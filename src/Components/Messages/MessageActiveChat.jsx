@@ -1,95 +1,238 @@
-import React, { useState } from 'react';
-import { Smile, Paperclip, Send, FileText, Image as ImageIcon, File } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Smile, Paperclip, Send, FileText, Image as ImageIcon, File, X } from 'lucide-react';
 
 export default function MessageActiveChat({ chatId }) {
   const [message, setMessage] = useState("Hello, I attached our quote document and product specification sheet...");
+  const [attachments, setAttachments] = useState([
+    { id: 1, name: 'quote-document.pdf', size: '1.2 MB', ext: 'PDF', type: 'pdf' },
+    { id: 2, name: 'factory-product-photo.jpg', size: '4.8 MB', ext: 'JPG', type: 'image' },
+    { id: 3, name: 'steel-spec-sheet.docx', size: '856 KB', ext: 'DOCX', type: 'doc' },
+  ]);
+  const [chatHistory, setChatHistory] = useState([
+    {
+      id: 1,
+      type: 'incoming',
+      text: 'Can you confirm if the primary carbon steel sheets meet the ASTM A36 standard for the upcoming Q3 shipment?',
+      time: 'Yesterday, 4:12 PM',
+      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop',
+      showDate: 'Yesterday'
+    },
+    {
+      id: 2,
+      type: 'outgoing',
+      text: "Yes, absolutely. All our structural components are ASTM certified. I'll get the documentation over to you shortly.",
+      time: 'Yesterday, 4:15 PM'
+    }
+  ]);
+  
+  const chatEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+  const commonEmojis = ['😀', '😂', '🥰', '😎', '👍', '🙏', '🔥', '✨', '🎉', '💡', '✅', '👀'];
+
+  useEffect(() => {
+    // Slight delay to ensure DOM is updated before scrolling
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 50);
+  }, [chatHistory]);
+
+  const handleSendMessage = () => {
+    if (!message.trim() && attachments.length === 0) return;
+
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    let attachmentText = "";
+    if (attachments.length > 0) {
+      attachmentText = `[Attached ${attachments.length} files] `;
+    }
+
+    const newMessage = {
+      id: Date.now(),
+      type: 'outgoing',
+      text: attachmentText + message,
+      time: `Today, ${timeString}`
+    };
+
+    setChatHistory([...chatHistory, newMessage]);
+    setMessage("");
+    setAttachments([]);
+  };
+
+  const removeAttachment = (id) => {
+    setAttachments(attachments.filter(a => a.id !== id));
+  };
+
+  const handleFileAttach = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const ext = file.name.split('.').pop().toLowerCase();
+      let type = 'doc';
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
+      else if (ext === 'pdf') type = 'pdf';
+      
+      const newAttachment = {
+        id: Date.now(),
+        name: file.name,
+        size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+        ext: ext.toUpperCase(),
+        type: type
+      };
+      
+      setAttachments([...attachments, newAttachment]);
+    }
+  };
+
+  const handleEmojiClick = (emoji) => {
+    setMessage(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      
+    <div className="flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-0">
+
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 bg-[#F8F9FB] flex flex-col gap-6">
-        
-        {/* Date Divider */}
-        <div className="flex justify-center">
-          <span className="px-4 py-1.5 bg-gray-200 text-gray-500 rounded-full text-[11px] font-bold">
-            Yesterday, 4:12 PM
-          </span>
-        </div>
+      <div className="flex-1 overflow-y-auto p-6 bg-[#F8F9FB] flex flex-col gap-6 min-h-0">
 
-        {/* Incoming Message */}
-        <div className="flex items-start gap-3 max-w-[85%]">
-          <img 
-            src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" 
-            alt="Buyer" 
-            className="w-8 h-8 rounded-full object-cover shrink-0" 
-          />
-          <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-tl-sm shadow-sm">
-            <p className="text-[13px] text-gray-600 leading-relaxed font-medium">
-              Can you confirm if the primary carbon steel sheets meet the ASTM A36 standard for the upcoming Q3 shipment?
-            </p>
-          </div>
-        </div>
+        {chatHistory.map((msg, index) => {
+          return (
+            <React.Fragment key={msg.id}>
+              {/* Date Divider (Only shown if specified) */}
+              {msg.showDate && (
+                <div className="flex justify-center">
+                  <span className="px-4 py-1.5 bg-gray-200 text-gray-500 rounded-full text-[11px] font-bold">
+                    {msg.showDate}
+                  </span>
+                </div>
+              )}
 
-        {/* Outgoing Message */}
-        <div className="flex items-start justify-end gap-3 w-full">
-          <div className="bg-[#5B6270] text-white p-4 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%]">
-            <p className="text-[13px] leading-relaxed font-medium">
-              Yes, absolutely. All our structural components are ASTM certified. I'll get the documentation over to you shortly.
-            </p>
-          </div>
-        </div>
+              {/* Message Bubble */}
+              {msg.type === 'incoming' ? (
+                <div className="flex items-start gap-3 max-w-[85%]">
+                  {msg.avatar ? (
+                    <img
+                      src={msg.avatar}
+                      alt="Buyer"
+                      className="w-8 h-8 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                      <span className="text-blue-700 font-bold text-[11px]">B</span>
+                    </div>
+                  )}
+                  <div>
+                    <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-tl-sm shadow-sm">
+                      <p className="text-[13px] text-gray-600 leading-relaxed font-medium">
+                        {msg.text}
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-gray-400 font-bold mt-1 ml-1">{msg.time}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-end w-full">
+                  <div className="flex items-start justify-end gap-3 w-full">
+                    <div className="bg-[#5B6270] text-white p-4 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%]">
+                      <p className="text-[13px] leading-relaxed font-medium">
+                        {msg.text}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-gray-400 font-bold mt-1 mr-1">{msg.time}</span>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+        <div ref={chatEndRef} />
       </div>
 
       {/* Input Area */}
       <div className="p-6 border-t border-gray-200 bg-white">
-        
+
         {/* Attachments Preview */}
-        <div className="flex flex-wrap gap-4 mb-4">
-          <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:border-gray-300 transition cursor-pointer w-[240px]">
-            <div className="w-10 h-10 rounded-lg bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-              <FileText size={20} />
-            </div>
-            <div className="min-w-0">
-              <h4 className="text-[13px] font-bold text-[#0F172A] truncate">quote-document.pdf</h4>
-              <p className="text-[11px] font-bold text-gray-500">1.2 MB · PDF</p>
-            </div>
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-4 mb-4">
+            {attachments.map(file => (
+              <div key={file.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:border-gray-300 transition cursor-pointer w-[240px] relative group">
+                <button
+                  onClick={() => removeAttachment(file.id)}
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition"
+                >
+                  <X size={12} />
+                </button>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${file.type === 'pdf' ? 'bg-red-50 text-red-500' :
+                    file.type === 'doc' ? 'bg-blue-50 text-blue-500' : ''
+                  }`}>
+                  {file.type === 'image' ? (
+                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=100&h=100&fit=crop" alt="Preview" className="w-full h-full object-cover" />
+                  ) : file.type === 'pdf' ? (
+                    <FileText size={20} />
+                  ) : (
+                    <File size={20} />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[13px] font-bold text-[#0F172A] truncate">{file.name}</h4>
+                  <p className="text-[11px] font-bold text-gray-500">{file.size} · {file.ext}</p>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:border-gray-300 transition cursor-pointer w-[240px]">
-            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
-              <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=100&h=100&fit=crop" alt="Steel" className="w-full h-full object-cover" />
-            </div>
-            <div className="min-w-0">
-              <h4 className="text-[13px] font-bold text-[#0F172A] truncate">factory-product-photo.jpg</h4>
-              <p className="text-[11px] font-bold text-gray-500">4.8 MB · JPG</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:border-gray-300 transition cursor-pointer w-[240px]">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
-              <File size={20} />
-            </div>
-            <div className="min-w-0">
-              <h4 className="text-[13px] font-bold text-[#0F172A] truncate">steel-spec-sheet.docx</h4>
-              <p className="text-[11px] font-bold text-gray-500">856 KB · DOCX</p>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Text Input */}
-        <div className="bg-[#F8F9FB] rounded-xl overflow-hidden border border-gray-100">
-          <textarea 
+        <div className="bg-[#F8F9FB] rounded-xl border border-gray-100 focus-within:border-gray-300 transition shrink-0 relative z-10">
+          <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message here..."
-            className="w-full h-24 p-4 bg-transparent resize-none outline-none text-[13px] font-medium placeholder:text-gray-400"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            placeholder="Type your message here... (Press Enter to send)"
+            className="w-full h-20 p-4 bg-transparent resize-none outline-none text-[13px] font-medium placeholder:text-gray-400"
           ></textarea>
-          
+
           <div className="px-4 pb-3 flex justify-between items-center text-gray-400">
-            <div className="flex items-center gap-4">
-              <button className="hover:text-gray-700 transition"><Smile size={18} strokeWidth={2.5} /></button>
-              <button className="hover:text-gray-700 transition"><Paperclip size={18} strokeWidth={2.5} /></button>
+            <div className="flex items-center gap-4 relative">
+              <button 
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="hover:text-gray-700 transition"
+              >
+                <Smile size={18} strokeWidth={2.5} />
+              </button>
+              
+              {showEmojiPicker && (
+                <div className="absolute bottom-8 left-0 bg-white border border-gray-200 shadow-lg rounded-xl p-3 grid grid-cols-4 gap-2 z-10 w-[160px]">
+                  {commonEmojis.map(emoji => (
+                    <button 
+                      key={emoji}
+                      onClick={() => handleEmojiClick(emoji)}
+                      className="hover:bg-gray-100 rounded text-lg p-1 transition flex items-center justify-center"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleFileAttach}
+                className="hidden"
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="hover:text-gray-700 transition"
+              >
+                <Paperclip size={18} strokeWidth={2.5} />
+              </button>
             </div>
             <span className="text-[10px] font-bold tracking-wider">{message.length} characters</span>
           </div>
@@ -100,7 +243,11 @@ export default function MessageActiveChat({ chatId }) {
           <button className="px-6 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 transition rounded-full text-[13px] font-bold text-[#0F172A]">
             Save Draft
           </button>
-          <button className="px-6 py-2.5 bg-[#0F172A] hover:bg-black transition rounded-full text-[13px] font-bold text-white shadow-sm flex items-center gap-2">
+          <button
+            onClick={handleSendMessage}
+            disabled={!message.trim() && attachments.length === 0}
+            className="px-6 py-2.5 bg-[#0F172A] hover:bg-black disabled:opacity-50 transition rounded-full text-[13px] font-bold text-white shadow-sm flex items-center gap-2"
+          >
             Send Message
             <Send size={14} strokeWidth={2.5} className="ml-1" />
           </button>

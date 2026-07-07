@@ -8,7 +8,7 @@ export default function MessageContent({ selectedChat }) {
   }
 
   return (
-    <div className="h-full flex flex-col gap-6">
+    <div className="h-full flex flex-col gap-6 min-h-0">
       
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">

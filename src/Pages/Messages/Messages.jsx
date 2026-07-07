@@ -56,9 +56,9 @@ export default function Messages() {
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-240px)] min-h-[600px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-220px)] min-h-0">
         {/* Left Sidebar */}
-        <div className="lg:col-span-4 xl:col-span-3 h-full">
+        <div className="lg:col-span-4 xl:col-span-3 h-full min-h-0">
           <MessageSidebar 
             activeTab={activeTab} 
             selectedChat={selectedChat}
@@ -67,7 +67,7 @@ export default function Messages() {
         </div>
 
         {/* Right Content */}
-        <div className="lg:col-span-8 xl:col-span-9 h-full">
+        <div className="lg:col-span-8 xl:col-span-9 h-full min-h-0">
           <MessageContent selectedChat={selectedChat} />
         </div>
       </div>
