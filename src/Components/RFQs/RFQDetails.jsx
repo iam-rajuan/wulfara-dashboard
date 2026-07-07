@@ -1,20 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, Printer, X, FileText, Image as ImageIcon, File, Paperclip, Send, MapPin, CheckCircle, Clock } from 'lucide-react';
 
 export default function RFQDetails() {
   const { id } = useParams();
   const [message, setMessage] = useState('');
+  const [rfq, setRfq] = useState(null);
+  const [attachedFile, setAttachedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
-  // Dynamically generate mock data based on the ID to simulate a real database fetch
-  const rfq = useMemo(() => {
+  useEffect(() => {
     const currentId = id || "RFQ-1027";
     
     // Simulate dynamic buyer data depending on the ID
     const isNova = currentId === 'RFQ-1047';
     const isApex = currentId === 'RFQ-1046' || currentId === 'RFQ-1045' || currentId === 'RFQ-1044';
     
-    return {
+    setRfq({
       id: currentId,
       status: currentId === 'RFQ-1048' ? "NEW" : (isNova ? "RESPONDED" : "PENDING"),
       category: isNova ? "Metal pipes" : (isApex ? "Raw materials" : "Steel sheets"),
@@ -37,15 +39,65 @@ export default function RFQDetails() {
       activity: [
         { date: "Today, 09:42 AM", title: "RFQ Created", desc: "Request submitted by buyer" }
       ]
-    };
+    });
   }, [id]);
 
   const handleReplySubmit = () => {
-    if (message.trim()) {
-      console.log("Sending reply for", rfq.id, ":", message);
-      alert(`Reply sent for ${rfq.id}`);
+    if ((message.trim() || attachedFile) && rfq) {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      const attachmentText = attachedFile ? ` (Attached: ${attachedFile.name})` : '';
+      const replyDesc = message.trim() 
+        ? `You sent a quote: "${message}"${attachmentText}`
+        : `You sent a quote with an attachment${attachmentText}`;
+
+      setRfq(prev => ({
+        ...prev,
+        status: "RESPONDED",
+        activity: [
+          ...prev.activity,
+          { 
+            date: `Today, ${timeString}`, 
+            title: "Proposal Sent", 
+            desc: replyDesc 
+          }
+        ]
+      }));
+      
       setMessage('');
+      setAttachedFile(null);
     }
+  };
+
+  const handleFileAttach = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setAttachedFile(e.target.files[0]);
+    }
+  };
+
+  const handleDecline = () => {
+    if (rfq) {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      setRfq(prev => ({
+        ...prev,
+        status: "DECLINED",
+        activity: [
+          ...prev.activity,
+          { 
+            date: `Today, ${timeString}`, 
+            title: "RFQ Declined", 
+            desc: "You declined this request." 
+          }
+        ]
+      }));
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const renderAttachmentIcon = (type) => {
@@ -56,6 +108,8 @@ export default function RFQDetails() {
       default: return <div className="w-8 h-8 rounded bg-gray-100 text-gray-500 flex items-center justify-center shrink-0"><File size={16} /></div>;
     }
   };
+
+  if (!rfq) return null;
 
   return (
     <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-16">
@@ -71,19 +125,25 @@ export default function RFQDetails() {
           <div className="flex items-center gap-4">
             <h1 className="text-[32px] font-bold tracking-tight text-[#0F172A]">{rfq.id}</h1>
             <span className={`px-3 py-1 text-white rounded-full text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 ${
-              rfq.status === 'NEW' ? 'bg-[#0066FF]' : (rfq.status === 'RESPONDED' ? 'bg-[#0052CC]' : 'bg-gray-500')
+              rfq.status === 'NEW' ? 'bg-[#0066FF]' : 
+              rfq.status === 'RESPONDED' ? 'bg-[#D4AF37] text-[#0F172A]' : 
+              rfq.status === 'DECLINED' ? 'bg-[#DC2626]' : 'bg-gray-500'
             }`}>
-              <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+              <div className={`w-1.5 h-1.5 rounded-full ${rfq.status === 'RESPONDED' ? 'bg-[#0F172A]' : 'bg-white'}`}></div>
               {rfq.status}
             </span>
           </div>
           
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 bg-white border border-gray-300 rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm hover:bg-gray-50 transition flex items-center gap-2">
+            <button onClick={handlePrint} className="px-4 py-2 bg-white border border-gray-300 rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm hover:bg-gray-50 transition flex items-center gap-2">
               <Printer size={16} strokeWidth={2.5} />
               Print
             </button>
-            <button className="px-4 py-2 bg-[#FEE2E2] hover:bg-[#FECACA] text-[#DC2626] transition rounded-md text-[13px] font-bold shadow-sm flex items-center gap-2">
+            <button 
+              onClick={handleDecline} 
+              disabled={rfq.status === 'DECLINED'}
+              className="px-4 py-2 bg-[#FEE2E2] hover:bg-[#FECACA] disabled:opacity-50 text-[#DC2626] transition rounded-md text-[13px] font-bold shadow-sm flex items-center gap-2"
+            >
               <X size={16} strokeWidth={2.5} />
               Decline
             </button>
@@ -162,17 +222,42 @@ export default function RFQDetails() {
               <textarea 
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full h-40 p-4 bg-transparent resize-none outline-none text-[13px] font-medium placeholder:text-gray-400"
+                className="w-full h-32 p-4 bg-transparent resize-none outline-none text-[13px] font-medium placeholder:text-gray-400"
                 placeholder="Type your response or quote details here..."
               ></textarea>
+              
+              {attachedFile && (
+                <div className="px-4 pb-3 flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 px-3 py-1.5 rounded-md text-[12px] font-bold">
+                    <FileText size={14} />
+                    <span className="truncate max-w-[200px]">{attachedFile.name}</span>
+                    <button 
+                      onClick={() => setAttachedFile(null)}
+                      className="ml-1 hover:text-blue-900 transition"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
               <div className="bg-white border-t border-gray-200 p-3 flex justify-between items-center">
-                <button className="flex items-center gap-2 text-[13px] font-bold text-gray-600 hover:text-gray-900 transition px-2">
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  ref={fileInputRef} 
+                  onChange={handleFileAttach}
+                />
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 text-[13px] font-bold text-gray-600 hover:text-gray-900 transition px-2"
+                >
                   <Paperclip size={16} />
                   Attach Quote
                 </button>
                 <button 
                   onClick={handleReplySubmit}
-                  disabled={!message.trim()}
+                  disabled={!message.trim() && !attachedFile}
                   className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] disabled:bg-[#e4ce84] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2"
                 >
                   <Send size={16} strokeWidth={2.5} />

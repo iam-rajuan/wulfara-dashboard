@@ -9,6 +9,7 @@ import ProductsServices from "../Pages/ProductsServices/ProductsServices";
 import Gallery from "../Pages/Gallery/Gallery";
 import RFQs from "../Pages/RFQs/RFQs";
 import RFQDetails from "../Components/RFQs/RFQDetails";
+import RFQReply from "../Components/RFQs/RFQReply";
 import VerifyCode from "../Pages/Auth/VerifyCode/VerifyCode";
 import NewPass from "../Pages/Auth/NewPass/NewPass";
 import Settings from "../Pages/Settings/Settings";
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
           { path: "/gallery", element: <Gallery/> },
           { path: "/rfqs", element: <RFQs/> },
           { path: "/rfqs/:id", element: <RFQDetails/> },
+          { path: "/rfqs/:id/reply", element: <RFQReply/> },
         ],
       },
     ],

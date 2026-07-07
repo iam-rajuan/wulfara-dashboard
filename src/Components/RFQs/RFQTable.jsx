@@ -191,7 +191,7 @@ export default function RFQTable() {
                 <td className="px-6 py-4 text-right">
                   {rfq.status === 'Pending' ? (
                     <button 
-                      onClick={() => navigate(`/rfqs/${rfq.id}`)}
+                      onClick={() => navigate(`/rfqs/${rfq.id}/reply`)}
                       className="px-4 py-1.5 bg-[#D4AF37] hover:bg-[#C29F31] transition rounded text-[12px] font-bold text-[#0F172A]"
                     >
                       Reply
