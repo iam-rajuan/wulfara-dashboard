@@ -15,8 +15,8 @@ export default function Messages() {
   ];
 
   return (
-    <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-16">
-      
+    <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-10">
+
       {/* Header */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -37,17 +37,15 @@ export default function Messages() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 text-[13px] font-bold whitespace-nowrap transition border-b-2 flex items-center gap-2 ${
-              activeTab === tab.id 
-                ? 'border-[#0F172A] text-[#0F172A]' 
+            className={`pb-3 text-[13px] font-bold whitespace-nowrap transition border-b-2 flex items-center gap-2 ${activeTab === tab.id
+                ? 'border-[#0F172A] text-[#0F172A]'
                 : 'border-transparent text-gray-500 hover:text-gray-900'
-            }`}
+              }`}
           >
             {tab.label}
             {tab.badge && (
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                activeTab === tab.id ? 'bg-[#DC2626] text-white' : 'bg-[#DC2626] text-white'
-              }`}>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === tab.id ? 'bg-[#DC2626] text-white' : 'bg-[#DC2626] text-white'
+                }`}>
                 {tab.badge}
               </span>
             )}
@@ -59,8 +57,8 @@ export default function Messages() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-220px)] min-h-0">
         {/* Left Sidebar */}
         <div className="lg:col-span-4 xl:col-span-3 h-full min-h-0">
-          <MessageSidebar 
-            activeTab={activeTab} 
+          <MessageSidebar
+            activeTab={activeTab}
             selectedChat={selectedChat}
             setSelectedChat={setSelectedChat}
           />
@@ -71,7 +69,7 @@ export default function Messages() {
           <MessageContent selectedChat={selectedChat} />
         </div>
       </div>
-      
+
     </div>
   );
 }

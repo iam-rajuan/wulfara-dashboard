@@ -5,7 +5,7 @@ export default function MessageActiveChat({ chatId }) {
   const [message, setMessage] = useState("Hello, I attached our quote document and product specification sheet...");
   const [attachments, setAttachments] = useState([
     { id: 1, name: 'quote-document.pdf', size: '1.2 MB', ext: 'PDF', type: 'pdf' },
-    { id: 2, name: 'factory-product-photo.jpg', size: '4.8 MB', ext: 'JPG', type: 'image' },
+    { id: 2, name: 'factory-product-photo.jpg', size: '4.8 MB', ext: 'JPG', type: 'image', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop' },
     { id: 3, name: 'steel-spec-sheet.docx', size: '856 KB', ext: 'DOCX', type: 'doc' },
   ]);
   const [chatHistory, setChatHistory] = useState([
@@ -44,16 +44,12 @@ export default function MessageActiveChat({ chatId }) {
     const now = new Date();
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    let attachmentText = "";
-    if (attachments.length > 0) {
-      attachmentText = `[Attached ${attachments.length} files] `;
-    }
-
     const newMessage = {
       id: Date.now(),
       type: 'outgoing',
-      text: attachmentText + message,
-      time: `Today, ${timeString}`
+      text: message,
+      time: `Today, ${timeString}`,
+      attachments: attachments
     };
 
     setChatHistory([...chatHistory, newMessage]);
@@ -78,7 +74,8 @@ export default function MessageActiveChat({ chatId }) {
         name: file.name,
         size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
         ext: ext.toUpperCase(),
-        type: type
+        type: type,
+        url: type === 'image' ? URL.createObjectURL(file) : null
       };
       
       setAttachments([...attachments, newAttachment]);
@@ -134,10 +131,34 @@ export default function MessageActiveChat({ chatId }) {
               ) : (
                 <div className="flex flex-col items-end w-full">
                   <div className="flex items-start justify-end gap-3 w-full">
-                    <div className="bg-[#5B6270] text-white p-4 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%]">
-                      <p className="text-[13px] leading-relaxed font-medium">
-                        {msg.text}
-                      </p>
+                    <div className="flex flex-col items-end max-w-[85%]">
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2 justify-end">
+                          {msg.attachments.map(att => (
+                            att.type === 'image' ? (
+                              <img key={att.id} src={att.url} alt={att.name} className="max-w-[240px] rounded-2xl border border-gray-200 shadow-sm" />
+                            ) : (
+                              <div key={att.id} className="bg-white border border-gray-200 p-3 rounded-xl flex items-center gap-3 shadow-sm min-w-[200px]">
+                                <div className={`w-8 h-8 flex items-center justify-center rounded-lg ${att.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                                  {att.type === 'pdf' ? <FileText size={16} /> : <File size={16} />}
+                                </div>
+                                <div className="text-left min-w-0">
+                                  <p className="text-[12px] font-bold text-[#0F172A] truncate">{att.name}</p>
+                                  <p className="text-[10px] text-gray-500">{att.size}</p>
+                                </div>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      )}
+                      
+                      {msg.text && (
+                        <div className="bg-[#5B6270] text-white p-4 rounded-2xl rounded-tr-sm shadow-sm inline-block">
+                          <p className="text-[13px] leading-relaxed font-medium">
+                            {msg.text}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <span className="text-[10px] text-gray-400 font-bold mt-1 mr-1">{msg.time}</span>
@@ -163,11 +184,12 @@ export default function MessageActiveChat({ chatId }) {
                 >
                   <X size={12} />
                 </button>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${file.type === 'pdf' ? 'bg-red-50 text-red-500' :
-                    file.type === 'doc' ? 'bg-blue-50 text-blue-500' : ''
-                  }`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${
+                  file.type === 'pdf' ? 'bg-red-50 text-red-500' : 
+                  file.type === 'doc' ? 'bg-blue-50 text-blue-500' : ''
+                }`}>
                   {file.type === 'image' ? (
-                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=100&h=100&fit=crop" alt="Preview" className="w-full h-full object-cover" />
+                    <img src={file.url || "https://images.unsplash.com/photo-1518770660439-4636190af475?w=100&h=100&fit=crop"} alt="Preview" className="w-full h-full object-cover" />
                   ) : file.type === 'pdf' ? (
                     <FileText size={20} />
                   ) : (
