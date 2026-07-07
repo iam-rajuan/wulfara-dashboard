@@ -14,15 +14,6 @@ import Messages from "../Pages/Messages/Messages";
 import VerifyCode from "../Pages/Auth/VerifyCode/VerifyCode";
 import NewPass from "../Pages/Auth/NewPass/NewPass";
 import Settings from "../Pages/Settings/Settings";
-import Booking from "../Pages/Bookings/Bookings";
-import BookingDetails from "../Pages/BookingDetails/BookingDetails";
-import Workers from "../Pages/Workers/Workers";
-import WorkerDetailsPage from "../Pages/WorkerDetailsPage/WorkerDetailsPage";
-import PaymentDetails from "../Pages/PaymentDetails/PaymentDetails";
-import Payments from "../Pages/Payments/Payments";
-import Customers from "../Pages/Customers/Customers";
-import CustomerDetails from "../Pages/CustomerDetails/CustomerDetails";
-import Support from "../Pages/Support/Support";
 export const router = createBrowserRouter([
   {
     path: "/sign-in",
@@ -49,15 +40,6 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <Dashboard /> },
           { path: "/dashboard", element: <Dashboard /> },
-          { path: "/booking", element: <Booking/> },
-          { path: "/booking-details", element: <BookingDetails/> },
-          { path: "/workers", element: <Workers/> },
-          { path: "/workers/:id", element: <WorkerDetailsPage/> },
-          {path: "/payments" , element: <Payments/>},
-          {path: "/payment-details" , element: <PaymentDetails/>},
-           {path: "/customers" , element: <Customers/>},
-          {path: "/customer/:id" , element: <CustomerDetails/>},
-          { path: "/support", element: <Support /> },
           { path: "/settings", element: <Settings/> },
           { path: "/profile", element: <CompanyProfile/> },
           { path: "/products", element: <ProductsServices/> },
