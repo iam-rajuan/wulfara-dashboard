@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, FileText, Clock, CloudUpload, Send, CheckCircle2, Circle } from 'lucide-react';
+import { ChevronRight, FileText, Clock, CloudUpload, Send, CheckCircle2, Circle, X } from 'lucide-react';
 
 export default function RFQReply() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     price: '',
@@ -13,6 +14,23 @@ export default function RFQReply() {
     shippingNotes: '',
     message: ''
   });
+  
+  const [attachedFile, setAttachedFile] = useState(null);
+
+  // Dynamically generate mock data based on the ID
+  const rfq = useMemo(() => {
+    const currentId = id || "RFQ-1027";
+    const isNova = currentId === 'RFQ-1047';
+    const isApex = currentId === 'RFQ-1046' || currentId === 'RFQ-1045' || currentId === 'RFQ-1044';
+    
+    return {
+      id: currentId,
+      product: isNova ? "Metal pipes" : (isApex ? "Raw materials" : "Steel Sheets (Grade A)"),
+      quantity: isNova ? "1,200 units" : (isApex ? "3 tons" : "2,000 units"),
+      targetDate: isNova ? "May 28, 2026" : (isApex ? "June 02, 2026" : "Oct 15, 2024"),
+      buyerName: isNova ? "Nova Build Team" : (isApex ? "Apex Industrial" : "Michael Carter"),
+    };
+  }, [id]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -22,6 +40,26 @@ export default function RFQReply() {
     }));
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setAttachedFile(e.target.files[0]);
+    }
+  };
+
+  const handleSendReply = () => {
+    if (!formData.price.trim() || !formData.timeline.trim() || !formData.message.trim()) {
+      alert("Please fill in all required fields (Price, Timeline, and Message).");
+      return;
+    }
+    alert(`Quote Response sent successfully for ${rfq.id}!`);
+    navigate(`/rfqs/${rfq.id}`);
+  };
+
+  const handleSaveDraft = () => {
+    alert(`Draft saved for ${rfq.id}.`);
+    navigate(`/rfqs`);
+  };
+
   return (
     <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-16">
       {/* Breadcrumb */}
@@ -29,7 +67,7 @@ export default function RFQReply() {
         <div className="flex items-center gap-2 text-[13px] font-bold text-gray-500 mb-4">
           <Link to="/rfqs" className="hover:text-gray-900 transition">RFQs</Link>
           <ChevronRight size={14} />
-          <Link to={`/rfqs/${id}`} className="hover:text-gray-900 transition">{id || 'RFQ-1027'}</Link>
+          <Link to={`/rfqs/${rfq.id}`} className="hover:text-gray-900 transition">{rfq.id}</Link>
           <ChevronRight size={14} />
           <span className="text-[#0F172A]">Reply</span>
         </div>
@@ -74,7 +112,7 @@ export default function RFQReply() {
                       name="isNegotiable"
                       checked={formData.isNegotiable}
                       onChange={handleInputChange}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                     <label htmlFor="isNegotiable" className="text-[12px] font-bold text-gray-600 cursor-pointer">
                       Price is negotiable
@@ -132,14 +170,44 @@ export default function RFQReply() {
                 <label className="block text-[13px] font-bold text-[#0F172A] mb-2">
                   Attach Quote Document
                 </label>
-                <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center bg-[#F8F9FB] hover:bg-gray-50 transition cursor-pointer">
-                  <CloudUpload className="text-gray-400 mb-3" size={32} />
-                  <p className="text-[14px] font-bold text-[#0F172A] mb-1">Drag and drop your file here</p>
-                  <p className="text-[12px] font-bold text-gray-500 mb-4">Supported formats: PDF, DOCX (Max 10MB)</p>
-                  <button className="px-6 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-gray-50 transition">
-                    Browse Files
-                  </button>
-                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                
+                {!attachedFile ? (
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center bg-[#F8F9FB] hover:bg-gray-50 transition cursor-pointer"
+                  >
+                    <CloudUpload className="text-gray-400 mb-3" size={32} />
+                    <p className="text-[14px] font-bold text-[#0F172A] mb-1">Drag and drop your file here</p>
+                    <p className="text-[12px] font-bold text-gray-500 mb-4">Supported formats: PDF, DOCX (Max 10MB)</p>
+                    <button className="px-6 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-gray-50 transition pointer-events-none">
+                      Browse Files
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border border-blue-100 bg-blue-50 rounded-xl p-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                        <FileText className="text-blue-600" size={20} />
+                      </div>
+                      <div>
+                        <p className="text-[14px] font-bold text-[#0F172A]">{attachedFile.name}</p>
+                        <p className="text-[11px] font-bold text-gray-500">{(attachedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setAttachedFile(null)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-white rounded-lg transition"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -147,13 +215,13 @@ export default function RFQReply() {
             {/* Action Buttons */}
             <div className="p-6 border-t border-gray-100 bg-[#F8F9FB] flex justify-end gap-3">
               <button 
-                onClick={() => navigate('/rfqs')}
+                onClick={handleSaveDraft}
                 className="px-6 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 transition rounded-md text-[13px] font-bold text-[#0F172A]"
               >
                 Save Draft
               </button>
               <button 
-                onClick={() => navigate(`/rfqs/${id}`)}
+                onClick={handleSendReply}
                 className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2"
               >
                 <Send size={16} strokeWidth={2.5} />
@@ -177,35 +245,35 @@ export default function RFQReply() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center py-2 border-b border-gray-50">
                   <span className="text-[12px] font-bold text-gray-500">RFQ ID</span>
-                  <span className="text-[13px] font-bold text-[#0F172A]">{id || 'RFQ-1027'}</span>
+                  <span className="text-[13px] font-bold text-[#0F172A]">{rfq.id}</span>
                 </div>
                 
                 <div className="flex justify-between items-center py-2 border-b border-gray-50">
                   <span className="text-[12px] font-bold text-gray-500">Buyer</span>
                   <div className="flex items-center gap-2">
                     <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" alt="Buyer" className="w-5 h-5 rounded-full object-cover" />
-                    <span className="text-[13px] font-bold text-[#0F172A]">Michael Carter</span>
+                    <span className="text-[13px] font-bold text-[#0F172A]">{rfq.buyerName}</span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center py-2 border-b border-gray-50">
                   <span className="text-[12px] font-bold text-gray-500">Product</span>
-                  <span className="text-[13px] font-bold text-[#0F172A]">Steel Sheets (Grade A)</span>
+                  <span className="text-[13px] font-bold text-[#0F172A] text-right">{rfq.product}</span>
                 </div>
 
                 <div className="flex justify-between items-center py-2 border-b border-gray-50">
                   <span className="text-[12px] font-bold text-gray-500">Quantity</span>
-                  <span className="text-[13px] font-bold text-[#0F172A]">2,000 units</span>
+                  <span className="text-[13px] font-bold text-[#0F172A]">{rfq.quantity}</span>
                 </div>
 
                 <div className="flex justify-between items-center py-2 border-b border-gray-50">
                   <span className="text-[12px] font-bold text-gray-500">Target Date</span>
-                  <span className="text-[13px] font-bold text-[#0F172A]">Oct 15, 2024</span>
+                  <span className="text-[13px] font-bold text-[#0F172A]">{rfq.targetDate}</span>
                 </div>
               </div>
               
               <div className="mt-5 text-center">
-                <Link to={`/rfqs/${id}`} className="text-[13px] font-bold text-[#0066FF] hover:underline">
+                <Link to={`/rfqs/${rfq.id}`} className="text-[13px] font-bold text-[#0066FF] hover:underline">
                   View Full RFQ Details
                 </Link>
               </div>
@@ -229,7 +297,11 @@ export default function RFQReply() {
                 <p className="text-[12px] font-bold text-gray-600 leading-tight">Confirm lead times include realistic buffer for logistics.</p>
               </div>
               <div className="flex items-start gap-3">
-                <Circle size={16} className="text-gray-400 shrink-0 mt-0.5" />
+                {attachedFile ? (
+                  <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                ) : (
+                  <Circle size={16} className="text-gray-400 shrink-0 mt-0.5" />
+                )}
                 <p className="text-[12px] font-bold text-gray-600 leading-tight">Attach detailed spec sheet if proposing an alternative grade.</p>
               </div>
             </div>
