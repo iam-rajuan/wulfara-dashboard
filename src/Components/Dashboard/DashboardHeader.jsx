@@ -3,7 +3,7 @@ import { Download, BadgeCheck, Clock } from 'lucide-react';
 
 export default function DashboardHeader() {
   return (
-    <>
+    <div className='mt-16'>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-[32px] font-bold mb-1 tracking-tight">Supplier Dashboard</h1>
@@ -47,6 +47,6 @@ export default function DashboardHeader() {
           </span>
         </div>
       </div>
-    </>
+    </div>
   );
 }
