@@ -7,6 +7,8 @@ import Dashboard from "../Pages/Dashboard/Dashboard";
 import CompanyProfile from "../Pages/CompanyProfile/CompanyProfile";
 import ProductsServices from "../Pages/ProductsServices/ProductsServices";
 import Gallery from "../Pages/Gallery/Gallery";
+import RFQs from "../Pages/RFQs/RFQs";
+import RFQDetails from "../Components/RFQs/RFQDetails";
 import VerifyCode from "../Pages/Auth/VerifyCode/VerifyCode";
 import NewPass from "../Pages/Auth/NewPass/NewPass";
 import Settings from "../Pages/Settings/Settings";
@@ -58,6 +60,8 @@ export const router = createBrowserRouter([
           { path: "/profile", element: <CompanyProfile/> },
           { path: "/products", element: <ProductsServices/> },
           { path: "/gallery", element: <Gallery/> },
+          { path: "/rfqs", element: <RFQs/> },
+          { path: "/rfqs/:id", element: <RFQDetails/> },
         ],
       },
     ],
