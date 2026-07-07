@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Package, Settings, CloudUpload } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Package, Settings, CloudUpload, Trash2 } from 'lucide-react';
 
 export default function ProductModal({ isOpen, onClose, product, onSave }) {
   const [formData, setFormData] = useState({
@@ -8,9 +8,27 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
     category: '',
     moq: '',
     description: '',
+    image: null,
     priceVis: 'Quote Only (Requires RFQ)',
     status: 'Save as Draft'
   });
+
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, image: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData({ ...formData, image: null });
+  };
 
   useEffect(() => {
     if (product) {
@@ -20,6 +38,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
         category: product.category || '',
         moq: product.moq || '',
         description: product.description || '',
+        image: product.image || null,
         // Map priceVis from table ("Quote Only") to modal options
         priceVis: product.priceVis === 'Visible' ? 'Publicly Visible' : 
                   product.priceVis === 'Quote Only' ? 'Quote Only (Requires RFQ)' : 
@@ -33,6 +52,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
         category: '',
         moq: '',
         description: '',
+        image: null,
         priceVis: 'Quote Only (Requires RFQ)',
         status: 'Save as Draft'
       });
@@ -146,7 +166,11 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
               <label className="block text-[13px] font-bold text-[#0F172A] mb-3">Price Visibility</label>
               <div className="space-y-3">
                 {['Publicly Visible', 'Quote Only (Requires RFQ)', 'Hidden / Logged-in Only'].map((option) => (
-                  <label key={option} className="flex items-center gap-3 cursor-pointer">
+                  <label 
+                    key={option} 
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={() => setFormData({ ...formData, priceVis: option })}
+                  >
                     <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                       formData.priceVis === option ? 'border-[#D4AF37]' : 'border-gray-300'
                     }`}>
@@ -163,7 +187,11 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
               <label className="block text-[13px] font-bold text-[#0F172A] mb-3">Publication Status</label>
               <div className="space-y-3">
                 {['Publish Immediately', 'Save as Draft'].map((option) => (
-                  <label key={option} className="flex items-center gap-3 cursor-pointer">
+                  <label 
+                    key={option} 
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={() => setFormData({ ...formData, status: option })}
+                  >
                     <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                       formData.status === option ? 'border-[#D4AF37]' : 'border-gray-300'
                     }`}>
@@ -179,11 +207,34 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
           {/* Images & Technical Documents */}
           <div>
             <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Images & Technical Documents</label>
-            <div className="border-2 border-dashed border-gray-200 bg-[#F8F9FB] rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition">
-              <CloudUpload size={32} className="text-gray-400 mb-3" />
-              <p className="text-[13px] font-bold text-[#0F172A] mb-1">Click to upload or drag and drop</p>
-              <p className="text-[11px] text-gray-500 font-medium">PNG, JPG, PDF up to 10MB</p>
-            </div>
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleImageUpload} 
+            />
+            {formData.image ? (
+              <div className="relative rounded-xl border border-gray-200 overflow-hidden w-full h-48 bg-gray-50 flex items-center justify-center">
+                <img src={formData.image} alt="Preview" className="max-w-full max-h-full object-contain" />
+                <button 
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition"
+                  title="Remove Image"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ) : (
+              <div 
+                onClick={() => fileInputRef.current.click()}
+                className="border-2 border-dashed border-gray-200 bg-[#F8F9FB] rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition"
+              >
+                <CloudUpload size={32} className="text-gray-400 mb-3" />
+                <p className="text-[13px] font-bold text-[#0F172A] mb-1">Click to upload or drag and drop</p>
+                <p className="text-[11px] text-gray-500 font-medium">PNG, JPG, PDF up to 10MB</p>
+              </div>
+            )}
           </div>
         </div>
 

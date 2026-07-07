@@ -5,20 +5,13 @@ import ProductsDataGrid from '../../Components/ProductsServices/ProductsDataGrid
 import ProductModal from '../../Components/ProductsServices/ProductModal';
 
 export default function ProductsServices() {
-  const [summaryData] = useState({
-    total: 124,
-    published: 118,
-    drafts: 6,
-    quoteEnabled: 82
-  });
-
   const [filters, setFilters] = useState({
     search: '',
     category: 'All Categories',
     status: 'All Statuses'
   });
 
-  const [products] = useState([
+  const [products, setProducts] = useState([
     {
       id: 1,
       title: "Industrial Steel Sheets (3mm)",
@@ -56,6 +49,15 @@ export default function ProductsServices() {
       status: "Published"
     }
   ]);
+
+  const summaryData = useMemo(() => {
+    return {
+      total: products.length,
+      published: products.filter(p => p.status === 'Published').length,
+      drafts: products.filter(p => p.status === 'Draft').length,
+      quoteEnabled: products.filter(p => p.priceVis === 'Quote Only').length
+    };
+  }, [products]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -107,8 +109,42 @@ export default function ProductsServices() {
   };
 
   const handleSaveProduct = (productData) => {
-    console.log("Saved product:", productData);
-    // Real implementation would update `products` array here
+    const formattedPriceVis = productData.priceVis === 'Publicly Visible' ? 'Visible' : 
+                              productData.priceVis === 'Quote Only (Requires RFQ)' ? 'Quote Only' : 'Hidden';
+    const formattedStatus = productData.status === 'Publish Immediately' ? 'Published' : 'Draft';
+
+    if (editingProduct) {
+      // Edit existing product
+      const updatedProducts = products.map(p => {
+        if (p.id === editingProduct.id) {
+          return {
+            ...p,
+            title: productData.title,
+            description: productData.description,
+            category: productData.category,
+            moq: productData.moq,
+            image: productData.image,
+            priceVis: formattedPriceVis,
+            status: formattedStatus
+          };
+        }
+        return p;
+      });
+      setProducts(updatedProducts);
+    } else {
+      // Add new product
+      const newProduct = {
+        id: Date.now(),
+        title: productData.title,
+        description: productData.description,
+        category: productData.category,
+        moq: productData.moq,
+        image: productData.image,
+        priceVis: formattedPriceVis,
+        status: formattedStatus
+      };
+      setProducts([newProduct, ...products]);
+    }
   };
 
   return (

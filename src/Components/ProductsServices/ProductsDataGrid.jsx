@@ -84,8 +84,12 @@ export default function ProductsDataGrid({
               <tr key={product.id} className="hover:bg-gray-50 transition">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#F8F9FB] rounded border border-gray-200 flex items-center justify-center shrink-0">
-                      <ImageIcon size={20} className="text-gray-400" />
+                    <div className="w-12 h-12 bg-[#F8F9FB] rounded border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+                      {product.image ? (
+                        <img src={product.image} alt="Product" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon size={20} className="text-gray-400" />
+                      )}
                     </div>
                     <div>
                       <h4 className="font-bold text-[13px] text-[#0F172A] mb-0.5">{product.title}</h4>
