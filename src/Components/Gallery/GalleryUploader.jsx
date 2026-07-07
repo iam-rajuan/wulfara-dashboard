@@ -1,12 +1,31 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { CloudUpload, FileUp, Cloud } from 'lucide-react';
 
 export default function GalleryUploader({ onUpload }) {
   const fileInputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       onUpload(Array.from(e.target.files));
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onUpload(Array.from(e.dataTransfer.files));
     }
   };
 
@@ -24,7 +43,14 @@ export default function GalleryUploader({ onUpload }) {
         </div>
       </div>
 
-      <div className="border-2 border-dashed border-gray-300 bg-white rounded-xl p-10 flex flex-col items-center justify-center text-center">
+      <div 
+        className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center transition-colors ${
+          isDragging ? 'border-[#D4AF37] bg-[#FDF9E6]' : 'border-gray-300 bg-white'
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <div className="w-16 h-16 bg-[#EEF2F6] rounded-xl flex items-center justify-center mb-4">
           <FileUp size={24} className="text-[#0F172A]" />
         </div>

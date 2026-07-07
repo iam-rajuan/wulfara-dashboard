@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileIcon, Plus } from 'lucide-react';
 
-export default function GalleryGrid({ files, activeTab, onSetPrimary }) {
+export default function GalleryGrid({ files, activeTab, onSetPrimary, onAddNewFile }) {
   const filteredFiles = files.filter(f => activeTab === 'All Files' || f.type === activeTab);
 
   return (
@@ -15,9 +15,12 @@ export default function GalleryGrid({ files, activeTab, onSetPrimary }) {
               </div>
             </div>
           ) : (
-            <div className="h-40 bg-gray-900 relative overflow-hidden">
-              {/* Using a placeholder gradient for images to match the design aesthetics */}
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900"></div>
+            <div className="h-40 bg-gray-900 relative overflow-hidden flex items-center justify-center">
+              {file.url ? (
+                <img src={file.url} alt={file.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900"></div>
+              )}
             </div>
           )}
           
@@ -54,7 +57,10 @@ export default function GalleryGrid({ files, activeTab, onSetPrimary }) {
       ))}
 
       {/* Add New File Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-dashed flex flex-col overflow-hidden cursor-pointer hover:bg-gray-50 transition">
+      <div 
+        onClick={onAddNewFile}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 border-dashed flex flex-col overflow-hidden cursor-pointer hover:bg-gray-50 transition"
+      >
         <div className="h-40 bg-[#F8F9FB] flex items-center justify-center">
           <Plus size={24} className="text-gray-400" />
         </div>

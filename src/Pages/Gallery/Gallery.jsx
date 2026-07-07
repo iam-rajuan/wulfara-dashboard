@@ -4,9 +4,11 @@ import GalleryUploader from '../../Components/Gallery/GalleryUploader';
 import GalleryTabs from '../../Components/Gallery/GalleryTabs';
 import GalleryGrid from '../../Components/Gallery/GalleryGrid';
 import GalleryTips from '../../Components/Gallery/GalleryTips';
+import GalleryModal from '../../Components/Gallery/GalleryModal';
 
 export default function Gallery() {
   const [activeTab, setActiveTab] = useState('All Files');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [files, setFiles] = useState([
     {
       id: 1,
@@ -35,17 +37,19 @@ export default function Gallery() {
   ]);
 
   const handleUpload = (newFiles) => {
-    // In a real app, we would process files, upload to server, and get URLs back.
-    // For now, we just log them and create a dummy entry.
     console.log("Uploaded files:", newFiles);
-    const uploaded = newFiles.map((file, idx) => ({
-      id: Date.now() + idx,
-      title: file.name,
-      type: file.type.includes('pdf') ? 'Certificates' : 'Product Images', // naive assignment
-      isPdf: file.type.includes('pdf'),
-      isPrimary: false,
-      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-    }));
+    const uploaded = newFiles.map((file, idx) => {
+      const isPdf = file.type.includes('pdf');
+      return {
+        id: Date.now() + idx,
+        title: file.name,
+        type: isPdf ? 'Certificates' : 'Product Images', // naive assignment
+        isPdf: isPdf,
+        isPrimary: false,
+        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+        url: isPdf ? null : URL.createObjectURL(file)
+      };
+    });
     setFiles([...files, ...uploaded]);
   };
 
@@ -61,6 +65,19 @@ export default function Gallery() {
     }));
   };
 
+  const handleSaveModalFile = (data) => {
+    const newFile = {
+      id: Date.now(),
+      title: data.title,
+      type: data.type,
+      isPdf: data.isPdf,
+      isPrimary: false,
+      size: `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`,
+      url: data.isPdf ? null : URL.createObjectURL(data.file)
+    };
+    setFiles([...files, newFile]);
+  };
+
   return (
     <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-16">
       <GalleryHeader />
@@ -72,7 +89,12 @@ export default function Gallery() {
           
           <div>
             <GalleryTabs activeTab={activeTab} onTabChange={setActiveTab} />
-            <GalleryGrid files={files} activeTab={activeTab} onSetPrimary={handleSetPrimary} />
+            <GalleryGrid 
+              files={files} 
+              activeTab={activeTab} 
+              onSetPrimary={handleSetPrimary} 
+              onAddNewFile={() => setIsModalOpen(true)}
+            />
           </div>
         </div>
 
@@ -82,6 +104,12 @@ export default function Gallery() {
         </div>
       </div>
       
+      <GalleryModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveModalFile}
+      />
+
       {/* Footer */}
       <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-500 pt-6 mt-12 pb-4 border-t border-gray-200">
         <p>© 2024 WULFARA Industrial Marketplace. All rights reserved.</p>
