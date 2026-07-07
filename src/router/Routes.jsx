@@ -6,6 +6,7 @@ import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../Pages/Dashboard/Dashboard";
 import CompanyProfile from "../Pages/CompanyProfile/CompanyProfile";
 import ProductsServices from "../Pages/ProductsServices/ProductsServices";
+import Gallery from "../Pages/Gallery/Gallery";
 import VerifyCode from "../Pages/Auth/VerifyCode/VerifyCode";
 import NewPass from "../Pages/Auth/NewPass/NewPass";
 import Settings from "../Pages/Settings/Settings";
@@ -56,7 +57,7 @@ export const router = createBrowserRouter([
           { path: "/settings", element: <Settings/> },
           { path: "/profile", element: <CompanyProfile/> },
           { path: "/products", element: <ProductsServices/> },
-
+          { path: "/gallery", element: <Gallery/> },
         ],
       },
     ],
