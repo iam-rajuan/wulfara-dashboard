@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import brandLogo from "../../assets/image/image.png";
 import {
   LayoutDashboard,
@@ -19,14 +19,21 @@ import {
   File,
   Globe,
   User,
-  Diamond
+  Diamond,
+  LogOut
 } from "lucide-react";
 
 const Sidebar = ({ closeDrawer }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const role = user.role || "supplier";
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/sign-in");
+  };
 
   // supplier route
   const supplierMenuItems = [
@@ -113,7 +120,7 @@ const Sidebar = ({ closeDrawer }) => {
       {/* Footer Profile & Settings */}
       <div className="px-4 pb-6 pt-4 border-t border-[#1C273C] mt-auto">
         {role === "admin" ? (
-          <div className="bg-[#0E1726] rounded-xl p-3 flex items-center gap-3 mb-2">
+          <div className="bg-[#0E1726] rounded-xl p-3 flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center">
               <User size={18} strokeWidth={2.5} />
             </div>
@@ -127,7 +134,7 @@ const Sidebar = ({ closeDrawer }) => {
             </div>
           </div>
         ) : (
-          <div className="bg-[#152136] rounded-xl p-3 flex items-center gap-3 mb-2 border border-[#1C273C]">
+          <div className="bg-[#152136] rounded-xl p-3 flex items-center gap-3 mb-4 border border-[#1C273C]">
             <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center text-[13px]">
               SC
             </div>
@@ -142,6 +149,14 @@ const Sidebar = ({ closeDrawer }) => {
             </div>
           </div>
         )}
+
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-white/5 hover:bg-[#DC2626]/20 text-[#8892A3] hover:text-[#DC2626] transition-all text-[13px] font-bold"
+        >
+          <LogOut size={16} strokeWidth={2.5} />
+          <span>Log Out</span>
+        </button>
       </div>
     </div>
   );
