@@ -1,354 +1,211 @@
 import React, { useState } from 'react';
-import { Save, ExternalLink } from 'lucide-react';
-import adminImage from "../../assets/image/adminkickclick.jpg";
-
 
 const Settings = () => {
-  const [platformInfo, setPlatformInfo] = useState({
-    name: 'YardWork Pro',
-    email: 'support@yardworkpro.com',
-    phone: '+1 (555) 123-4567'
+  const [personalInfo, setPersonalInfo] = useState({
+    firstName: 'Sarah',
+    lastName: 'Jenkins',
+    phoneNumber: '+1 (555) 019-2834',
+    jobTitle: 'Director of Operations'
   });
 
-  const [paymentSettings, setPaymentSettings] = useState({
-    platformFee: 12,
-    minimumServiceAmount: 25,
-    paymentProcessor: 'Stripe'
+  const [emailInfo, setEmailInfo] = useState({
+    currentEmail: 's.jenkins@wulfara-supplier.com'
   });
 
-  const [adminProfile, setAdminProfile] = useState({
-    name: 'John Administrator',
-    email: 'admin@yardworkpro.com',
+  const [passwordInfo, setPasswordInfo] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
 
-  const [notifications, setNotifications] = useState({
-    newUserRegistrations: true,
-    serviceCompletions: true,
-    paymentIssues: true
-  });
-
-  const [legalDocs] = useState([
-    { name: 'Terms of Service', status: 'Active' },
-    { name: 'Privacy Policy', status: 'Active' },
-    { name: 'Cookie Policy', status: 'Active' },
-    { name: 'GDPR Compliance', status: 'Active' }
-  ]);
-
-  const handlePlatformChange = (field, value) => {
-    setPlatformInfo(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handlePaymentChange = (field, value) => {
-    setPaymentSettings(prev => ({ ...prev, [field]: value }));
+  const handlePersonalInfoChange = (field, value) => {
+    setPersonalInfo(prev => ({ ...prev, [field]: value }));
   };
 
   const handlePasswordChange = (field, value) => {
-    setAdminProfile(prev => ({ ...prev, [field]: value }));
-  };
-
-  const toggleNotification = (key) => {
-    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const handleUpdatePassword = () => {
-    if (adminProfile.newPassword !== adminProfile.confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-    alert('Password updated successfully!');
-    setAdminProfile(prev => ({
-      ...prev,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    }));
-  };
-
-  const handleSaveSettings = () => {
-    alert('All settings saved successfully!');
+    setPasswordInfo(prev => ({ ...prev, [field]: value }));
   };
 
   return (
-    <div className="min-h-screen p-6 mt-16 bg-gray-50">
-      <div className="mx-auto ">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Left Column */}
-          <div className="space-y-6">
-            {/* Platform Information */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h2 className="mb-6 text-xl font-semibold">Platform Information</h2>
+    <div className="min-h-screen bg-[#F8F9FA] text-sm font-sans pt-12 md:pt-16">
+      <div className="max-w-[1100px] mx-auto px-6 py-8">
+        
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="text-[32px] font-bold text-gray-900 mb-2">Account Settings</h1>
+          <p className="text-gray-500 text-[14px]">Manage your supplier account, business email, password, and security.</p>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-10">
+          
+          {/* Sidebar Navigation */}
+          <div className="w-full md:w-56 shrink-0">
+            <nav className="flex flex-col space-y-5 text-[15px]">
+              <a href="#personal-info" className="text-gray-900 font-semibold">Personal Info</a>
+              <a href="#business-email" className="text-gray-500 hover:text-gray-900">Business Email</a>
+              <a href="#password" className="text-gray-500 hover:text-gray-900">Password</a>
+              <a href="#security" className="text-gray-500 hover:text-gray-900">Security</a>
+            </nav>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 space-y-8">
+            
+            {/* Personal Information */}
+            <div id="personal-info" className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Personal Information</h2>
               
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 mb-8">
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Platform Name
-                  </label>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-2">First Name</label>
                   <input
                     type="text"
-                    value={platformInfo.name}
-                    onChange={(e) => handlePlatformChange('name', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    value={personalInfo.firstName}
+                    onChange={(e) => handlePersonalInfoChange('firstName', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
                   />
                 </div>
-
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Support Email
-                  </label>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Last Name</label>
                   <input
-                    type="email"
-                    value={platformInfo.email}
-                    onChange={(e) => handlePlatformChange('email', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    type="text"
+                    value={personalInfo.lastName}
+                    onChange={(e) => handlePersonalInfoChange('lastName', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
                   />
                 </div>
-
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Contact Phone
-                  </label>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Phone Number</label>
                   <input
-                    type="tel"
-                    value={platformInfo.phone}
-                    onChange={(e) => handlePlatformChange('phone', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    type="text"
+                    value={personalInfo.phoneNumber}
+                    onChange={(e) => handlePersonalInfoChange('phoneNumber', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Job Title</label>
+                  <input
+                    type="text"
+                    value={personalInfo.jobTitle}
+                    onChange={(e) => handlePersonalInfoChange('jobTitle', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
                   />
                 </div>
               </div>
+              <button className="bg-black text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-gray-800 transition-colors">
+                Save Changes
+              </button>
             </div>
 
-            {/* Payment Settings */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h2 className="mb-6 text-xl font-semibold">Payment Settings</h2>
+            {/* Business Email */}
+            <div id="business-email" className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Business Email</h2>
               
-              <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-gray-50">
-                  <div className="flex items-start justify-between mb-1">
-                    <div>
-                      <h3 className="font-medium">Platform Fee</h3>
-                      <p className="text-sm text-gray-600">Commission charged on completed services</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">{paymentSettings.platformFee}%</div>
-                      <div className="text-xs text-gray-500">Read-only</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Platform Fee
-                  </label>
-                  <div className="relative">
-                    <span className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2">$</span>
+              <div className="mb-4">
+                <label className="block text-[13px] font-medium text-gray-700 mb-2">Current Email Address</label>
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                  <div className="relative flex-1 w-full sm:w-auto">
                     <input
-                      type="number"
-                      value={paymentSettings.platformFee}
-                      onChange={(e) => handlePaymentChange('platformFee', parseFloat(e.target.value))}
-                      className="w-full py-2 pl-8 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      type="text"
+                      readOnly
+                      value={emailInfo.currentEmail}
+                      className="w-full px-3 py-2.5 bg-[#F0F4F8] border border-gray-100 rounded-md text-gray-700 pr-24 focus:outline-none"
                     />
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center">
+                      <span className="bg-[#1D4ED8] text-white text-[11px] font-medium px-2.5 py-1 rounded-[4px] flex items-center gap-1.5 shadow-sm">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        Verified
+                      </span>
+                    </div>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Minimum Service Amount
-                  </label>
-                  <div className="relative">
-                    <span className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2">$</span>
-                    <input
-                      type="number"
-                      value={paymentSettings.minimumServiceAmount}
-                      onChange={(e) => handlePaymentChange('minimumServiceAmount', parseFloat(e.target.value))}
-                      className="w-full py-2 pl-8 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Payment Processing
-                  </label>
-                  <select
-                    value={paymentSettings.paymentProcessor}
-                    onChange={(e) => handlePaymentChange('paymentProcessor', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  >
-                    <option value="Stripe">Stripe</option>
-                    <option value="PayPal">PayPal</option>
-                    <option value="Square">Square</option>
-                  </select>
+                  <button className="px-6 py-2.5 border border-gray-300 rounded text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors whitespace-nowrap bg-white shadow-sm">
+                    Change Email
+                  </button>
                 </div>
               </div>
+              <p className="text-[13px] text-gray-500">Changing your email will require re-verification to maintain marketplace access.</p>
             </div>
 
-            {/* Notification Preferences */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h2 className="mb-6 text-xl font-semibold">Notification Preferences</h2>
+            {/* Password */}
+            <div id="password" className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Password</h2>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">New User Registrations</h3>
-                    <p className="text-sm text-gray-600">Notify when new users join the platform</p>
-                  </div>
-                  <button
-                    onClick={() => toggleNotification('newUserRegistrations')}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      notifications.newUserRegistrations ? 'bg-emerald-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                        notifications.newUserRegistrations ? 'translate-x-6' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Service Completions</h3>
-                    <p className="text-sm text-gray-600">Notify when services are marked as complete</p>
-                  </div>
-                  <button
-                    onClick={() => toggleNotification('serviceCompletions')}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      notifications.serviceCompletions ? 'bg-emerald-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                        notifications.serviceCompletions ? 'translate-x-6' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Payment Issues</h3>
-                    <p className="text-sm text-gray-600">Notify about failed payments or disputes</p>
-                  </div>
-                  <button
-                    onClick={() => toggleNotification('paymentIssues')}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      notifications.paymentIssues ? 'bg-emerald-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                        notifications.paymentIssues ? 'translate-x-6' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Admin Profile */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h2 className="mb-6 text-xl font-semibold">Admin Profile</h2>
-              
-              <div className="flex flex-col items-center mb-6">
-                <div className="flex items-center justify-center w-24 h-24 mb-3 text-3xl font-bold text-white rounded-full bg-gradient-to-br from-blue-400 to-purple-500">
-                 <img src={adminImage} alt="Admin" className='rounded-full' />
-                </div>
-                <h3 className="text-lg font-semibold">{adminProfile.name}</h3>
-                <p className="text-sm text-gray-600">{adminProfile.email}</p>
-              </div>
-
-              <div className="space-y-4">
+              <div className="space-y-6 max-w-[450px]">
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Current Password
-                  </label>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Current Password</label>
                   <input
                     type="password"
-                    value={adminProfile.currentPassword}
+                    value={passwordInfo.currentPassword}
                     onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
                   />
                 </div>
-
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={adminProfile.newPassword}
-                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={adminProfile.confirmPassword}
-                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                </div>
-
-                <button
-                  onClick={handleUpdatePassword}
-                  className="w-full py-3 font-medium text-white transition-colors rounded-lg bg-emerald-700 hover:bg-emerald-800"
-                >
-                  Update Password
-                </button>
-              </div>
-            </div>
-
-            {/* Legal & Compliance */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h2 className="mb-6 text-xl font-semibold">Legal & Compliance</h2>
-              
-              <div className="space-y-3">
-                {legalDocs.map((doc, index) => (
-                  <div key={index} className="flex items-center justify-between py-3 border-b last:border-b-0">
-                    <span className="font-medium">{doc.name}</span>
-                    <button className="flex items-center text-sm font-medium text-emerald-700 hover:text-emerald-800">
-                      Edit
-                      <ExternalLink className="w-4 h-4 ml-1" />
-                    </button>
-                  </div>
-                ))}
                 
-                <div className="flex items-center justify-between py-3">
-                  <span className="font-medium">GDPR Compliance</span>
-                  <span className="flex items-center text-sm font-medium text-emerald-600">
-                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Active
-                  </span>
+                <div>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-2">New Password</label>
+                  <input
+                    type="password"
+                    value={passwordInfo.newPassword}
+                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                  />
+                  
+                  {/* Password Strength */}
+                  <div className="mt-3 flex gap-1 h-1.5 w-full">
+                    <div className="w-1/4 bg-yellow-500 rounded-sm"></div>
+                    <div className="w-1/4 bg-yellow-500 rounded-sm"></div>
+                    <div className="w-1/4 bg-gray-200 rounded-sm"></div>
+                    <div className="w-1/4 bg-gray-200 rounded-sm"></div>
+                  </div>
+                  <p className="text-[12px] text-gray-600 mt-2">
+                    Password strength: <span className="text-yellow-600 font-semibold">Good</span>. Add special characters to improve.
+                  </p>
+                </div>
+
+                <div className="pt-1">
+                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={passwordInfo.confirmPassword}
+                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                  />
+                </div>
+                
+                <div className="pt-2">
+                  <button className="bg-black text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-gray-800 transition-colors">
+                    Update Password
+                  </button>
                 </div>
               </div>
             </div>
+
+            {/* Security */}
+            <div id="security" className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 mb-10">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Security</h2>
+              
+              <div>
+                <h3 className="text-[15px] font-bold text-gray-900 mb-1">Two-Factor Authentication (2FA)</h3>
+                <p className="text-[13px] text-gray-500">Add an extra layer of security to your account using an authenticator app.</p>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        {/* Save Button */}
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={handleSaveSettings}
-            className="flex items-center px-8 py-3 font-medium text-white transition-colors rounded-lg bg-emerald-700 hover:bg-emerald-800"
-          >
-            <Save className="w-5 h-5 mr-2" />
-            Save All Settings
-          </button>
+        {/* Footer */}
+        <div className="mt-16 pt-8 pb-4 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center text-[13px] text-gray-500 gap-4">
+          <div>
+            © 2024 WULFARA Industrial Marketplace. All rights reserved.
+          </div>
+          <div className="flex gap-6 font-medium">
+            <a href="#" className="hover:text-gray-900 transition-colors">Support</a>
+            <a href="#" className="hover:text-gray-900 transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-gray-900 transition-colors">Terms of Service</a>
+          </div>
         </div>
+
       </div>
     </div>
   );
