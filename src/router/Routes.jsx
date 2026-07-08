@@ -8,6 +8,7 @@ import CompanyInfo from "../Pages/Auth/CompanyInfo/CompanyInfo";
 import Subscription from "../Pages/Auth/Subscription/Subscription";
 import Cart from "../Pages/Auth/Cart/Cart";
 import ListingPeriod from "../Pages/Auth/ListingPeriod/ListingPeriod";
+import Listed from "../Pages/Auth/Listed/Listed";
 import ForgatePassword from "../Pages/Auth/ForgatePassword/ForgatePassword";
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../Pages/Dashboard/Dashboard";
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
   {
     path: "/listing-period",
     element: <ListingPeriod />,
+  },
+  {
+    path: "/listed",
+    element: <Listed />,
   },
   {
     path: "/forgate-password",
