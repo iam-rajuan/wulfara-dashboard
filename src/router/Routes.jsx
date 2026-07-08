@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import MainLayout from "../Layout/Main/Main";
 import SignIn from "../Pages/Auth/SignIn/SignIn";
+import SignUp from "../Pages/Auth/SignUp/SignUp";
 import ForgatePassword from "../Pages/Auth/ForgatePassword/ForgatePassword";
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../Pages/Dashboard/Dashboard";
@@ -18,6 +19,10 @@ export const router = createBrowserRouter([
   {
     path: "/sign-in",
     element: <SignIn />,
+  },
+  {
+    path: "/sign-up",
+    element: <SignUp />,
   },
   {
     path: "/forgate-password",
