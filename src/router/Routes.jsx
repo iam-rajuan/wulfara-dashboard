@@ -4,6 +4,8 @@ import SignIn from "../Pages/Auth/SignIn/SignIn";
 import SignUp from "../Pages/Auth/SignUp/SignUp";
 import VerifyEmail from "../Pages/Auth/VerifyEmail/VerifyEmail";
 import ChooseIndustry from "../Pages/Auth/ChooseIndustry/ChooseIndustry";
+import CompanyInfo from "../Pages/Auth/CompanyInfo/CompanyInfo";
+import Subscription from "../Pages/Auth/Subscription/Subscription";
 import ForgatePassword from "../Pages/Auth/ForgatePassword/ForgatePassword";
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../Pages/Dashboard/Dashboard";
@@ -33,6 +35,14 @@ export const router = createBrowserRouter([
   {
     path: "/choose-industry",
     element: <ChooseIndustry />,
+  },
+  {
+    path: "/company-info",
+    element: <CompanyInfo />,
+  },
+  {
+    path: "/subscription",
+    element: <Subscription />,
   },
   {
     path: "/forgate-password",
