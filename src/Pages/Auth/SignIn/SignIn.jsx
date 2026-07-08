@@ -6,6 +6,9 @@ const SignIn = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -14,11 +17,20 @@ const SignIn = () => {
   const onFinish = (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
     // Simulating login
     setTimeout(() => {
       setLoading(false);
-      navigate("/dashboard");
-    }, 1500);
+      if (email === "supplier@gmail.com" && password === "123456") {
+        localStorage.setItem("user", JSON.stringify({ email, role: "supplier" }));
+        navigate("/dashboard");
+      } else if (email === "admin@gmail.com" && password === "123456") {
+        localStorage.setItem("user", JSON.stringify({ email, role: "admin" }));
+        navigate("/dashboard");
+      } else {
+        setError("Invalid email or password");
+      }
+    }, 1000);
   };
 
   return (
@@ -55,7 +67,9 @@ const SignIn = () => {
                 <input
                   type="email"
                   required
-                  placeholder="admin@wulfara.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="supplier@gmail.com or admin@gmail.com"
                   className="w-full pl-10 pr-4 py-2.5 bg-[#F4F5F7] border border-gray-200 rounded-md text-[14px] text-gray-900 focus:outline-none focus:border-[#D1A635] focus:ring-1 focus:ring-[#D1A635] transition-colors"
                 />
               </div>
@@ -78,6 +92,8 @@ const SignIn = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="********"
                   className="w-full pl-10 pr-10 py-2.5 bg-[#F4F5F7] border border-gray-200 rounded-md text-[14px] text-gray-900 focus:outline-none focus:border-[#D1A635] focus:ring-1 focus:ring-[#D1A635] transition-colors"
                 />
@@ -106,6 +122,8 @@ const SignIn = () => {
                 Remember this device
               </label>
             </div>
+
+            {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
 
             {/* Submit Button */}
             <div className="pt-4">

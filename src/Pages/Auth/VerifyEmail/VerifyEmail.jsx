@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, ArrowRight, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const VerifyEmail = () => {
   return (
@@ -65,10 +66,12 @@ const VerifyEmail = () => {
           </p>
 
           <div className="w-full space-y-4 mb-10">
-            <button className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold py-3.5 px-4 rounded-md transition-colors flex items-center justify-center gap-2">
-              Continue After Verification
-              <ArrowRight className="w-4 h-4 font-bold" />
-            </button>
+            <Link to="/choose-industry" className="block w-full">
+              <button className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold py-3.5 px-4 rounded-md transition-colors flex items-center justify-center gap-2">
+                Continue After Verification
+                <ArrowRight className="w-4 h-4 font-bold" />
+              </button>
+            </Link>
             <button className="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold py-3.5 px-4 rounded-md transition-colors">
               Resend Email
             </button>

@@ -100,7 +100,7 @@ const Cart = () => {
                   <p className="text-[13px] text-gray-500">12-Month Featured Listing</p>
                 </div>
               </div>
-              <a href="/subscription" className="text-[13px] font-bold text-blue-600 hover:text-blue-700">Edit Plan</a>
+              <Link to="/subscription" className="text-[13px] font-bold text-blue-600 hover:text-blue-700">Edit Plan</Link>
             </div>
 
             <div className="space-y-4 mb-8">
@@ -207,10 +207,12 @@ const Cart = () => {
               <div className="text-right text-[11px] text-gray-500">Billed monthly thereafter.</div>
             </div>
 
-            <button className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm flex items-center justify-center gap-2 mb-4">
-              Continue to Payment
-              <ArrowRight className="w-4 h-4 font-bold" />
-            </button>
+            <Link to="/listing-period">
+              <button className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm flex items-center justify-center gap-2 mb-4">
+                Continue to Payment
+                <ArrowRight className="w-4 h-4 font-bold" />
+              </button>
+            </Link>
 
             <div className="text-center mb-6">
               <button className="text-[12.5px] font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all">

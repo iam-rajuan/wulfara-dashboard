@@ -323,10 +323,12 @@ const CompanyInfo = () => {
               Back
             </button>
           </Link>
-          <button className="flex items-center gap-2 px-6 py-2.5 rounded bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[13px] transition-colors shadow-sm">
-            Save & Continue
-            <span className="font-bold text-lg leading-none ml-1">→</span>
-          </button>
+          <Link to="/subscription">
+            <button className="flex items-center gap-2 px-6 py-2.5 rounded bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[13px] transition-colors shadow-sm">
+              Save & Continue
+              <span className="font-bold text-lg leading-none ml-1">→</span>
+            </button>
+          </Link>
         </div>
       </div>
 

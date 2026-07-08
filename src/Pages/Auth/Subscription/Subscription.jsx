@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Check, Store, Star, TrendingUp, HeadphonesIcon, Lock, XCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Subscription = () => {
   const [billingCycle, setBillingCycle] = useState('monthly');
@@ -128,9 +129,11 @@ const Subscription = () => {
               </div>
             </div>
             
-            <button className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors">
-              Choose Basic
-            </button>
+            <Link to="/cart">
+              <button className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors">
+                Choose Basic
+              </button>
+            </Link>
           </div>
 
           {/* Premium Plan (Highlighted) */}
@@ -172,9 +175,11 @@ const Subscription = () => {
               </div>
             </div>
             
-            <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
-              Choose Premium
-            </button>
+            <Link to="/cart">
+              <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
+                Choose Premium
+              </button>
+            </Link>
           </div>
 
           {/* Pro Plan */}
@@ -208,9 +213,11 @@ const Subscription = () => {
               </div>
             </div>
             
-            <button className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors">
-              Choose Pro
-            </button>
+            <Link to="/cart">
+              <button className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors">
+                Choose Pro
+              </button>
+            </Link>
           </div>
 
         </div>

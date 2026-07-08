@@ -48,9 +48,11 @@ const Listed = () => {
               <button className="flex-1 max-w-[220px] mx-auto sm:mx-0 py-3 px-6 bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[13px] rounded-md transition-colors shadow-sm">
                 View Listing
               </button>
-              <button className="flex-1 max-w-[220px] mx-auto sm:mx-0 py-3 px-6 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-bold text-[13px] rounded-md transition-colors shadow-sm">
-                Go to Supplier Dashboard
-              </button>
+              <Link to="/dashboard" className="flex-1 w-full max-w-[220px] mx-auto sm:mx-0">
+                <button className="w-full py-3 px-6 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-bold text-[13px] rounded-md transition-colors shadow-sm">
+                  Go to Supplier Dashboard
+                </button>
+              </Link>
             </div>
 
             {/* Footer Links */}

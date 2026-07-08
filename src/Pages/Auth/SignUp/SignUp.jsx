@@ -112,13 +112,15 @@ const SignUp = () => {
               </div>
 
               <div className="pt-4">
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold py-3.5 px-4 rounded-md transition-colors"
-                >
-                  Create Supplier Account
-                  <ArrowRight className="w-4 h-4 font-bold" />
-                </button>
+                <Link to="/verify-email" className="block w-full">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-center gap-2 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold py-3.5 px-4 rounded-md transition-colors"
+                  >
+                    Create Supplier Account
+                    <ArrowRight className="w-4 h-4 font-bold" />
+                  </button>
+                </Link>
               </div>
 
               <div className="text-center pt-2">

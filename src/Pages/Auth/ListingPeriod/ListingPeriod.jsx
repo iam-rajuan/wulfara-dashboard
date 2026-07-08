@@ -194,9 +194,11 @@ const ListingPeriod = () => {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <button className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm">
-                Continue
-              </button>
+              <Link to="/listed" className="block w-full">
+                <button className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm">
+                  Continue
+                </button>
+              </Link>
               <Link to="/subscription" className="block">
                 <button className="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-800 font-medium text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm">
                   Back to Plans
