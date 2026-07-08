@@ -1,7 +1,10 @@
 import React from "react";
-import { X, CheckCircle, Ban, AlertCircle } from "lucide-react";
+import { X, CheckCircle, Ban, AlertCircle, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function SupplierDetailsModal({ isOpen, onClose, supplier }) {
+  const navigate = useNavigate();
+
   if (!isOpen || !supplier) return null;
 
   return (
@@ -80,7 +83,17 @@ export default function SupplierDetailsModal({ isOpen, onClose, supplier }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end px-6 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+          <button 
+            onClick={() => {
+              onClose();
+              navigate(`/supplier-management/verification/${supplier.id}`);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#F1F5F9] text-[#2563EB] rounded-lg text-[13px] font-bold hover:bg-[#E2E8F0] transition-colors"
+          >
+            Full Verification Page
+            <ExternalLink size={14} />
+          </button>
           <button 
             onClick={onClose}
             className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
