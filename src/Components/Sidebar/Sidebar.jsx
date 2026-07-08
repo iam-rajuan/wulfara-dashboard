@@ -50,8 +50,8 @@ const Sidebar = ({ closeDrawer }) => {
   // admin route
   const adminMenuItems = [
     { icon: <LayoutDashboard size={18} />, label: "Dashboard", Link: "/" },
-    { icon: <Users size={18} />, label: "Buyers", Link: "/buyers" },
-    { icon: <Diamond size={18} />, label: "Suppliers", Link: "/suppliers" },
+    { icon: <Users size={18} />, label: "Buyers", Link: "/buyer-management" },
+    { icon: <Diamond size={18} />, label: "Suppliers", Link: "/supplier-management" },
     { icon: <LayoutList size={18} />, label: "Listings", Link: "/listings" },
     { icon: <Box size={18} />, label: "Categories", Link: "/categories" },
     { icon: <Tag size={18} />, label: "Subscriptions", Link: "/subscriptions" },

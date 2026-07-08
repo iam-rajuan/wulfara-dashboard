@@ -13,6 +13,7 @@ import ForgatePassword from "../Pages/Auth/ForgatePassword/ForgatePassword";
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../Pages/Dashboard/Dashboard";
 import BuyerManagement from "../Pages/admin-pages/buyer/BuyerManagement";
+import SupplierManagement from "../Pages/admin-pages/supplier/SupplierManagement";
 import CompanyProfile from "../Pages/CompanyProfile/CompanyProfile";
 import ProductsServices from "../Pages/ProductsServices/ProductsServices";
 import Gallery from "../Pages/Gallery/Gallery";
@@ -81,7 +82,14 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <Dashboard /> },
           { path: "/dashboard", element: <Dashboard /> },
-          { path: "/buyers", element: <BuyerManagement /> },
+          {
+            path: "buyer-management",
+            element: <BuyerManagement />
+          },
+          {
+            path: "supplier-management",
+            element: <SupplierManagement />
+          },
           { path: "/settings", element: <Settings /> },
           { path: "/profile", element: <CompanyProfile /> },
           { path: "/products", element: <ProductsServices /> },
