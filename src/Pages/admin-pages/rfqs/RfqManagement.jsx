@@ -3,8 +3,9 @@ import { Download, Plus } from "lucide-react";
 import RfqMetrics from "../../../Components/admin-components/rfqs/RfqMetrics";
 import RfqFilters from "../../../Components/admin-components/rfqs/RfqFilters";
 import RfqTable from "../../../Components/admin-components/rfqs/RfqTable";
+import ManualEntryModal from "../../../Components/admin-components/rfqs/ManualEntryModal";
 
-const MOCK_RFQS = [
+const INITIAL_RFQS = [
   { id: "#RFQ-2024-8842", buyer: { name: "Astra Zen Limited", logo: "AZ", color: "bg-gray-200 text-gray-700" }, supplier: "Global Logis-X", category: "HARDWARE", status: "Responded", statusColor: "bg-[#D4AF37]", created: "Oct 12, 2024", dispute: "No" },
   { id: "#RFQ-2024-8843", buyer: { name: "TechCorp Inc", logo: "TC", color: "bg-blue-100 text-blue-700" }, supplier: "Silicon Valley Parts", category: "SOFTWARE", status: "Closed", statusColor: "bg-gray-400", created: "Oct 11, 2024", dispute: "No" },
   { id: "#RFQ-2024-8844", buyer: { name: "Mega Build", logo: "MB", color: "bg-green-100 text-green-700" }, supplier: "BuildMat Pro", category: "LOGISTICS", status: "Responded", statusColor: "bg-[#D4AF37]", created: "Oct 10, 2024", dispute: "Yes" },
@@ -15,6 +16,11 @@ const MOCK_RFQS = [
 ];
 
 export default function RfqManagement() {
+  const [rfqsList, setRfqsList] = useState(INITIAL_RFQS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [selectedRfq, setSelectedRfq] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -30,8 +36,67 @@ export default function RfqManagement() {
     setCurrentPage(1);
   };
 
+  const handleCreateEntry = (entryData) => {
+    if (modalMode === "edit" && selectedRfq) {
+      const updatedList = rfqsList.map(rfq => {
+        if (rfq.id === selectedRfq.id) {
+          return {
+            ...rfq,
+            buyer: {
+              ...rfq.buyer,
+              name: entryData.buyerName || "Unknown Buyer",
+              logo: entryData.buyerName ? entryData.buyerName.substring(0, 2).toUpperCase() : "UK"
+            },
+            supplier: entryData.supplierName || "Unknown Supplier",
+            category: entryData.category || "LOGISTICS",
+            status: entryData.status || "Responded",
+            statusColor: entryData.status === "Closed" ? "bg-gray-400" : "bg-[#D4AF37]",
+            dispute: entryData.dispute || "No"
+          };
+        }
+        return rfq;
+      });
+      setRfqsList(updatedList);
+    } else {
+      const newId = `#RFQ-2024-${8848 + rfqsList.length + 1}`;
+      const newRfq = {
+        id: newId,
+        buyer: { 
+          name: entryData.buyerName || "Unknown Buyer", 
+          logo: entryData.buyerName ? entryData.buyerName.substring(0, 2).toUpperCase() : "UK", 
+          color: "bg-blue-100 text-blue-700" 
+        },
+        supplier: entryData.supplierName || "Unknown Supplier",
+        category: entryData.category || "LOGISTICS",
+        status: entryData.status || "Responded",
+        statusColor: entryData.status === "Closed" ? "bg-gray-400" : "bg-[#D4AF37]",
+        created: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        dispute: entryData.dispute || "No"
+      };
+      setRfqsList([newRfq, ...rfqsList]);
+    }
+  };
+
+  const handleOpenCreate = () => {
+    setModalMode("create");
+    setSelectedRfq(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (rfq) => {
+    setModalMode("edit");
+    setSelectedRfq(rfq);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenView = (rfq) => {
+    setModalMode("view");
+    setSelectedRfq(rfq);
+    setIsModalOpen(true);
+  };
+
   const filteredRfqs = useMemo(() => {
-    return MOCK_RFQS.filter(rfq => {
+    return rfqsList.filter(rfq => {
       const matchesSearch = 
         rfq.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
         rfq.buyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,7 +132,10 @@ export default function RfqManagement() {
               <Download size={14} />
               Export Matrix
             </button>
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm">
+            <button 
+              onClick={handleOpenCreate}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
+            >
               <Plus size={16} />
               Manual Entry
             </button>
@@ -92,8 +160,21 @@ export default function RfqManagement() {
           totalPages={totalPages}
           totalItems={filteredRfqs.length}
           itemsPerPage={itemsPerPage}
+          onView={handleOpenView}
+          onEdit={handleOpenEdit}
         />
       </div>
+
+      <ManualEntryModal 
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedRfq(null);
+        }}
+        onSubmit={handleCreateEntry}
+        mode={modalMode}
+        initialData={selectedRfq}
+      />
 
     </div>
   );

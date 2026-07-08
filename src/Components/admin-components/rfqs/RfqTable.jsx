@@ -1,7 +1,7 @@
 import React from "react";
-import { Eye } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 
-export default function RfqTable({ rfqs, currentPage, setCurrentPage, totalPages, totalItems, itemsPerPage }) {
+export default function RfqTable({ rfqs, currentPage, setCurrentPage, totalPages, totalItems, itemsPerPage, onView, onEdit }) {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -68,9 +68,22 @@ export default function RfqTable({ rfqs, currentPage, setCurrentPage, totalPages
                   {rfq.dispute}
                 </td>
                 <td className="py-4 px-6">
-                  <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                    <Eye size={16} />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => onView && onView(rfq)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      title="View Details"
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button 
+                      onClick={() => onEdit && onEdit(rfq)}
+                      className="text-gray-400 hover:text-[#D4AF37] transition-colors"
+                      title="Edit RFQ"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
