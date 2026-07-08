@@ -11,6 +11,9 @@ const Header = ({ showDrawer }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const role = user.role || "supplier";
+
   const adminProfile = {
     name: "James",
     role: "admin",
@@ -28,15 +31,15 @@ const Header = ({ showDrawer }) => {
   return (
     <div className="relative mt-2 border-b-2">
       <div className="flex items-center justify-between p-4 ">
-        {/*============================= Left Section============================= */}
+        {/* =============================Left Section============================= */}
         <div className="flex items-center gap-4">
           <RxHamburgerMenu
             className="text-2xl text-blue-800 cursor-pointer lg:hidden"
             onClick={showDrawer}
           />
           <div>
-            <h2 className="font-bold text-[#202326] text-2xl">
-              SUPPLIER PORTAL
+            <h2 className="font-bold text-[#202326] text-2xl uppercase">
+              {role === "admin" ? "ADMIN PORTAL" : "SUPPLIER PORTAL"}
             </h2>
             <p className="text-sm text-gray-500">Platform Overview</p>
           </div>
@@ -46,7 +49,7 @@ const Header = ({ showDrawer }) => {
         <div className="flex items-center gap-4">
 
 
-          {/* Notification Icon */}
+          {/* =============================Notification Icon============================= */}
           <button
             className="relative p-2 transition hover:bg-blue-50"
             onClick={() => setShowNotifications((prev) => !prev)}
@@ -57,7 +60,7 @@ const Header = ({ showDrawer }) => {
             )}
           </button>
 
-          {/* Profile Icon */}
+          {/* =============================Profile Icon============================= */}
           <Link to="/settings">
             <div className="p-2 text-blue-700 transition border border-blue-500 rounded-full hover:bg-blue-50">
               <img
@@ -70,7 +73,7 @@ const Header = ({ showDrawer }) => {
         </div>
       </div>
 
-      {/* Notification Dropdown */}
+      {/* =============================Notification Dropdown============================= */}
       {showNotifications && (
         <div className="absolute right-4 top-[72px] z-50 p-4 bg-white rounded-md shadow-xl w-80">
           <h2 className="text-lg font-semibold text-center border-b pb-2 text-[#2c3e50]">
@@ -92,16 +95,6 @@ const Header = ({ showDrawer }) => {
               </div>
             ))}
           </div>
-
-          {/* <button
-            onClick={() => {
-              setShowNotifications(false);
-              navigate("/notifications");
-            }}
-            className="mt-6 w-full bg-[#71abe0] text-white py-2 rounded-md hover:bg-blue-400 transition duration-200"
-          >
-            Load More
-          </button> */}
         </div>
       )}
     </div>
