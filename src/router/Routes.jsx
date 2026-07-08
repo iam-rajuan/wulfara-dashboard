@@ -17,6 +17,9 @@ import SupplierManagement from "../Pages/admin-pages/supplier/SupplierManagement
 import SupplierVerificationDetail from "../Pages/admin-pages/supplier/SupplierVerificationDetail";
 import ListingReview from "../Pages/admin-pages/listings/ListingReview";
 import ListingDetail from "../Pages/admin-pages/listings/ListingDetail";
+import CategoryManagement from "../Pages/admin-pages/categories/CategoryManagement";
+import CreateCategory from "../Pages/admin-pages/categories/CreateCategory";
+import EditCategory from "../Pages/admin-pages/categories/EditCategory";
 import CompanyProfile from "../Pages/CompanyProfile/CompanyProfile";
 import ProductsServices from "../Pages/ProductsServices/ProductsServices";
 import Gallery from "../Pages/Gallery/Gallery";
@@ -104,6 +107,18 @@ export const router = createBrowserRouter([
           {
             path: "listings/:id",
             element: <ListingDetail />
+          },
+          {
+            path: "categories",
+            element: <CategoryManagement />
+          },
+          {
+            path: "categories/create",
+            element: <CreateCategory />
+          },
+          {
+            path: "categories/edit/:id",
+            element: <EditCategory />
           },
           { path: "/settings", element: <Settings /> },
           { path: "/profile", element: <CompanyProfile /> },
