@@ -3,6 +3,7 @@ import MainLayout from "../Layout/Main/Main";
 import SignIn from "../Pages/Auth/SignIn/SignIn";
 import SignUp from "../Pages/Auth/SignUp/SignUp";
 import VerifyEmail from "../Pages/Auth/VerifyEmail/VerifyEmail";
+import ChooseIndustry from "../Pages/Auth/ChooseIndustry/ChooseIndustry";
 import ForgatePassword from "../Pages/Auth/ForgatePassword/ForgatePassword";
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../Pages/Dashboard/Dashboard";
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
   {
     path: "/verify-email",
     element: <VerifyEmail />,
+  },
+  {
+    path: "/choose-industry",
+    element: <ChooseIndustry />,
   },
   {
     path: "/forgate-password",
