@@ -15,6 +15,8 @@ import Dashboard from "../Pages/Dashboard/Dashboard";
 import BuyerManagement from "../Pages/admin-pages/buyer/BuyerManagement";
 import SupplierManagement from "../Pages/admin-pages/supplier/SupplierManagement";
 import SupplierVerificationDetail from "../Pages/admin-pages/supplier/SupplierVerificationDetail";
+import ListingReview from "../Pages/admin-pages/listings/ListingReview";
+import ListingDetail from "../Pages/admin-pages/listings/ListingDetail";
 import CompanyProfile from "../Pages/CompanyProfile/CompanyProfile";
 import ProductsServices from "../Pages/ProductsServices/ProductsServices";
 import Gallery from "../Pages/Gallery/Gallery";
@@ -94,6 +96,14 @@ export const router = createBrowserRouter([
           {
             path: "supplier-management/verification/:id",
             element: <SupplierVerificationDetail />
+          },
+          {
+            path: "listings",
+            element: <ListingReview />
+          },
+          {
+            path: "listings/:id",
+            element: <ListingDetail />
           },
           { path: "/settings", element: <Settings /> },
           { path: "/profile", element: <CompanyProfile /> },
