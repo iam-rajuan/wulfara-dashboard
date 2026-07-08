@@ -129,6 +129,8 @@ export default function BuyerManagement() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBuyer, setEditingBuyer] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [verificationFilter, setVerificationFilter] = useState("All");
   const pageSize = 6;
 
   const handleSaveBuyer = (savedBuyer) => {
@@ -160,10 +162,18 @@ export default function BuyerManagement() {
 
 
 
+  const filteredBuyers = useMemo(() => {
+    return buyers.filter(buyer => {
+      const matchStatus = statusFilter === "All" || buyer.status === statusFilter;
+      const matchVerification = verificationFilter === "All" || buyer.verification === verificationFilter;
+      return matchStatus && matchVerification;
+    });
+  }, [buyers, statusFilter, verificationFilter]);
+
   const paginatedBuyers = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return buyers.slice(start, start + pageSize);
-  }, [currentPage, buyers]);
+    return filteredBuyers.slice(start, start + pageSize);
+  }, [currentPage, filteredBuyers]);
 
   const handleSelect = (id) => {
     setSelectedIds((prev) =>
@@ -177,6 +187,16 @@ export default function BuyerManagement() {
     } else {
       setSelectedIds([]);
     }
+  };
+
+  const handleBulkVerify = () => {
+    setBuyers(buyers.map(b => selectedIds.includes(b.id) ? { ...b, verification: "Verified" } : b));
+    setSelectedIds([]);
+  };
+
+  const handleBulkSuspend = () => {
+    setBuyers(buyers.map(b => selectedIds.includes(b.id) ? { ...b, status: "Suspended" } : b));
+    setSelectedIds([]);
   };
 
   const hasSelection = selectedIds.length > 0;
@@ -220,14 +240,40 @@ export default function BuyerManagement() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center p-4 border-b border-gray-100 gap-4">
 
           <div className="flex flex-wrap items-center gap-3">
-            <button className="flex items-center justify-between gap-2 px-3 py-2 bg-[#F1F5F9] rounded-md text-[12px] font-bold text-[#475569] min-w-[120px] hover:bg-[#E2E8F0] transition-colors">
-              All Statuses
-              <ChevronDown size={14} />
-            </button>
-            <button className="flex items-center justify-between gap-2 px-3 py-2 bg-[#E0E7FF] rounded-md text-[12px] font-bold text-[#4338CA] min-w-[140px] hover:bg-[#C7D2FE] transition-colors">
-              Verification: All
-              <ChevronDown size={14} />
-            </button>
+            <div className="relative">
+              <select 
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="appearance-none flex items-center justify-between gap-2 pl-3 pr-8 py-2 bg-[#F1F5F9] rounded-md text-[12px] font-bold text-[#475569] min-w-[120px] hover:bg-[#E2E8F0] transition-colors outline-none cursor-pointer"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Pending">Pending</option>
+                <option value="Suspended">Suspended</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-2.5 text-[#475569] pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select 
+                value={verificationFilter}
+                onChange={(e) => {
+                  setVerificationFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="appearance-none flex items-center justify-between gap-2 pl-3 pr-8 py-2 bg-[#E0E7FF] rounded-md text-[12px] font-bold text-[#4338CA] min-w-[140px] hover:bg-[#C7D2FE] transition-colors outline-none cursor-pointer"
+              >
+                <option value="All">Verification: All</option>
+                <option value="Verified">Verified</option>
+                <option value="Unverified">Unverified</option>
+                <option value="TOS Violation">TOS Violation</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-2.5 text-[#4338CA] pointer-events-none" />
+            </div>
+
             <button className="flex items-center justify-between gap-2 px-3 py-2 bg-[#E0E7FF] rounded-md text-[12px] font-bold text-[#4338CA] min-w-[160px] hover:bg-[#C7D2FE] transition-colors">
               Activity: Last 30 Days
               <ChevronDown size={14} />
@@ -237,12 +283,14 @@ export default function BuyerManagement() {
           <div className="flex items-center gap-3 w-full lg:w-auto">
             <span className="text-[12px] font-bold text-gray-500 mr-1">Bulk Actions:</span>
             <button
+              onClick={handleBulkVerify}
               disabled={!hasSelection}
               className="px-4 py-2 border border-gray-200 rounded-md text-[12px] font-bold text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               Verify
             </button>
             <button
+              onClick={handleBulkSuspend}
               disabled={!hasSelection}
               className="px-4 py-2 border border-gray-200 rounded-md text-[12px] font-bold text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
@@ -265,7 +313,7 @@ export default function BuyerManagement() {
         {/* Pagination Area */}
         <Pagination 
           currentPage={currentPage}
-          totalItems={buyers.length}
+          totalItems={filteredBuyers.length}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
         />
