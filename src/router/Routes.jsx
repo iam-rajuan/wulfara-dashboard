@@ -12,6 +12,7 @@ import Listed from "../Pages/Auth/Listed/Listed";
 import ForgatePassword from "../Pages/Auth/ForgatePassword/ForgatePassword";
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../Pages/Dashboard/Dashboard";
+import BuyerManagement from "../Pages/admin-pages/buyer/BuyerManagement";
 import CompanyProfile from "../Pages/CompanyProfile/CompanyProfile";
 import ProductsServices from "../Pages/ProductsServices/ProductsServices";
 import Gallery from "../Pages/Gallery/Gallery";
@@ -80,14 +81,15 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <Dashboard /> },
           { path: "/dashboard", element: <Dashboard /> },
-          { path: "/settings", element: <Settings/> },
-          { path: "/profile", element: <CompanyProfile/> },
-          { path: "/products", element: <ProductsServices/> },
-          { path: "/gallery", element: <Gallery/> },
-          { path: "/rfqs", element: <RFQs/> },
-          { path: "/rfqs/:id", element: <RFQDetails/> },
-          { path: "/rfqs/:id/reply", element: <RFQReply/> },
-          { path: "/messages", element: <Messages/> },
+          { path: "/buyers", element: <BuyerManagement /> },
+          { path: "/settings", element: <Settings /> },
+          { path: "/profile", element: <CompanyProfile /> },
+          { path: "/products", element: <ProductsServices /> },
+          { path: "/gallery", element: <Gallery /> },
+          { path: "/rfqs", element: <RFQs /> },
+          { path: "/rfqs/:id", element: <RFQDetails /> },
+          { path: "/rfqs/:id/reply", element: <RFQReply /> },
+          { path: "/messages", element: <Messages /> },
         ],
       },
     ],

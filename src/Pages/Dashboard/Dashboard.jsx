@@ -1,5 +1,5 @@
 import React from "react";
-import AdminDashboard from "../admin-dashboard/AdminDashboard";
+import AdminDashboard from "../admin-pages/admin-dashboard/AdminDashboard";
 import SupplierDashboard from "./SupplierDashboard";
 
 export default function Dashboard() {

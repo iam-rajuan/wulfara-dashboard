@@ -1,10 +1,10 @@
 import React from "react";
 import { Users, Building2, ClipboardList, CreditCard, DollarSign, FileText, LineChart } from "lucide-react";
-import AdminStatCard from "../../Components/admin-components/Dashboard/AdminStatCard";
-import RevenueOverview from "../../Components/admin-components/Dashboard/RevenueOverview";
-import PriorityActions from "../../Components/admin-components/Dashboard/PriorityActions";
-import RecentSupplierListings from "../../Components/admin-components/Dashboard/RecentSupplierListings";
-import RecentRFQs from "../../Components/admin-components/Dashboard/RecentRFQs";
+import AdminStatCard from "../../../Components/admin-components/Dashboard/AdminStatCard";
+import RevenueOverview from "../../../Components/admin-components/Dashboard/RevenueOverview";
+import PriorityActions from "../../../Components/admin-components/Dashboard/PriorityActions";
+import RecentSupplierListings from "../../../Components/admin-components/Dashboard/RecentSupplierListings";
+import RecentRFQs from "../../../Components/admin-components/Dashboard/RecentRFQs";
 
 export default function AdminDashboard() {
   return (
