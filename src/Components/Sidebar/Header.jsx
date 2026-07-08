@@ -36,7 +36,7 @@ const Header = ({ showDrawer }) => {
           />
           <div>
             <h2 className="font-bold text-[#202326] text-2xl">
-              Admin Dashboard
+              SUPPLIER PORTAL
             </h2>
             <p className="text-sm text-gray-500">Platform Overview</p>
           </div>
@@ -44,7 +44,7 @@ const Header = ({ showDrawer }) => {
 
         {/* =============================Right Section============================= */}
         <div className="flex items-center gap-4">
-  
+
 
           {/* Notification Icon */}
           <button

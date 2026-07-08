@@ -25,7 +25,7 @@ const Sidebar = ({ closeDrawer }) => {
     { icon: <FileText size={18} />, label: "RFQs", Link: "/rfqs", badge: "12" },
     { icon: <MessageSquare size={18} />, label: "Messages", Link: "/messages" },
     { icon: <CreditCard size={18} />, label: "Subscription", Link: "/subscription" },
-    { icon: <LineChart size={18} />, label: "Analytics", Link: "/analytics" },
+    { icon: <Settings size={18} />, label: "Settings", Link: "/settings" },
   ];
 
   return (
@@ -41,9 +41,9 @@ const Sidebar = ({ closeDrawer }) => {
             WULFARA
           </span>
         </div>
-        <div className="text-[11px] font-bold tracking-widest uppercase text-white/90">
+        {/* <div className="text-[11px] font-bold tracking-widest uppercase text-white/90">
           SUPPLIER PORTAL
-        </div>
+        </div> */}
       </div>
 
       {/* Navigation */}
@@ -56,11 +56,10 @@ const Sidebar = ({ closeDrawer }) => {
               <Link
                 key={item.label}
                 to={item.Link}
-                className={`flex items-center justify-between px-4 py-3 rounded-md text-[14px] font-semibold transition-colors ${
-                  isActive
-                    ? "bg-[#D4AF37] text-[#0E1726] shadow-sm"
-                    : "text-[#8892A3] hover:text-white hover:bg-white/5"
-                }`}
+                className={`flex items-center justify-between px-4 py-3 rounded-md text-[14px] font-semibold transition-colors ${isActive
+                  ? "bg-[#D4AF37] text-[#0E1726] shadow-sm"
+                  : "text-[#8892A3] hover:text-white hover:bg-white/5"
+                  }`}
               >
                 <div className="flex items-center gap-4">
                   {React.cloneElement(item.icon, {
@@ -96,14 +95,6 @@ const Sidebar = ({ closeDrawer }) => {
             </div>
           </div>
         </div>
-
-        <Link
-          to="/settings"
-          className="flex items-center gap-4 px-4 py-3 rounded-md text-[14px] font-semibold text-[#8892A3] hover:text-white hover:bg-white/5 transition-colors"
-        >
-          <Settings size={18} strokeWidth={2} />
-          <span>Settings</span>
-        </Link>
       </div>
     </div>
   );
