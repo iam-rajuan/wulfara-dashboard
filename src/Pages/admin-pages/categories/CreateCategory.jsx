@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Info, 
   Image as ImageIcon, 
@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 
 export default function CreateCategory() {
+  const navigate = useNavigate();
+  const [bannerPreview, setBannerPreview] = useState("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop");
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -34,6 +36,13 @@ export default function CreateCategory() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBannerUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBannerPreview(URL.createObjectURL(file));
+    }
   };
 
   return (
@@ -184,13 +193,17 @@ export default function CreateCategory() {
             {/* Banner Image */}
             <div>
               <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Banner Image</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50/50 transition-colors cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-[#FEF3C7] text-[#D97706] flex items-center justify-center mb-4">
-                  <CloudUpload size={20} />
+              <label className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50/50 transition-colors cursor-pointer relative overflow-hidden group block">
+                <input type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
+                <img src={bannerPreview} alt="Banner Preview" className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-10 transition-opacity" />
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#FEF3C7] text-[#D97706] flex items-center justify-center mb-4 shadow">
+                    <CloudUpload size={20} />
+                  </div>
+                  <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">Click to upload or drag and drop</h4>
+                  <p className="text-[12px] font-medium text-gray-400">SVG, PNG, JPG or WEBP (max. 1920x1080px)</p>
                 </div>
-                <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">Click to upload or drag and drop</h4>
-                <p className="text-[12px] font-medium text-gray-400">SVG, PNG, JPG or WEBP (max. 1920x1080px)</p>
-              </div>
+              </label>
             </div>
 
           </div>
@@ -209,7 +222,7 @@ export default function CreateCategory() {
             <div className="p-4 bg-gray-50">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="h-32 bg-slate-800 relative">
-                  <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop" alt="Banner Preview" className="w-full h-full object-cover opacity-50" />
+                  <img src={bannerPreview} alt="Banner Preview" className="w-full h-full object-cover opacity-50" />
                 </div>
                 <div className="p-5">
                   <div className="flex justify-between items-start mb-3">
@@ -273,10 +286,16 @@ export default function CreateCategory() {
 
       {/* Bottom Sticky Actions */}
       <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-white border-t border-gray-200 p-4 flex items-center justify-center sm:justify-end gap-4 z-40 px-6 lg:px-8">
-        <button className="px-6 py-2.5 text-[13px] font-bold text-gray-600 hover:text-gray-900 transition-colors">
+        <button 
+          onClick={() => navigate("/categories")}
+          className="px-6 py-2.5 text-[13px] font-bold text-gray-600 hover:text-gray-900 transition-colors"
+        >
           Cancel
         </button>
-        <button className="px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm">
+        <button 
+          onClick={() => navigate("/categories")}
+          className="px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
+        >
           Save Category
         </button>
       </div>

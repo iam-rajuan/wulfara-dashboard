@@ -11,6 +11,8 @@ export default function EditCategory() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const [bannerPreview, setBannerPreview] = useState("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop");
+
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -52,6 +54,13 @@ export default function EditCategory() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBannerUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBannerPreview(URL.createObjectURL(file));
+    }
   };
 
   return (
@@ -203,8 +212,9 @@ export default function EditCategory() {
             {/* Banner Image */}
             <div>
               <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Banner Image</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50/50 transition-colors cursor-pointer relative overflow-hidden group">
-                <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop" alt="Banner Preview" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-10 transition-opacity" />
+              <label className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50/50 transition-colors cursor-pointer relative overflow-hidden group block">
+                <input type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
+                <img src={bannerPreview} alt="Banner Preview" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-10 transition-opacity" />
                 <div className="relative z-10 flex flex-col items-center">
                   <div className="w-10 h-10 rounded-full bg-white shadow text-[#D97706] flex items-center justify-center mb-4">
                     <CloudUpload size={20} />
@@ -212,7 +222,7 @@ export default function EditCategory() {
                   <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">Click to replace image</h4>
                   <p className="text-[12px] font-medium text-gray-500">SVG, PNG, JPG or WEBP (max. 1920x1080px)</p>
                 </div>
-              </div>
+              </label>
             </div>
 
           </div>
@@ -231,7 +241,7 @@ export default function EditCategory() {
             <div className="p-4 bg-gray-50">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="h-32 bg-slate-800 relative">
-                  <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop" alt="Banner Preview" className="w-full h-full object-cover opacity-50" />
+                  <img src={bannerPreview} alt="Banner Preview" className="w-full h-full object-cover opacity-50" />
                 </div>
                 <div className="p-5">
                   <div className="flex justify-between items-start mb-3">
@@ -301,7 +311,10 @@ export default function EditCategory() {
         >
           Cancel
         </button>
-        <button className="px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm">
+        <button 
+          onClick={() => navigate("/categories")}
+          className="px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
+        >
           Update Category
         </button>
       </div>
