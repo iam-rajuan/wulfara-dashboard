@@ -101,7 +101,7 @@ export default function BuyerTable({ buyers, selectedIds, onSelect, onSelectAll,
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
-          {buyers.map((buyer) => (
+          {buyers.map((buyer, index) => (
             <tr key={buyer.id} className="hover:bg-gray-50 transition-colors">
               <td className="py-4 pl-6 pr-4">
                 <input 
@@ -182,10 +182,10 @@ export default function BuyerTable({ buyers, selectedIds, onSelect, onSelectAll,
                 {openActionId === buyer.id && (
                   <>
                     <div 
-                      className="fixed inset-0 z-10" 
+                      className="fixed inset-0 z-50" 
                       onClick={() => setOpenActionId(null)}
                     ></div>
-                    <div className="absolute right-6 top-10 w-32 bg-white rounded-md shadow-lg border border-gray-100 z-20 py-1 overflow-hidden">
+                    <div className={`absolute right-6 w-32 bg-white rounded-md shadow-xl border border-gray-100 z-50 py-1 overflow-hidden ${index === buyers.length - 1 && buyers.length > 1 ? 'bottom-8' : 'top-10'}`}>
                       <button 
                         onClick={() => {
                           setOpenActionId(null);

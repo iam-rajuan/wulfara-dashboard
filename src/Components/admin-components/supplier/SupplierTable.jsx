@@ -102,7 +102,7 @@ export default function SupplierTable({ suppliers, selectedIds, onSelect, onSele
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
-          {suppliers.map((supplier) => (
+          {suppliers.map((supplier, index) => (
             <tr key={supplier.id} className="hover:bg-gray-50 transition-colors">
               <td className="py-4 pl-6 pr-4">
                 <input
@@ -152,11 +152,11 @@ export default function SupplierTable({ suppliers, selectedIds, onSelect, onSele
 
                 {openActionId === supplier.id && (
                   <>
-                    <div
-                      className="fixed inset-0 z-10"
+                    <div 
+                      className="fixed inset-0 z-50"
                       onClick={() => setOpenActionId(null)}
                     ></div>
-                    <div className="absolute right-6 top-10 w-32 bg-white rounded-md shadow-lg border border-gray-100 z-20 py-1 overflow-hidden">
+                    <div className={`absolute right-6 w-32 bg-white rounded-md shadow-xl border border-gray-100 z-50 py-1 overflow-hidden ${index === suppliers.length - 1 && suppliers.length > 1 ? 'bottom-8' : 'top-10'}`}>
                       <button
                         onClick={() => {
                           setOpenActionId(null);
