@@ -20,6 +20,9 @@ import ListingDetail from "../Pages/admin-pages/listings/ListingDetail";
 import CategoryManagement from "../Pages/admin-pages/categories/CategoryManagement";
 import CreateCategory from "../Pages/admin-pages/categories/CreateCategory";
 import EditCategory from "../Pages/admin-pages/categories/EditCategory";
+import SubscriptionManagement from "../Pages/admin-pages/subscriptions/SubscriptionManagement";
+import EditSubscription from "../Pages/admin-pages/subscriptions/EditSubscription";
+import CreateSubscription from "../Pages/admin-pages/subscriptions/CreateSubscription";
 import CompanyProfile from "../Pages/CompanyProfile/CompanyProfile";
 import ProductsServices from "../Pages/ProductsServices/ProductsServices";
 import Gallery from "../Pages/Gallery/Gallery";
@@ -119,6 +122,18 @@ export const router = createBrowserRouter([
           {
             path: "categories/edit/:id",
             element: <EditCategory />
+          },
+          {
+            path: "subscriptions",
+            element: <SubscriptionManagement />
+          },
+          {
+            path: "subscriptions/edit/:id",
+            element: <EditSubscription />
+          },
+          {
+            path: "subscriptions/create",
+            element: <CreateSubscription />
           },
           { path: "/settings", element: <Settings /> },
           { path: "/profile", element: <CompanyProfile /> },
