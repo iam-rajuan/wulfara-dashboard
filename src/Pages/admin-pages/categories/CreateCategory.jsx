@@ -10,6 +10,7 @@ import {
 export default function CreateCategory() {
   const navigate = useNavigate();
   const [bannerPreview, setBannerPreview] = useState("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop");
+  const [iconPreview, setIconPreview] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -42,6 +43,13 @@ export default function CreateCategory() {
     const file = e.target.files[0];
     if (file) {
       setBannerPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleIconUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIconPreview(URL.createObjectURL(file));
     }
   };
 
@@ -129,11 +137,18 @@ export default function CreateCategory() {
               <div>
                 <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Icon</label>
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400">
-                    <ImageIcon size={20} />
+                  <div className="w-14 h-14 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400 overflow-hidden">
+                    {iconPreview ? (
+                      <img src={iconPreview} alt="Icon Preview" className="w-full h-full object-contain p-2" />
+                    ) : (
+                      <ImageIcon size={20} />
+                    )}
                   </div>
                   <div>
-                    <button className="text-[13px] font-bold text-[#D4AF37] hover:underline">Upload SVG or PNG</button>
+                    <label className="text-[13px] font-bold text-[#D4AF37] hover:underline cursor-pointer">
+                      Upload SVG or PNG
+                      <input type="file" accept="image/svg+xml,image/png" onChange={handleIconUpload} className="hidden" />
+                    </label>
                     <p className="text-[11px] font-medium text-gray-400 mt-1">Max size 500kb</p>
                   </div>
                 </div>

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function CategoryHierarchyPanel({ categories, activeCategoryId, onSelectCategory }) {
+export default function CategoryHierarchyPanel({ categories, activeCategoryId, onSelectCategory, onUpdateCategory, onDeleteCategory }) {
   // Simple state to track expanded nodes in the tree
   const [expandedNodes, setExpandedNodes] = useState({ 'cat-1': true });
 
@@ -30,6 +30,23 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
 
   // Find the active category details
   const activeCategory = categories.find(c => c.id === activeCategoryId) || categories[0];
+
+  const handleThumbnailUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && onUpdateCategory) {
+      onUpdateCategory(activeCategory.id, { thumbnail: URL.createObjectURL(file) });
+    }
+  };
+
+  const handleIconUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && onUpdateCategory) {
+      const url = URL.createObjectURL(file);
+      onUpdateCategory(activeCategory.id, { 
+        icon: <img src={url} alt="icon" className="w-full h-full object-contain p-0.5" /> 
+      });
+    }
+  };
 
   // Render a recursive tree node
   const renderTreeNode = (node, depth = 0) => {
@@ -102,13 +119,23 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
             <h2 className="text-[18px] font-extrabold text-[#0F172A] mb-1">Category Details</h2>
             <p className="text-[12px] font-medium text-gray-500">Viewing: {activeCategory?.name}</p>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <button className="flex-1 sm:flex-none px-4 py-2 bg-white border border-[#EF4444] rounded-md text-[13px] font-bold text-[#EF4444] hover:bg-red-50 transition-colors shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            <button 
+              onClick={() => {
+                if (onDeleteCategory && activeCategory) {
+                  onDeleteCategory(activeCategory.id);
+                }
+              }}
+              className="flex-1 sm:flex-none px-4 py-2 bg-white border border-red-200 rounded-md text-[13px] font-bold text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm"
+            >
               Delete
             </button>
-            <button className="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+            <Link 
+              to="/categories/create"
+              className="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm text-center"
+            >
               Add Subcategory
-            </button>
+            </Link>
             <Link 
               to={`/categories/edit/${activeCategory?.id}`}
               className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
@@ -128,24 +155,34 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
               <div className="md:col-span-4 lg:col-span-3 space-y-6">
                 <div>
                   <h4 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Category Thumbnail</h4>
-                  <div className="w-full aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                  <label className="block w-full aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 cursor-pointer relative group">
+                    <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="hidden" />
                     {activeCategory.thumbnail ? (
-                      <img src={activeCategory.thumbnail} alt={activeCategory.name} className="w-full h-full object-cover" />
+                      <>
+                        <img src={activeCategory.thumbnail} alt={activeCategory.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-white text-[11px] font-bold">Change Thumbnail</span>
+                        </div>
+                      </>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <ImageIcon size={32} />
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors bg-gray-50 hover:bg-gray-100">
+                        <ImageIcon size={24} className="mb-2" />
+                        <span className="text-[11px] font-bold">Upload</span>
                       </div>
                     )}
-                  </div>
+                  </label>
                 </div>
 
                 <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-100 bg-gray-50/50">
-                  <div className="w-12 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center text-[#D4AF37]">
+                  <div className="w-12 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center text-[#D4AF37] overflow-hidden">
                     {activeCategory.icon}
                   </div>
                   <div>
                     <h4 className="text-[12px] font-bold text-[#0F172A]">Category Icon</h4>
-                    <button className="text-[11px] font-bold text-[#D97706] hover:underline mt-0.5">Change Icon</button>
+                    <label className="block text-[11px] font-bold text-[#D97706] hover:underline mt-0.5 cursor-pointer">
+                      Change Icon
+                      <input type="file" accept="image/svg+xml,image/png" onChange={handleIconUpload} className="hidden" />
+                    </label>
                   </div>
                 </div>
               </div>

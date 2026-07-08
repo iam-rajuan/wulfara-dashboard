@@ -209,8 +209,45 @@ const flattenCategories = (cats) => {
 };
 
 export default function CategoryManagement() {
-  const [categories] = useState(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState(MOCK_CATEGORIES);
   const [activeCategoryId, setActiveCategoryId] = useState("cat-1");
+
+  const handleUpdateCategory = (categoryId, updates) => {
+    const updateNodes = (nodes) => {
+      return nodes.map(node => {
+        if (node.id === categoryId) {
+          return { ...node, ...updates };
+        }
+        if (node.children) {
+          return { ...node, children: updateNodes(node.children) };
+        }
+        return node;
+      });
+    };
+    setCategories(updateNodes(categories));
+  };
+
+  const handleDeleteCategory = (categoryId) => {
+    if (!window.confirm("Are you sure you want to delete this category?")) return;
+    
+    const deleteNode = (nodes) => {
+      return nodes.filter(node => {
+        if (node.id === categoryId) return false;
+        if (node.children) {
+          node.children = deleteNode(node.children);
+        }
+        return true;
+      });
+    };
+    
+    setCategories(prevCategories => {
+      const newCategories = deleteNode([...prevCategories]);
+      if (activeCategoryId === categoryId) {
+        setActiveCategoryId(newCategories[0]?.id || null);
+      }
+      return newCategories;
+    });
+  };
 
   const flatCategories = flattenCategories(categories);
 
@@ -300,15 +337,20 @@ export default function CategoryManagement() {
       </div>
 
       <div className="space-y-8">
-        {/* Red Box 1: Hierarchy Tree & Details */}
+        {/* Red Box 1: Hierarchy Tree & Category Details */}
         <CategoryHierarchyPanel 
           categories={categories} 
           activeCategoryId={activeCategoryId} 
           onSelectCategory={setActiveCategoryId} 
+          onUpdateCategory={handleUpdateCategory}
+          onDeleteCategory={handleDeleteCategory}
         />
 
         {/* Red Box 2: All Categories Registry */}
-        <CategoryRegistryTable categories={flatCategories} />
+        <CategoryRegistryTable 
+          categories={flatCategories} 
+          onDeleteCategory={handleDeleteCategory}
+        />
       </div>
 
     </div>

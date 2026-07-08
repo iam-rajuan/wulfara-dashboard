@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Eye, Edit2, Trash2, ChevronDown, Search, Filter, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function CategoryRegistryTable({ categories }) {
+export default function CategoryRegistryTable({ categories, onDeleteCategory }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [parentFilter, setParentFilter] = useState("Filter by Parent");
   
@@ -184,7 +184,12 @@ export default function CategoryRegistryTable({ categories }) {
                             Edit
                           </Link>
                           <button
-                            onClick={() => setOpenActionId(null)}
+                            onClick={() => {
+                              setOpenActionId(null);
+                              if (onDeleteCategory) {
+                                onDeleteCategory(category.id);
+                              }
+                            }}
                             className="w-full px-4 py-2 text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                           >
                             <Trash2 size={14} />
