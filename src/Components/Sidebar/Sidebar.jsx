@@ -65,7 +65,7 @@ const Sidebar = ({ closeDrawer }) => {
   const menuItems = role === "admin" ? adminMenuItems : supplierMenuItems;
 
   return (
-    <div className="w-[260px] bg-[#0E1726] flex flex-col h-screen text-[#8892A3]">
+    <div className="w-[285px] bg-[#0E1726] flex flex-col h-screen text-[#8892A3]">
       {/* Logo & Header */}
       <div className="px-6 pt-8 pb-8 flex flex-col gap-6">
         <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ const Sidebar = ({ closeDrawer }) => {
           </div>
         )}
 
-        <button 
+        <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-white/5 hover:bg-[#DC2626]/20 text-[#8892A3] hover:text-[#DC2626] transition-all text-[13px] font-bold"
         >

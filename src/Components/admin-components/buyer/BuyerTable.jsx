@@ -1,5 +1,5 @@
 import React from "react";
-import { BadgeCheck, ShieldAlert, AlertCircle, MoreHorizontal } from "lucide-react";
+import { BadgeCheck, ShieldAlert, AlertCircle, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
 
 export function Pagination({ currentPage, totalItems, pageSize, onPageChange }) {
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -74,7 +74,8 @@ export function Pagination({ currentPage, totalItems, pageSize, onPageChange }) 
   );
 }
 
-export default function BuyerTable({ buyers, selectedIds, onSelect, onSelectAll }) {
+export default function BuyerTable({ buyers, selectedIds, onSelect, onSelectAll, onEdit, onDelete }) {
+  const [openActionId, setOpenActionId] = React.useState(null);
   const allSelected = buyers.length > 0 && selectedIds.length === buyers.length;
 
   return (
@@ -170,10 +171,44 @@ export default function BuyerTable({ buyers, selectedIds, onSelect, onSelectAll 
                   {buyer.createdYear}
                 </div>
               </td>
-              <td className="py-4 pr-6 text-right">
-                <button className="text-gray-400 hover:text-gray-600 p-1">
+              <td className="py-4 pr-6 text-right relative">
+                <button 
+                  onClick={() => setOpenActionId(openActionId === buyer.id ? null : buyer.id)}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                >
                   <MoreHorizontal size={18} />
                 </button>
+
+                {openActionId === buyer.id && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setOpenActionId(null)}
+                    ></div>
+                    <div className="absolute right-6 top-10 w-32 bg-white rounded-md shadow-lg border border-gray-100 z-20 py-1 overflow-hidden">
+                      <button 
+                        onClick={() => {
+                          setOpenActionId(null);
+                          onEdit && onEdit(buyer);
+                        }}
+                        className="w-full px-4 py-2 text-[12px] font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                      >
+                        <Edit2 size={14} />
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setOpenActionId(null);
+                          onDelete && onDelete(buyer.id);
+                        }}
+                        className="w-full px-4 py-2 text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
               </td>
             </tr>
           ))}

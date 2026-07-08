@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Download, Plus, ChevronDown } from "lucide-react";
 import BuyerTable, { Pagination } from "../../../Components/admin-components/buyer/BuyerTable";
+import BuyerFormModal from "../../../Components/admin-components/buyer/BuyerFormModal";
 
 // Mock data generator
 const generateBuyers = () => {
@@ -123,14 +124,46 @@ const generateBuyers = () => {
 const MOCK_BUYERS = generateBuyers();
 
 export default function BuyerManagement() {
+  const [buyers, setBuyers] = useState(MOCK_BUYERS);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBuyer, setEditingBuyer] = useState(null);
   const pageSize = 6;
+
+  const handleSaveBuyer = (savedBuyer) => {
+    if (editingBuyer) {
+      setBuyers(buyers.map((b) => (b.id === savedBuyer.id ? savedBuyer : b)));
+    } else {
+      setBuyers([savedBuyer, ...buyers]);
+    }
+    setEditingBuyer(null);
+  };
+
+  const handleDeleteBuyer = (id) => {
+    setBuyers(buyers.filter((b) => b.id !== id));
+  };
+
+  const openAddModal = () => {
+    setEditingBuyer(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (buyer) => {
+    setEditingBuyer(buyer);
+    setIsModalOpen(true);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+
 
   const paginatedBuyers = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return MOCK_BUYERS.slice(start, start + pageSize);
-  }, [currentPage]);
+    return buyers.slice(start, start + pageSize);
+  }, [currentPage, buyers]);
 
   const handleSelect = (id) => {
     setSelectedIds((prev) =>
@@ -163,11 +196,17 @@ export default function BuyerManagement() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-gray-50 transition-colors shadow-sm">
+          <button 
+            onClick={handlePrint}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-gray-50 transition-colors shadow-sm print:hidden"
+          >
             <Download size={16} />
-            Export Buyers
+            Print Data
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm">
+          <button 
+            onClick={openAddModal}
+            className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
+          >
             <Plus size={16} strokeWidth={3} />
             Add Buyer
           </button>
@@ -214,23 +253,31 @@ export default function BuyerManagement() {
         </div>
 
         {/* Table Area */}
-        <BuyerTable
+        <BuyerTable 
           buyers={paginatedBuyers}
           selectedIds={selectedIds}
           onSelect={handleSelect}
           onSelectAll={handleSelectAll}
+          onEdit={openEditModal}
+          onDelete={handleDeleteBuyer}
         />
 
         {/* Pagination Area */}
-        <Pagination
+        <Pagination 
           currentPage={currentPage}
-          totalItems={MOCK_BUYERS.length}
+          totalItems={buyers.length}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
         />
 
       </div>
 
+      <BuyerFormModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveBuyer}
+        buyer={editingBuyer}
+      />
     </div>
   );
 }
