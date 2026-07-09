@@ -369,34 +369,34 @@ const HomepageSettings = () => {
           </div>
 
           {/* Hero Section */}
-          <div className="px-8 py-20 flex flex-col items-center text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl font-black text-[#111827] mb-6 leading-[1.1] max-w-3xl">
+          <div className={`px-8 flex flex-col items-center text-center max-w-4xl mx-auto ${previewMode === 'mobile' ? 'py-10' : 'py-20'}`}>
+            <h1 className={`font-black text-[#111827] mb-6 leading-[1.1] max-w-3xl ${previewMode === 'mobile' ? 'text-3xl' : 'text-5xl'}`}>
               {heroSettings.mainHeading}
             </h1>
-            <p className="text-gray-500 text-lg mb-10 max-w-2xl">
+            <p className={`text-gray-500 mb-10 max-w-2xl ${previewMode === 'mobile' ? 'text-sm' : 'text-lg'}`}>
               {heroSettings.introParagraph}
             </p>
 
             <div className="w-full max-w-xl relative mb-10">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 text-gray-400`} size={previewMode === 'mobile' ? 16 : 20} />
               <input 
                 type="text" 
                 placeholder={heroSettings.searchFieldText} 
-                className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-white hover:shadow-md"
+                className={`w-full pl-12 pr-4 border border-gray-200 rounded-lg bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-white hover:shadow-md ${previewMode === 'mobile' ? 'py-3 text-xs' : 'py-4 text-sm'}`}
               />
             </div>
 
-            <div className="flex gap-4 mb-16">
-              <button className="px-8 py-3.5 bg-[#1a365d] text-white rounded-lg text-sm font-semibold hover:bg-[#112440] transition-colors">
+            <div className={`flex gap-4 mb-16 ${previewMode === 'mobile' ? 'flex-col w-full' : ''}`}>
+              <button className={`bg-[#1a365d] text-white rounded-lg font-semibold hover:bg-[#112440] transition-colors ${previewMode === 'mobile' ? 'w-full py-3 text-xs' : 'px-8 py-3.5 text-sm'}`}>
                 {buttonSettings.primaryCTA}
               </button>
-              <button className="px-8 py-3.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
+              <button className={`bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors ${previewMode === 'mobile' ? 'w-full py-3 text-xs' : 'px-8 py-3.5 text-sm'}`}>
                 {buttonSettings.secondaryCTA}
               </button>
             </div>
 
             {/* Hero Image */}
-            <div className="w-full h-[350px] bg-[#0d1627] rounded-xl overflow-hidden shadow-2xl relative">
+            <div className={`w-full bg-[#0d1627] rounded-xl overflow-hidden shadow-2xl relative ${previewMode === 'mobile' ? 'h-[200px]' : 'h-[350px]'}`}>
               {heroImage ? (
                 <img src={URL.createObjectURL(heroImage)} alt="Hero" className="w-full h-full object-cover" />
               ) : (
@@ -411,9 +411,9 @@ const HomepageSettings = () => {
           </div>
 
           {/* Support & Information (FAQ) */}
-          <div className="bg-[#fcfcfc] py-20 border-t border-gray-100">
+          <div className={`bg-[#fcfcfc] border-t border-gray-100 ${previewMode === 'mobile' ? 'py-10' : 'py-20'}`}>
             <div className="max-w-4xl mx-auto px-8">
-              <h2 className="text-2xl font-black text-[#111827] mb-8">
+              <h2 className={`font-black text-[#111827] mb-8 ${previewMode === 'mobile' ? 'text-xl' : 'text-2xl'}`}>
                 Support & Information
               </h2>
               

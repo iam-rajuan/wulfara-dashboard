@@ -37,6 +37,8 @@ import NewPass from "../Pages/Auth/NewPass/NewPass";
 import Settings from "../Pages/Settings/Settings";
 import ContentManagement from "../Pages/admin-pages/content/ContentManagement";
 import HomepageSettings from "../Pages/admin-pages/content/HomepageSettings";
+import SeoManagement from "../Pages/admin-pages/seo/SeoManagement";
+
 export const router = createBrowserRouter([
   {
     path: "/sign-in",
@@ -155,6 +157,10 @@ export const router = createBrowserRouter([
           {
             path: "content/homepage",
             element: <HomepageSettings />
+          },
+          {
+            path: "seo",
+            element: <SeoManagement />
           },
           { path: "/profile", element: <CompanyProfile /> },
           { path: "/products", element: <ProductsServices /> },
