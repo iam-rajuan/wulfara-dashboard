@@ -3,52 +3,50 @@ import {
   Globe, Eye, CheckCircle2, AlertTriangle, UploadCloud, 
   Filter, Download, Search, LayoutGrid, ShoppingCart, Truck, HelpCircle
 } from 'lucide-react';
-import { Input, Select, Switch, Upload, Table } from 'antd';
+import { Input, Select, Switch, Upload, Table, message } from 'antd';
 
 const { TextArea } = Input;
 
 const SeoSettings = () => {
   const [siteTitle, setSiteTitle] = useState('WULFARA | B2B Supplier Marketplace Directory');
   const [metaDesc, setMetaDesc] = useState('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
+  const [ogImage, setOgImage] = useState(null);
 
-  const pageLevelData = [
-    {
-      key: '1',
-      entity: { icon: <LayoutGrid size={16} />, name: 'Marketplace Homepage' },
-      path: '/',
-      metaConfig: 'WULFARA | Global B2B Supplier Marketplace',
-      status: 'OPTIMIZED',
-      indexed: true,
-      updated: '2h ago'
-    },
-    {
-      key: '2',
-      entity: { icon: <ShoppingCart size={16} />, name: 'Suppliers Directory' },
-      path: '/suppliers',
-      metaConfig: 'Verified B2B Suppliers & Manufacturers Directory',
-      status: 'NEEDS KEYWORDS',
-      indexed: true,
-      updated: 'Yesterday'
-    },
-    {
-      key: '3',
-      entity: { icon: <Truck size={16} />, name: 'Logistics Hub' },
-      path: '/logistics-hub',
-      metaConfig: 'Strategic Global Logistics and Chain Solutions',
-      status: 'NEEDS REVIEW',
-      indexed: false,
-      updated: '3 days ago'
-    },
-    {
-      key: '4',
-      entity: { icon: <HelpCircle size={16} />, name: 'Support Center' },
-      path: '/support',
-      metaConfig: 'Wulfara Support Center - B2B Marketplace',
-      status: 'OPTIMIZED',
-      indexed: true,
-      updated: 'May 12, 2024'
-    }
+  const initialPageData = [
+    { key: '1', entity: { icon: <LayoutGrid size={16} />, name: 'Marketplace Homepage' }, path: '/', metaConfig: 'WULFARA | Global B2B Supplier Marketplace', status: 'OPTIMIZED', indexed: true, updated: '2h ago' },
+    { key: '2', entity: { icon: <ShoppingCart size={16} />, name: 'Suppliers Directory' }, path: '/suppliers', metaConfig: 'Verified B2B Suppliers & Manufacturers Directory', status: 'NEEDS KEYWORDS', indexed: true, updated: 'Yesterday' },
+    { key: '3', entity: { icon: <Truck size={16} />, name: 'Logistics Hub' }, path: '/logistics-hub', metaConfig: 'Strategic Global Logistics and Chain Solutions', status: 'NEEDS REVIEW', indexed: false, updated: '3 days ago' },
+    { key: '4', entity: { icon: <HelpCircle size={16} />, name: 'Support Center' }, path: '/support', metaConfig: 'Wulfara Support Center - B2B Marketplace', status: 'OPTIMIZED', indexed: true, updated: 'May 12, 2024' },
+    { key: '5', entity: { icon: <LayoutGrid size={16} />, name: 'About Us' }, path: '/about', metaConfig: 'About Wulfara | Neo-industrial Enterprise', status: 'OPTIMIZED', indexed: true, updated: '1 week ago' },
+    { key: '6', entity: { icon: <ShoppingCart size={16} />, name: 'Pricing Plans' }, path: '/pricing', metaConfig: 'B2B Marketplace Pricing & Subscriptions', status: 'NEEDS KEYWORDS', indexed: true, updated: '2 weeks ago' },
+    { key: '7', entity: { icon: <HelpCircle size={16} />, name: 'FAQ' }, path: '/faq', metaConfig: 'Frequently Asked Questions | Wulfara Matrix', status: 'OPTIMIZED', indexed: true, updated: '3 weeks ago' },
+    { key: '8', entity: { icon: <Truck size={16} />, name: 'Shipping API' }, path: '/api/shipping', metaConfig: 'Global Shipping & Logistics API Documentation', status: 'NEEDS REVIEW', indexed: false, updated: '1 month ago' },
+    { key: '9', entity: { icon: <LayoutGrid size={16} />, name: 'Contact Us' }, path: '/contact', metaConfig: 'Contact Wulfara Support & Sales', status: 'OPTIMIZED', indexed: true, updated: '1 month ago' },
+    { key: '10', entity: { icon: <ShoppingCart size={16} />, name: 'Featured Suppliers' }, path: '/featured', metaConfig: 'Top Tier-One Industrial Partners', status: 'OPTIMIZED', indexed: true, updated: '2 months ago' },
+    { key: '11', entity: { icon: <HelpCircle size={16} />, name: 'Terms of Service' }, path: '/terms', metaConfig: 'Legal Terms of Service | Wulfara', status: 'NEEDS KEYWORDS', indexed: true, updated: '3 months ago' },
+    { key: '12', entity: { icon: <LayoutGrid size={16} />, name: 'Privacy Policy' }, path: '/privacy', metaConfig: 'Privacy Policy & Data Protection', status: 'OPTIMIZED', indexed: true, updated: '6 months ago' },
+    { key: '13', entity: { icon: <LayoutGrid size={16} />, name: 'Careers' }, path: '/careers', metaConfig: 'Join the Wulfara Team | Careers', status: 'NEEDS REVIEW', indexed: false, updated: '6 months ago' },
+    { key: '14', entity: { icon: <Truck size={16} />, name: 'Warehouse Network' }, path: '/warehouses', metaConfig: 'Global Warehouse Network & Storage', status: 'OPTIMIZED', indexed: true, updated: '7 months ago' }
   ];
+
+  const [pageData, setPageData] = useState(initialPageData);
+
+  const handleImageUpload = (info) => {
+    if (info.file.originFileObj) {
+      setOgImage(info.file.originFileObj);
+    }
+  };
+
+  const handlePublish = () => {
+    message.success('SEO Settings published successfully!');
+  };
+
+  const handleDiscard = () => {
+    setSiteTitle('WULFARA | B2B Supplier Marketplace Directory');
+    setMetaDesc('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
+    setOgImage(null);
+    message.info('Changes discarded.');
+  };
 
   const columns = [
     {
@@ -114,10 +112,10 @@ const SeoSettings = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-black text-[#1a1f36]">SEO Settings</h1>
         <div className="flex gap-4">
-          <button className="px-5 py-2.5 bg-white border border-gray-200 rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+          <button onClick={handleDiscard} className="px-5 py-2.5 bg-white border border-gray-200 rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
             Discard Changes
           </button>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-[#dcb14b] text-gray-900 rounded-md text-sm font-bold hover:bg-[#c9a040] transition-colors shadow-sm">
+          <button onClick={handlePublish} className="flex items-center gap-2 px-5 py-2.5 bg-[#dcb14b] text-gray-900 rounded-md text-sm font-bold hover:bg-[#c9a040] transition-colors shadow-sm">
             <CheckCircle2 size={16} />
             Publish Settings
           </button>
@@ -178,18 +176,37 @@ const SeoSettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Open Graph Image (1200x630)</label>
-                  <Upload.Dragger className="bg-[#5c6e7a] rounded-xl overflow-hidden border-0 relative h-[140px]" showUploadList={false}>
-                    {/* Placeholder image representation */}
-                    <div className="absolute inset-0 bg-[#5c6e7a] opacity-80 z-0 flex items-center justify-center">
-                      <div className="w-40 h-40 rounded-full border border-white/20"></div>
-                      <div className="absolute w-full h-[1px] bg-white/20"></div>
-                    </div>
-                    <div className="absolute inset-0 z-10 flex items-center justify-center">
-                      <div className="bg-white px-4 py-2 rounded shadow-sm text-xs font-bold text-gray-700 flex flex-col items-center gap-1">
-                        <UploadCloud size={16} />
-                        Change Image
+                  <Upload.Dragger 
+                    onChange={handleImageUpload}
+                    className="bg-[#5c6e7a] rounded-xl overflow-hidden border-0 relative h-[140px]" 
+                    showUploadList={false}
+                    accept="image/*"
+                  >
+                    {ogImage ? (
+                      <div className="absolute inset-0 z-0">
+                        <img src={URL.createObjectURL(ogImage)} alt="OG Preview" className="w-full h-full object-cover opacity-90" />
+                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center transition-opacity hover:bg-opacity-50">
+                          <div className="bg-white px-4 py-2 rounded shadow-sm text-xs font-bold text-gray-700 flex flex-col items-center gap-1">
+                            <UploadCloud size={16} />
+                            Change Image
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <>
+                        {/* Placeholder image representation */}
+                        <div className="absolute inset-0 bg-[#5c6e7a] opacity-80 z-0 flex items-center justify-center">
+                          <div className="w-40 h-40 rounded-full border border-white/20"></div>
+                          <div className="absolute w-full h-[1px] bg-white/20"></div>
+                        </div>
+                        <div className="absolute inset-0 z-10 flex items-center justify-center">
+                          <div className="bg-white px-4 py-2 rounded shadow-sm text-xs font-bold text-gray-700 flex flex-col items-center gap-1">
+                            <UploadCloud size={16} />
+                            Upload Image
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </Upload.Dragger>
                 </div>
 
@@ -317,12 +334,12 @@ const SeoSettings = () => {
         <div className="px-6 pb-6 pt-2">
           <Table 
             columns={columns} 
-            dataSource={pageLevelData} 
+            dataSource={pageData} 
             pagination={{
-              pageSize: 4,
+              pageSize: 5,
               showSizeChanger: true,
-              pageSizeOptions: ['4', '10', '20'],
-              showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of 142 total pages`,
+              pageSizeOptions: ['5', '10', '20'],
+              showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} total pages`,
               className: 'mt-6'
             }}
             rowClassName="hover:bg-gray-50 cursor-pointer"
