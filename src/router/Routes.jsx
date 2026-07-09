@@ -39,6 +39,7 @@ import ContentManagement from "../Pages/admin-pages/content/ContentManagement";
 import HomepageSettings from "../Pages/admin-pages/content/HomepageSettings";
 import SeoManagement from "../Pages/admin-pages/seo/SeoManagement";
 import SeoSettings from "../Pages/admin-pages/seo/SeoSettings";
+import RevenueReports from "../Pages/admin-pages/revenue/RevenueReports";
 
 export const router = createBrowserRouter([
   {
@@ -166,6 +167,10 @@ export const router = createBrowserRouter([
           {
             path: "seo/add",
             element: <SeoSettings />
+          },
+          {
+            path: "revenue",
+            element: <RevenueReports />
           },
           { path: "/profile", element: <CompanyProfile /> },
           { path: "/products", element: <ProductsServices /> },
