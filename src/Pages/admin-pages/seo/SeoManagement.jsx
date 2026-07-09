@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Filter, Download, Edit3, Trash2, TrendingUp, Clock, Archive, AlertTriangle, UploadCloud } from 'lucide-react';
 import { Table, Tag, Tooltip, Modal, Form, Input, Select, DatePicker, Upload, message, Popconfirm } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 // Custom Stat Card Component to match the design
@@ -22,6 +22,8 @@ const SeoStatCard = ({ title, count, subtitle, icon, colorClass, numberColorClas
 
 const SeoManagement = () => {
   const [form] = Form.useForm();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
 
@@ -64,6 +66,22 @@ const SeoManagement = () => {
       status: 'Expired',
     },
   ]);
+
+  useEffect(() => {
+    if (location.state && location.state.newSeoRecord) {
+      const record = location.state.newSeoRecord;
+      setSeoData(prev => {
+        // Prevent duplicate adds if the effect runs multiple times
+        const exists = prev.find(item => item.title === record.title);
+        if (!exists) {
+          return [{ ...record, key: Date.now().toString() }, ...prev];
+        }
+        return prev;
+      });
+      // Clear the location state so it doesn't re-add on page refresh
+      navigate('.', { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   const handleDelete = (key) => {
     setSeoData(seoData.filter(item => item.key !== key));

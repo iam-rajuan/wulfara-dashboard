@@ -4,10 +4,12 @@ import {
   Filter, Download, Search, LayoutGrid, ShoppingCart, Truck, HelpCircle
 } from 'lucide-react';
 import { Input, Select, Switch, Upload, Table, message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const { TextArea } = Input;
 
 const SeoSettings = () => {
+  const navigate = useNavigate();
   const [siteTitle, setSiteTitle] = useState('WULFARA | B2B Supplier Marketplace Directory');
   const [metaDesc, setMetaDesc] = useState('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
   const [ogImage, setOgImage] = useState(null);
@@ -39,6 +41,17 @@ const SeoSettings = () => {
 
   const handlePublish = () => {
     message.success('SEO Settings published successfully!');
+    setTimeout(() => {
+      const newSeoData = {
+        title: siteTitle,
+        image: ogImage ? URL.createObjectURL(ogImage) : 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=200&auto=format&fit=crop', // Default tech placeholder
+        placement: 'Global SEO',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: '2029-12-31',
+        status: 'Active',
+      };
+      navigate('/seo', { state: { newSeoRecord: newSeoData } });
+    }, 700);
   };
 
   const handleDiscard = () => {
