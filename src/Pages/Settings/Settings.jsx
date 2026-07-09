@@ -1,211 +1,369 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { 
+  User, Building2, Shield, Bell, Plus, Download, Save,
+  CheckCircle2, AlertCircle, Banknote
+} from 'lucide-react';
+import { Input, Select, Switch, Button, Checkbox, Tag } from 'antd';
+import { Link, useLocation } from 'react-router-dom';
 
-const Settings = () => {
-  const [personalInfo, setPersonalInfo] = useState({
-    firstName: 'Sarah',
-    lastName: 'Jenkins',
-    phoneNumber: '+1 (555) 019-2834',
-    jobTitle: 'Director of Operations'
-  });
+const GeneralConfiguration = () => {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="px-8 py-6 border-b border-gray-100">
+        <h2 className="text-xl font-bold text-gray-900">General Configuration</h2>
+      </div>
+      
+      <div className="p-8 space-y-8">
+        {/* Form Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Platform Name</label>
+            <Input defaultValue="WULFARA B2B Marketplace" className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Primary URL</label>
+            <Input defaultValue="https://app.wulfara.com" className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Support Email Address</label>
+            <Input defaultValue="support@wulfara.com" className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Default Language</label>
+            <Select 
+              defaultValue="English (US)" 
+              className="w-full h-[42px]"
+              options={[{ value: 'English (US)', label: 'English (US)' }]}
+            />
+          </div>
+        </div>
 
-  const [emailInfo, setEmailInfo] = useState({
-    currentEmail: 's.jenkins@wulfara-supplier.com'
-  });
+        {/* Platform Access Controls */}
+        <div>
+          <h3 className="text-sm font-bold text-gray-900 mb-4">Platform Access Controls</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-gray-50/50">
+              <div>
+                <h4 className="text-[13px] font-bold text-gray-900">Enable Public Browsing</h4>
+                <p className="text-[12px] text-gray-500">Allow non-authenticated users to view the supplier directory.</p>
+              </div>
+              <Switch defaultChecked className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" />
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-gray-50/50">
+              <div>
+                <h4 className="text-[13px] font-bold text-gray-900">Allow Guest RFQ Submission</h4>
+                <p className="text-[12px] text-gray-500">Guests can submit Request for Quotes without an account.</p>
+              </div>
+              <Switch className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" />
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-gray-50/50">
+              <div>
+                <h4 className="text-[13px] font-bold text-gray-900">Open Supplier Registration</h4>
+                <p className="text-[12px] text-gray-500">Suppliers can sign up autonomously via the platform.</p>
+              </div>
+              <Switch defaultChecked className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" />
+            </div>
+          </div>
+        </div>
+      </div>
 
-  const [passwordInfo, setPasswordInfo] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
+      {/* Bottom Cards Row */}
+      <div className="px-8 pb-8 flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 border border-gray-100 rounded-xl p-6 relative overflow-hidden">
+          <div className="absolute right-[-20px] top-[-20px] opacity-5">
+            <Shield size={140} />
+          </div>
+          <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">TOTAL PLATFORM ADMINS</h3>
+          <div className="text-5xl font-black text-gray-900 mb-2">5</div>
+          <p className="text-[12px] text-gray-500 font-medium">1 Super Admin, 4 Staff</p>
+        </div>
+        
+        <div className="flex-[2] border border-gray-100 rounded-xl p-6">
+          <h3 className="text-sm font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Recent Audit Log</h3>
+          <div className="space-y-4 pt-2">
+            <div className="flex gap-3">
+              <div className="w-2 h-2 rounded-full bg-[#dcb14b] mt-1.5 shrink-0"></div>
+              <div>
+                <p className="text-[13px] text-gray-800"><span className="font-bold">Super Admin</span> updated Security Settings.</p>
+                <p className="text-[11px] text-gray-400 font-medium mt-0.5">2 hours ago</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-2 h-2 rounded-full bg-blue-600 mt-1.5 shrink-0"></div>
+              <div>
+                <p className="text-[13px] text-gray-800"><span className="font-bold">System</span> backed up database.</p>
+                <p className="text-[11px] text-gray-400 font-medium mt-0.5">Yesterday, 11:00 PM</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-  const handlePersonalInfoChange = (field, value) => {
-    setPersonalInfo(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handlePasswordChange = (field, value) => {
-    setPasswordInfo(prev => ({ ...prev, [field]: value }));
-  };
+const RolesAndPermissions = () => {
+  const roles = [
+    { title: 'Super Admin', desc: 'Unrestricted full access to all platform settings and data.', users: 2, icon: <Shield size={16} />, default: true },
+    { title: 'Admin', desc: 'Broad management access, excluding billing and core security.', users: 5, icon: <User size={16} />, default: false },
+    { title: 'Finance Admin', desc: 'Access to billing, invoices, and financial reporting only.', users: 3, icon: <Banknote size={16} />, default: false },
+    { title: 'Support Admin', desc: 'Manage tickets, user queries, and view-only profiles.', users: 8, icon: <Bell size={16} />, default: false },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-sm font-sans pt-12 md:pt-16">
-      <div className="max-w-[1100px] mx-auto px-6 py-8">
-        
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-[32px] font-bold text-gray-900 mb-2">Account Settings</h1>
-          <p className="text-gray-500 text-[14px]">Manage your supplier account, business email, password, and security.</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-black text-gray-900 mb-2">Roles & Permissions</h2>
+          <p className="text-sm text-gray-500 font-medium">Manage what users can see and do within the IndustrialLink platform.</p>
+        </div>
+        <button className="flex items-center gap-2 bg-[#0E1726] text-white px-4 py-2.5 rounded-lg text-[13px] font-bold hover:bg-gray-800 transition-colors shadow-sm">
+          <Plus size={16} /> Create Custom Role
+        </button>
+      </div>
+
+      {/* Role Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {roles.map((role, idx) => (
+          <div key={idx} className={`p-5 rounded-xl border ${role.default ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200 bg-white'} relative`}>
+            {role.default && (
+              <div className="absolute top-[-1px] left-8 right-8 h-1 bg-blue-500 rounded-b-md"></div>
+            )}
+            <div className="flex justify-between items-start mb-4">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${role.default ? 'bg-[#dcb14b] text-white' : 'bg-gray-100 text-gray-500'}`}>
+                {role.icon}
+              </div>
+              {role.default && <Tag color="blue" className="font-bold border-0 bg-blue-100 text-blue-600 m-0 text-[10px] tracking-wider">DEFAULT</Tag>}
+            </div>
+            <h3 className="font-bold text-gray-900 mb-2">{role.title}</h3>
+            <p className="text-[11px] text-gray-500 leading-relaxed mb-6 min-h-[40px]">{role.desc}</p>
+            <p className="text-[11px] font-bold text-blue-600">{role.users} Users</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Permission Matrix */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mt-8">
+        <div className="p-5 flex justify-between items-center border-b border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900">Permission Matrix</h3>
+          <div className="flex gap-3">
+            <button className="px-4 py-2 text-[13px] font-bold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Export CSV</button>
+            <button className="px-4 py-2 text-[13px] font-bold text-white bg-[#0E1726] rounded-lg hover:bg-gray-800">Save Changes</button>
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-10">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-white">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest w-[30%]">Permission</th>
+                <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Super Admin</th>
+                <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Admin</th>
+                <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Finance</th>
+                <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Support</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Category 1 */}
+              <tr className="bg-gray-50/80"><td colSpan={5} className="px-6 py-3 text-[11px] font-bold text-gray-900">General & Dashboard</td></tr>
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-[13px] font-medium text-gray-700">View Main Dashboard</td>
+                <td className="px-4 py-4 text-center"><CheckCircle2 size={18} className="text-[#dcb14b] mx-auto" /></td>
+                <td className="px-4 py-4 text-center"><CheckCircle2 size={18} className="text-[#dcb14b] mx-auto" /></td>
+                <td className="px-4 py-4 text-center"><CheckCircle2 size={18} className="text-[#dcb14b] mx-auto" /></td>
+                <td className="px-4 py-4 text-center"><CheckCircle2 size={18} className="text-[#dcb14b] mx-auto" /></td>
+              </tr>
+              {/* Category 2 */}
+              <tr className="bg-gray-50/80"><td colSpan={5} className="px-6 py-3 text-[11px] font-bold text-gray-900">Supplier & Buyer Management</td></tr>
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-[13px] font-medium text-gray-700">Manage Buyers/Suppliers</td>
+                <td className="px-4 py-4 text-center"><Switch defaultChecked disabled className="bg-gray-300 [&.ant-switch-checked]:bg-gray-300" /></td>
+                <td className="px-4 py-4 text-center"><Switch defaultChecked className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" /></td>
+                <td className="px-4 py-4 text-center text-gray-300">—</td>
+                <td className="px-4 py-4 text-center"><Switch className="bg-gray-200" /></td>
+              </tr>
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-[13px] font-medium text-gray-700">Approve/Reject Listings</td>
+                <td className="px-4 py-4 text-center"><CheckCircle2 size={18} className="text-[#dcb14b] mx-auto" /></td>
+                <td className="px-4 py-4 text-center"><CheckCircle2 size={18} className="text-[#dcb14b] mx-auto" /></td>
+                <td className="px-4 py-4 text-center text-gray-300">—</td>
+                <td className="px-4 py-4 text-center text-gray-300">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const NotificationsSettings = () => {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-100 gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-1">Notifications Settings</h2>
+          <p className="text-[13px] text-gray-500 font-medium">Configure how and when your team is alerted for platform events.</p>
+        </div>
+        <button className="text-[12px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-800">RESET DEFAULTS</button>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-[#fcfcfc] border-b border-gray-100">
+            <tr>
+              <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest w-[40%]">Event Category / Type</th>
+              <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">In-App</th>
+              <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Email</th>
+              <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Critical Alert</th>
+              <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Recipients</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Supplier Mgmt */}
+            <tr className="bg-white"><td colSpan={5} className="px-6 py-4 text-[12px] font-bold text-gray-900 border-b border-gray-50">Supplier Management</td></tr>
+            <tr className="border-b border-gray-50">
+              <td className="px-6 py-4">
+                <div className="font-bold text-[13px] text-gray-800">New Supplier Signup</div>
+                <div className="text-[11px] text-gray-500 mt-1">When a new supplier registers on the platform.</div>
+              </td>
+              <td className="px-4 py-4 text-center"><Checkbox defaultChecked className="checked-yellow" /></td>
+              <td className="px-4 py-4 text-center"><Checkbox /></td>
+              <td className="px-4 py-4 text-center"><Checkbox /></td>
+              <td className="px-6 py-4"><Tag className="text-[10px] font-bold bg-gray-100 text-gray-600 border-gray-200">Procurement Team</Tag></td>
+            </tr>
+            <tr className="border-b border-gray-50">
+              <td className="px-6 py-4">
+                <div className="font-bold text-[13px] text-gray-800">Supplier Verified</div>
+                <div className="text-[11px] text-gray-500 mt-1">KYC and compliance checks completed.</div>
+              </td>
+              <td className="px-4 py-4 text-center"><Checkbox defaultChecked /></td>
+              <td className="px-4 py-4 text-center"><Checkbox defaultChecked /></td>
+              <td className="px-4 py-4 text-center"><Checkbox /></td>
+              <td className="px-6 py-4"><Tag className="text-[10px] font-bold bg-blue-50 text-blue-600 border-blue-100">Compliance Leads</Tag></td>
+            </tr>
+
+            {/* Inventory */}
+            <tr className="bg-white"><td colSpan={5} className="px-6 py-4 text-[12px] font-bold text-gray-900 border-b border-gray-50">Inventory & Listings</td></tr>
+            <tr className="border-b border-gray-50">
+              <td className="px-6 py-4">
+                <div className="font-bold text-[13px] text-gray-800">Listing Submitted for Review</div>
+                <div className="text-[11px] text-gray-500 mt-1">New product/material pending admin approval.</div>
+              </td>
+              <td className="px-4 py-4 text-center"><Checkbox defaultChecked /></td>
+              <td className="px-4 py-4 text-center"><Checkbox defaultChecked /></td>
+              <td className="px-4 py-4 text-center"><Checkbox /></td>
+              <td className="px-6 py-4"><Tag className="text-[10px] font-bold bg-gray-100 text-gray-600 border-gray-200">Catalog Admins</Tag></td>
+            </tr>
+            <tr className="border-b border-gray-50">
+              <td className="px-6 py-4">
+                <div className="font-bold text-[13px] text-gray-800">Listing Rejected</div>
+                <div className="text-[11px] text-gray-500 mt-1">QA flagged issues with a submission.</div>
+              </td>
+              <td className="px-4 py-4 text-center"><Checkbox defaultChecked /></td>
+              <td className="px-4 py-4 text-center"><Checkbox /></td>
+              <td className="px-4 py-4 text-center"><Checkbox className="ant-checkbox-red" defaultChecked /></td>
+              <td className="px-6 py-4 flex flex-col gap-1 items-start">
+                <Tag className="text-[10px] font-bold bg-gray-100 text-gray-600 border-gray-200">Catalog Admins</Tag>
+                <Tag className="text-[10px] font-bold bg-red-50 text-red-600 border-red-100">QA Team</Tag>
+              </td>
+            </tr>
+
+            {/* RFQs */}
+            <tr className="bg-white"><td colSpan={5} className="px-6 py-4 text-[12px] font-bold text-gray-900 border-b border-gray-50">Transactions (RFQs)</td></tr>
+            <tr className="border-b border-gray-50">
+              <td className="px-6 py-4">
+                <div className="font-bold text-[13px] text-gray-800">RFQ Submitted</div>
+                <div className="text-[11px] text-gray-500 mt-1">High-value Request for Quote initiated.</div>
+              </td>
+              <td className="px-4 py-4 text-center"><Checkbox defaultChecked /></td>
+              <td className="px-4 py-4 text-center"><Checkbox defaultChecked /></td>
+              <td className="px-4 py-4 text-center"><Checkbox className="ant-checkbox-red" defaultChecked /></td>
+              <td className="px-6 py-4"><Tag className="text-[10px] font-bold bg-[#dcb14b] text-[#5a4616] border-0">Account Execs</Tag></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="p-6 bg-gray-50/50 flex justify-end gap-3 border-t border-gray-100">
+        <button className="px-6 py-2.5 bg-white border border-gray-200 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-50 shadow-sm">Cancel</button>
+        <button className="px-6 py-2.5 bg-[#dcb14b] text-gray-900 rounded-md text-sm font-bold hover:bg-[#c9a040] shadow-sm">Save Configuration</button>
+      </div>
+
+      {/* Global overrides for Ant Design Checkbox specific to this view */}
+      <style jsx global>{`
+        .ant-checkbox-checked .ant-checkbox-inner {
+          background-color: #dcb14b;
+          border-color: #dcb14b;
+        }
+        .ant-checkbox-red.ant-checkbox-wrapper .ant-checkbox-checked .ant-checkbox-inner {
+          background-color: #dc2626 !important;
+          border-color: #dc2626 !important;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+const Settings = () => {
+  const location = useLocation();
+
+  const getActiveTab = () => {
+    if (location.pathname === '/settings/roles') return 'Roles & Permissions';
+    if (location.pathname === '/settings/notifications') return 'Notifications';
+    if (location.pathname === '/settings/company') return 'Company Details';
+    return 'My Profile';
+  };
+
+  const activeTab = getActiveTab();
+
+  const tabs = [
+    { id: 'My Profile', path: '/settings', icon: <User size={16} /> },
+    { id: 'Company Details', path: '/settings/company', icon: <Building2 size={16} /> },
+    { id: 'Roles & Permissions', path: '/settings/roles', icon: <Shield size={16} /> },
+    { id: 'Notifications', path: '/settings/notifications', icon: <Bell size={16} /> },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#FAFAFA] pt-12 md:pt-16 pb-20">
+      <div className="max-w-[1200px] mx-auto px-6 py-8">
+        <div className="flex flex-col md:flex-row gap-8">
           
-          {/* Sidebar Navigation */}
-          <div className="w-full md:w-56 shrink-0">
-            <nav className="flex flex-col space-y-5 text-[15px]">
-              <a href="#personal-info" className="text-gray-900 font-semibold">Personal Info</a>
-              <a href="#business-email" className="text-gray-500 hover:text-gray-900">Business Email</a>
-              <a href="#password" className="text-gray-500 hover:text-gray-900">Password</a>
-              <a href="#security" className="text-gray-500 hover:text-gray-900">Security</a>
-            </nav>
+          {/* Sidebar */}
+          <div className="w-full md:w-[240px] shrink-0">
+            <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <h2 className="text-xl font-black text-gray-900 px-4 mb-4">Settings</h2>
+              <nav className="flex flex-col space-y-1">
+                {tabs.map(tab => (
+                  <Link 
+                    key={tab.id}
+                    to={tab.path}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all ${
+                      activeTab === tab.id 
+                        ? 'bg-[#dcb14b] text-gray-900' 
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    {tab.icon}
+                    {tab.id}
+                  </Link>
+                ))}
+              </nav>
+            </div>
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 space-y-8">
-            
-            {/* Personal Information */}
-            <div id="personal-info" className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Personal Information</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 mb-8">
-                <div>
-                  <label className="block text-[13px] font-medium text-gray-700 mb-2">First Name</label>
-                  <input
-                    type="text"
-                    value={personalInfo.firstName}
-                    onChange={(e) => handlePersonalInfoChange('firstName', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Last Name</label>
-                  <input
-                    type="text"
-                    value={personalInfo.lastName}
-                    onChange={(e) => handlePersonalInfoChange('lastName', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Phone Number</label>
-                  <input
-                    type="text"
-                    value={personalInfo.phoneNumber}
-                    onChange={(e) => handlePersonalInfoChange('phoneNumber', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Job Title</label>
-                  <input
-                    type="text"
-                    value={personalInfo.jobTitle}
-                    onChange={(e) => handlePersonalInfoChange('jobTitle', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                  />
-                </div>
-              </div>
-              <button className="bg-black text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-gray-800 transition-colors">
-                Save Changes
-              </button>
-            </div>
-
-            {/* Business Email */}
-            <div id="business-email" className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Business Email</h2>
-              
-              <div className="mb-4">
-                <label className="block text-[13px] font-medium text-gray-700 mb-2">Current Email Address</label>
-                <div className="flex flex-col sm:flex-row gap-4 items-start">
-                  <div className="relative flex-1 w-full sm:w-auto">
-                    <input
-                      type="text"
-                      readOnly
-                      value={emailInfo.currentEmail}
-                      className="w-full px-3 py-2.5 bg-[#F0F4F8] border border-gray-100 rounded-md text-gray-700 pr-24 focus:outline-none"
-                    />
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center">
-                      <span className="bg-[#1D4ED8] text-white text-[11px] font-medium px-2.5 py-1 rounded-[4px] flex items-center gap-1.5 shadow-sm">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                        Verified
-                      </span>
-                    </div>
-                  </div>
-                  <button className="px-6 py-2.5 border border-gray-300 rounded text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors whitespace-nowrap bg-white shadow-sm">
-                    Change Email
-                  </button>
-                </div>
-              </div>
-              <p className="text-[13px] text-gray-500">Changing your email will require re-verification to maintain marketplace access.</p>
-            </div>
-
-            {/* Password */}
-            <div id="password" className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Password</h2>
-              
-              <div className="space-y-6 max-w-[450px]">
-                <div>
-                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Current Password</label>
-                  <input
-                    type="password"
-                    value={passwordInfo.currentPassword}
-                    onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-[13px] font-medium text-gray-700 mb-2">New Password</label>
-                  <input
-                    type="password"
-                    value={passwordInfo.newPassword}
-                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                  />
-                  
-                  {/* Password Strength */}
-                  <div className="mt-3 flex gap-1 h-1.5 w-full">
-                    <div className="w-1/4 bg-yellow-500 rounded-sm"></div>
-                    <div className="w-1/4 bg-yellow-500 rounded-sm"></div>
-                    <div className="w-1/4 bg-gray-200 rounded-sm"></div>
-                    <div className="w-1/4 bg-gray-200 rounded-sm"></div>
-                  </div>
-                  <p className="text-[12px] text-gray-600 mt-2">
-                    Password strength: <span className="text-yellow-600 font-semibold">Good</span>. Add special characters to improve.
-                  </p>
-                </div>
-
-                <div className="pt-1">
-                  <label className="block text-[13px] font-medium text-gray-700 mb-2">Confirm New Password</label>
-                  <input
-                    type="password"
-                    value={passwordInfo.confirmPassword}
-                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-gray-800 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                  />
-                </div>
-                
-                <div className="pt-2">
-                  <button className="bg-black text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-gray-800 transition-colors">
-                    Update Password
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Security */}
-            <div id="security" className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 mb-10">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Security</h2>
-              
-              <div>
-                <h3 className="text-[15px] font-bold text-gray-900 mb-1">Two-Factor Authentication (2FA)</h3>
-                <p className="text-[13px] text-gray-500">Add an extra layer of security to your account using an authenticator app.</p>
-              </div>
-            </div>
-
+          {/* Main Content Area */}
+          <div className="flex-1">
+            {activeTab === 'My Profile' && <GeneralConfiguration />}
+            {activeTab === 'Company Details' && <GeneralConfiguration />}
+            {activeTab === 'Roles & Permissions' && <RolesAndPermissions />}
+            {activeTab === 'Notifications' && <NotificationsSettings />}
           </div>
+
         </div>
-
-        {/* Footer */}
-        <div className="mt-16 pt-8 pb-4 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center text-[13px] text-gray-500 gap-4">
-          <div>
-            © 2024 WULFARA Industrial Marketplace. All rights reserved.
-          </div>
-          <div className="flex gap-6 font-medium">
-            <a href="#" className="hover:text-gray-900 transition-colors">Support</a>
-            <a href="#" className="hover:text-gray-900 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-gray-900 transition-colors">Terms of Service</a>
-          </div>
-        </div>
-
       </div>
     </div>
   );

@@ -152,6 +152,9 @@ export const router = createBrowserRouter([
             element: <RfqDetails />
           },
           { path: "/settings", element: <Settings /> },
+          { path: "/settings/company", element: <Settings /> },
+          { path: "/settings/roles", element: <Settings /> },
+          { path: "/settings/notifications", element: <Settings /> },
           {
             path: "content",
             element: <ContentManagement />
