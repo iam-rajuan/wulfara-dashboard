@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Filter, Download, Edit3, Trash2, TrendingUp, Clock, Archive, AlertTriangle } from 'lucide-react';
-import { Table, Tag, Tooltip } from 'antd';
+import { Plus, Filter, Download, Edit3, Trash2, TrendingUp, Clock, Archive, AlertTriangle, UploadCloud } from 'lucide-react';
+import { Table, Tag, Tooltip, Modal, Form, Input, Select, DatePicker, Upload, message, Popconfirm } from 'antd';
 import { Link } from 'react-router-dom';
+import dayjs from 'dayjs';
 
 // Custom Stat Card Component to match the design
 const SeoStatCard = ({ title, count, subtitle, icon, colorClass, numberColorClass, subtitleColorClass }) => {
@@ -20,92 +21,122 @@ const SeoStatCard = ({ title, count, subtitle, icon, colorClass, numberColorClas
 };
 
 const SeoManagement = () => {
-  // Mock Data for SEO Inventory
-  const [seoData] = useState([
+  const [form] = Form.useForm();
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+
+  // Mock Data for SEO Inventory (Matching Banner Layout)
+  const [seoData, setSeoData] = useState([
     {
       key: '1',
-      pagePath: '/home',
-      metaTitle: 'Wulfara - Industrial Logistics Matrix',
-      focusKeyword: 'industrial logistics',
-      lastUpdated: '2024-10-01',
+      image: 'https://images.unsplash.com/photo-1586528116311-ad8ed3c812b0?q=80&w=200&auto=format&fit=crop',
+      title: 'Find Trusted Suppliers',
+      placement: 'Home Hero',
+      startDate: '2023-10-01',
+      endDate: '2024-10-01',
       status: 'Active',
     },
     {
       key: '2',
-      pagePath: '/capabilities',
-      metaTitle: 'Certified Supplier Network | Wulfara',
-      focusKeyword: 'supplier network',
-      lastUpdated: '2024-09-15',
+      image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=200&auto=format&fit=crop',
+      title: 'Global Logistics Partners',
+      placement: 'Sidebar Sticky',
+      startDate: '2023-11-15',
+      endDate: '2024-05-15',
       status: 'Active',
     },
     {
       key: '3',
-      pagePath: '/about-us',
-      metaTitle: 'About Wulfara Technologies',
-      focusKeyword: 'about wulfara',
-      lastUpdated: '2024-08-20',
-      status: 'Inactive',
-    },
-    {
-      key: '4',
-      pagePath: '/new-feature-landing',
-      metaTitle: 'Matrix v2.0 - Coming Soon',
-      focusKeyword: 'matrix v2',
-      lastUpdated: '2024-10-10',
+      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=200&auto=format&fit=crop',
+      title: 'Manufacturing Suppliers',
+      placement: 'Footer Top',
+      startDate: '2024-01-10',
+      endDate: '2024-03-10',
       status: 'Scheduled',
     },
     {
-      key: '5',
-      pagePath: '/holiday-promo',
-      metaTitle: 'End of Year Supplier Discounts',
-      focusKeyword: 'supplier discounts',
-      lastUpdated: '2023-12-01',
+      key: '4',
+      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=200&auto=format&fit=crop',
+      title: 'List Your Company',
+      placement: 'Category Listing',
+      startDate: '2023-01-01',
+      endDate: '2023-12-31',
       status: 'Expired',
     },
-    {
-      key: '6',
-      pagePath: '/blog/quantum-encryption',
-      metaTitle: 'Quantum Encryption in Logistics',
-      focusKeyword: 'quantum encryption logistics',
-      lastUpdated: '2024-07-05',
-      status: 'Active',
-    },
-    {
-      key: '7',
-      pagePath: '/contact',
-      metaTitle: 'Contact Our Global Support',
-      focusKeyword: 'contact wulfara',
-      lastUpdated: '2024-05-11',
-      status: 'Active',
-    },
   ]);
+
+  const handleDelete = (key) => {
+    setSeoData(seoData.filter(item => item.key !== key));
+    message.success('Item deleted successfully');
+  };
+
+  const handleEdit = (record) => {
+    setEditingRecord(record);
+    form.setFieldsValue({
+      title: record.title,
+      placement: record.placement,
+      status: record.status,
+      dates: [dayjs(record.startDate), dayjs(record.endDate)]
+    });
+    setIsEditModalVisible(true);
+  };
+
+  const handleModalOk = () => {
+    form.validateFields().then(values => {
+      const updatedData = seoData.map(item => {
+        if (item.key === editingRecord.key) {
+          return {
+            ...item,
+            title: values.title,
+            placement: values.placement,
+            status: values.status,
+            startDate: values.dates[0].format('YYYY-MM-DD'),
+            endDate: values.dates[1].format('YYYY-MM-DD')
+          };
+        }
+        return item;
+      });
+      setSeoData(updatedData);
+      setIsEditModalVisible(false);
+      message.success('Item updated successfully');
+    });
+  };
 
   // Define Table Columns
   const columns = [
     {
-      title: 'PAGE PATH',
-      dataIndex: 'pagePath',
-      key: 'pagePath',
-      render: (text) => <span className="font-semibold text-gray-800">{text}</span>,
-      sorter: (a, b) => a.pagePath.localeCompare(b.pagePath),
+      title: 'IMAGE PREVIEW',
+      dataIndex: 'image',
+      key: 'image',
+      render: (img) => (
+        <div className="w-[100px] h-[45px] rounded overflow-hidden shadow-sm">
+          <img src={img} alt="Preview" className="w-full h-full object-cover" />
+        </div>
+      ),
     },
     {
-      title: 'META TITLE',
-      dataIndex: 'metaTitle',
-      key: 'metaTitle',
-      render: (text) => <span className="text-gray-600 truncate max-w-[200px] block" title={text}>{text}</span>,
+      title: 'TITLE',
+      dataIndex: 'title',
+      key: 'title',
+      render: (text) => <span className="font-bold text-gray-800 text-sm max-w-[150px] block leading-tight">{text}</span>,
     },
     {
-      title: 'FOCUS KEYWORD',
-      dataIndex: 'focusKeyword',
-      key: 'focusKeyword',
-      render: (text) => <span className="text-gray-500">{text}</span>,
+      title: 'PLACEMENT',
+      dataIndex: 'placement',
+      key: 'placement',
+      render: (text) => <span className="text-gray-500 text-sm">{text}</span>,
     },
     {
-      title: 'LAST UPDATED',
-      dataIndex: 'lastUpdated',
-      key: 'lastUpdated',
-      sorter: (a, b) => new Date(a.lastUpdated) - new Date(b.lastUpdated),
+      title: 'START DATE',
+      dataIndex: 'startDate',
+      key: 'startDate',
+      render: (text) => <span className="text-gray-500 text-sm">{text}</span>,
+    },
+    {
+      title: 'END DATE',
+      dataIndex: 'endDate',
+      key: 'endDate',
+      render: (text) => <span className="text-gray-500 text-sm">{text}</span>,
     },
     {
       title: 'STATUS',
@@ -138,7 +169,7 @@ const SeoManagement = () => {
         }
         
         return (
-          <span className={`px-3 py-1 rounded-full text-xs font-bold ${color} ${bgColor}`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold border ${color} ${bgColor} border-opacity-50`}>
             {status}
           </span>
         );
@@ -146,7 +177,6 @@ const SeoManagement = () => {
       filters: [
         { text: 'Active', value: 'Active' },
         { text: 'Scheduled', value: 'Scheduled' },
-        { text: 'Inactive', value: 'Inactive' },
         { text: 'Expired', value: 'Expired' },
       ],
       onFilter: (value, record) => record.status === value,
@@ -157,14 +187,33 @@ const SeoManagement = () => {
       render: (_, record) => (
         <div className="flex items-center gap-3">
           <Tooltip title="Edit SEO">
-            <button className="text-gray-400 hover:text-blue-600 transition-colors">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(record);
+              }}
+              className="text-gray-400 hover:text-blue-600 transition-colors"
+            >
               <Edit3 size={18} />
             </button>
           </Tooltip>
           <Tooltip title="Delete">
-            <button className="text-gray-400 hover:text-red-600 transition-colors">
-              <Trash2 size={18} />
-            </button>
+            <Popconfirm
+              title="Delete this record"
+              description="Are you sure you want to delete this record?"
+              onConfirm={(e) => {
+                e.stopPropagation();
+                handleDelete(record.key);
+              }}
+              onCancel={(e) => e.stopPropagation()}
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ danger: true }}
+            >
+              <button onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-red-600 transition-colors">
+                <Trash2 size={18} />
+              </button>
+            </Popconfirm>
           </Tooltip>
         </div>
       ),
@@ -260,6 +309,77 @@ const SeoManagement = () => {
           />
         </div>
       </div>
+
+      {/* Dynamic Edit Modal */}
+      <Modal
+        title={<span className="font-bold text-gray-800">Edit SEO / Banner Record</span>}
+        open={isEditModalVisible}
+        onOk={handleModalOk}
+        onCancel={() => setIsEditModalVisible(false)}
+        okText="Save Changes"
+        okButtonProps={{ style: { backgroundColor: '#dcb14b', borderColor: '#dcb14b', color: '#111' } }}
+        width={600}
+      >
+        <Form form={form} layout="vertical" className="mt-6">
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item
+              name="title"
+              label={<span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Title</span>}
+              rules={[{ required: true }]}
+            >
+              <Input className="rounded-lg" />
+            </Form.Item>
+            
+            <Form.Item
+              name="placement"
+              label={<span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Placement</span>}
+              rules={[{ required: true }]}
+            >
+              <Select className="rounded-lg">
+                <Select.Option value="Home Hero">Home Hero</Select.Option>
+                <Select.Option value="Sidebar Sticky">Sidebar Sticky</Select.Option>
+                <Select.Option value="Footer Top">Footer Top</Select.Option>
+                <Select.Option value="Category Listing">Category Listing</Select.Option>
+              </Select>
+            </Form.Item>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item
+              name="dates"
+              label={<span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Start & End Dates</span>}
+              rules={[{ required: true }]}
+            >
+              <DatePicker.RangePicker className="w-full rounded-lg" />
+            </Form.Item>
+
+            <Form.Item
+              name="status"
+              label={<span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status</span>}
+              rules={[{ required: true }]}
+            >
+              <Select className="rounded-lg">
+                <Select.Option value="Active">Active</Select.Option>
+                <Select.Option value="Scheduled">Scheduled</Select.Option>
+                <Select.Option value="Inactive">Inactive</Select.Option>
+                <Select.Option value="Expired">Expired</Select.Option>
+              </Select>
+            </Form.Item>
+          </div>
+
+          <Form.Item
+            label={<span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Banner / Graph Image</span>}
+          >
+            <Upload.Dragger name="image" action="/upload.do" maxCount={1} showUploadList={false}>
+              <div className="p-6 flex flex-col items-center justify-center">
+                <UploadCloud className="text-gray-400 mb-2" size={32} />
+                <p className="text-sm text-gray-600 font-semibold mb-1">Click or drag image to upload</p>
+                <p className="text-xs text-gray-400">Support for high-res webp, png, jpg.</p>
+              </div>
+            </Upload.Dragger>
+          </Form.Item>
+        </Form>
+      </Modal>
       
       {/* Custom Styles for Antd Table to match the design (Optional but helpful for precise matching) */}
       <style jsx global>{`
