@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Filter, Download, Edit3, Trash2, TrendingUp, Clock, Archive, AlertTriangle } from 'lucide-react';
 import { Table, Tag, Tooltip } from 'antd';
+import { Link } from 'react-router-dom';
 
 // Custom Stat Card Component to match the design
 const SeoStatCard = ({ title, count, subtitle, icon, colorClass, numberColorClass, subtitleColorClass }) => {
@@ -185,10 +186,10 @@ const SeoManagement = () => {
           <h1 className="text-2xl font-medium text-[#333] mb-1">SEO Management</h1>
           <p className="text-[#888] text-sm">Create, schedule, activate, and manage WULFARA website SEO.</p>
         </div>
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-[#dcb14b] text-gray-900 rounded-md text-sm font-semibold hover:bg-[#c9a040] transition-colors shadow-sm">
+        <Link to="/seo/add" className="flex items-center gap-2 px-5 py-2.5 bg-[#dcb14b] text-gray-900 rounded-md text-sm font-semibold hover:bg-[#c9a040] transition-colors shadow-sm">
           <Plus size={18} />
           Add SEO
-        </button>
+        </Link>
       </div>
 
       {/* Stat Cards */}
