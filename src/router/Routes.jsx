@@ -35,6 +35,8 @@ import Messages from "../Pages/Messages/Messages";
 import VerifyCode from "../Pages/Auth/VerifyCode/VerifyCode";
 import NewPass from "../Pages/Auth/NewPass/NewPass";
 import Settings from "../Pages/Settings/Settings";
+import ContentManagement from "../Pages/admin-pages/content/ContentManagement";
+import HomepageSettings from "../Pages/admin-pages/content/HomepageSettings";
 export const router = createBrowserRouter([
   {
     path: "/sign-in",
@@ -146,6 +148,14 @@ export const router = createBrowserRouter([
             element: <RfqDetails />
           },
           { path: "/settings", element: <Settings /> },
+          {
+            path: "content",
+            element: <ContentManagement />
+          },
+          {
+            path: "content/homepage",
+            element: <HomepageSettings />
+          },
           { path: "/profile", element: <CompanyProfile /> },
           { path: "/products", element: <ProductsServices /> },
           { path: "/gallery", element: <Gallery /> },
