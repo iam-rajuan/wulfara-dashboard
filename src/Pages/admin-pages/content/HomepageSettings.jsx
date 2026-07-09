@@ -34,6 +34,7 @@ const HomepageSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const [previewMode, setPreviewMode] = useState('desktop'); // 'desktop' or 'mobile'
+  const [expandedFaqId, setExpandedFaqId] = useState(null);
 
   // FAQ Handlers
   const handleAddFaq = () => {
@@ -359,10 +360,10 @@ const HomepageSettings = () => {
               <span className="text-xl font-black tracking-tight text-[#111827]">WULFARA</span>
             </div>
             {previewMode === 'desktop' && (
-              <div className="flex gap-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+              <div className="flex gap-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest items-center">
                 <span className="cursor-pointer hover:text-gray-900">Capabilities</span>
                 <span className="cursor-pointer hover:text-gray-900">Network</span>
-                <span className="cursor-pointer text-blue-700">Partner Login</span>
+                <span className="cursor-pointer text-blue-700">{buttonSettings.accountLogin}</span>
               </div>
             )}
           </div>
@@ -381,8 +382,7 @@ const HomepageSettings = () => {
               <input 
                 type="text" 
                 placeholder={heroSettings.searchFieldText} 
-                className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                readOnly
+                className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-white hover:shadow-md"
               />
             </div>
 
@@ -419,9 +419,23 @@ const HomepageSettings = () => {
               
               <div className="space-y-4">
                 {faqs.map((faq) => (
-                  <div key={faq.id} className="bg-white border border-gray-200 rounded-lg p-6 flex justify-between items-center cursor-pointer hover:border-gray-300 transition-colors">
-                    <span className="font-semibold text-gray-800 text-sm">{faq.question}</span>
-                    <Plus className="text-gray-400" size={20} />
+                  <div 
+                    key={faq.id} 
+                    className={`bg-white border ${expandedFaqId === faq.id ? 'border-blue-300 shadow-sm' : 'border-gray-200'} rounded-lg p-6 cursor-pointer hover:border-gray-300 transition-all`}
+                    onClick={() => setExpandedFaqId(expandedFaqId === faq.id ? null : faq.id)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className={`font-semibold text-sm ${expandedFaqId === faq.id ? 'text-blue-700' : 'text-gray-800'}`}>{faq.question}</span>
+                      <Plus 
+                        className={`${expandedFaqId === faq.id ? 'text-blue-500 rotate-45' : 'text-gray-400'} transition-transform duration-300`} 
+                        size={20} 
+                      />
+                    </div>
+                    {expandedFaqId === faq.id && (
+                      <div className="mt-4 pt-4 border-t border-gray-100 text-gray-600 text-sm leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
+                        {faq.answer}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

@@ -15,8 +15,8 @@ import {
   AlertCircle,
   UploadCloud
 } from 'lucide-react';
-import StatCard from './components/StatCard';
-import SectionCard from './components/SectionCard';
+import StatCard from '../../../Components/admin-components/StatCard';
+import SectionCard from '../../../Components/admin-components/SectionCard';
 import { Link } from 'react-router-dom';
 import { Modal, Form, Input, Upload, message } from 'antd';
 
