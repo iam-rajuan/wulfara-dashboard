@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Eye, Pencil } from "lucide-react";
 
 export default function RfqTable({ rfqs, currentPage, setCurrentPage, totalPages, totalItems, itemsPerPage, onView, onEdit }) {
@@ -69,13 +70,13 @@ export default function RfqTable({ rfqs, currentPage, setCurrentPage, totalPages
                 </td>
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => onView && onView(rfq)}
+                    <Link 
+                      to={`/rfqs/${rfq.id.replace('#', '')}`}
                       className="text-gray-400 hover:text-gray-600 transition-colors"
                       title="View Details"
                     >
                       <Eye size={16} />
-                    </button>
+                    </Link>
                     <button 
                       onClick={() => onEdit && onEdit(rfq)}
                       className="text-gray-400 hover:text-[#D4AF37] transition-colors"

@@ -24,6 +24,7 @@ import SubscriptionManagement from "../Pages/admin-pages/subscriptions/Subscript
 import EditSubscription from "../Pages/admin-pages/subscriptions/EditSubscription";
 import CreateSubscription from "../Pages/admin-pages/subscriptions/CreateSubscription";
 import RfqManagement from "../Pages/admin-pages/rfqs/RfqManagement";
+import RfqDetails from "../Pages/admin-pages/rfqs/RfqDetails";
 import CompanyProfile from "../Pages/CompanyProfile/CompanyProfile";
 import ProductsServices from "../Pages/ProductsServices/ProductsServices";
 import Gallery from "../Pages/Gallery/Gallery";
@@ -139,6 +140,10 @@ export const router = createBrowserRouter([
           {
             path: "rfqs",
             element: <RfqManagement />
+          },
+          {
+            path: "rfqs/:id",
+            element: <RfqDetails />
           },
           { path: "/settings", element: <Settings /> },
           { path: "/profile", element: <CompanyProfile /> },
