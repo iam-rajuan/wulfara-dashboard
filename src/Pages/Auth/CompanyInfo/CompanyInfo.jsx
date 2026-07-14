@@ -30,49 +30,53 @@ const CompanyInfo = () => {
         <p className="text-[15px] text-gray-500 mb-10">Add your company details so customers can contact you and send RFQs.</p>
 
         {/* Progress Tracker */}
-        <div className="relative flex justify-between items-center w-full max-w-[900px] mb-12">
+        <div className="relative flex justify-between items-start w-full max-w-[900px] mb-20 mx-auto px-4 md:px-8">
           {/* Connecting Lines */}
-          <div className="absolute top-[14px] left-[5%] right-[75%] h-[2px] bg-[#D1A635] -z-10"></div>
-          <div className="absolute top-[14px] left-[25%] right-[5%] h-[2px] bg-gray-200 -z-10"></div>
+          <div className="absolute top-[20px] left-[5%] right-[5%] h-[2px] flex z-0">
+            <div className="w-1/4 bg-[#D1A635]"></div>
+            <div className="w-1/4 bg-gray-200"></div>
+            <div className="w-1/4 bg-gray-200"></div>
+            <div className="w-1/4 bg-gray-200"></div>
+          </div>
           
           {/* Step 1 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-[#D1A635] flex items-center justify-center">
-              <Check className="w-4 h-4 text-white" />
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
+            <div className="w-10 h-10 rounded-[12px] bg-[#D1A635] flex items-center justify-center mb-3">
+              <Check className="w-5 h-5 text-white" strokeWidth={3} />
             </div>
-            <span className="text-[11px] font-bold text-gray-800 absolute top-9 whitespace-nowrap">Industry</span>
+            <span className="text-[13px] font-bold text-gray-700 whitespace-nowrap">Industry</span>
           </div>
 
           {/* Step 2 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-white border-2 border-[#D1A635] flex items-center justify-center">
-              <span className="text-[12px] font-bold text-[#D1A635]">2</span>
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
+            <div className="w-10 h-10 rounded-[12px] bg-white border-2 border-[#D1A635] flex items-center justify-center mb-3">
+              <span className="text-[14px] font-bold text-[#D1A635]">2</span>
             </div>
-            <span className="text-[11px] font-bold text-gray-900 absolute top-9 whitespace-nowrap">Company Info</span>
+            <span className="text-[13px] font-extrabold text-gray-900 whitespace-nowrap">Company Info</span>
           </div>
 
           {/* Step 3 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-              <span className="text-[12px] font-bold text-gray-400">3</span>
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
+            <div className="w-10 h-10 rounded-[12px] bg-white border-2 border-gray-200 flex items-center justify-center mb-3">
+              <span className="text-[14px] font-bold text-gray-300">3</span>
             </div>
-            <span className="text-[11px] font-bold text-gray-400 absolute top-9 whitespace-nowrap">Subscription</span>
+            <span className="text-[13px] font-bold text-gray-300 whitespace-nowrap">Subscription</span>
           </div>
 
           {/* Step 4 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-              <span className="text-[12px] font-bold text-gray-400">4</span>
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
+            <div className="w-10 h-10 rounded-[12px] bg-white border-2 border-gray-200 flex items-center justify-center mb-3">
+              <span className="text-[14px] font-bold text-gray-300">4</span>
             </div>
-            <span className="text-[11px] font-bold text-gray-400 absolute top-9 whitespace-nowrap">Payment</span>
+            <span className="text-[13px] font-bold text-gray-300 whitespace-nowrap">Payment</span>
           </div>
 
           {/* Step 5 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-              <span className="text-[12px] font-bold text-gray-400">5</span>
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
+            <div className="w-10 h-10 rounded-[12px] bg-white border-2 border-gray-200 flex items-center justify-center mb-3">
+              <span className="text-[14px] font-bold text-gray-300">5</span>
             </div>
-            <span className="text-[11px] font-bold text-gray-400 absolute top-9 whitespace-nowrap">Listed</span>
+            <span className="text-[13px] font-bold text-gray-300 whitespace-nowrap">Listed</span>
           </div>
         </div>
       </div>
