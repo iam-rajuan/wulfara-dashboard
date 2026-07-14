@@ -31,16 +31,16 @@ const Header = ({ showDrawer }) => {
     <div className="relative mt-2 border-b-2">
       <div className="flex items-center justify-between p-4 ">
         {/* =============================Left Section============================= */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <RxHamburgerMenu
-            className="text-2xl text-blue-800 cursor-pointer lg:hidden"
+            className="text-2xl text-blue-800 cursor-pointer lg:hidden flex-shrink-0"
             onClick={showDrawer}
           />
-          <div>
-            <h2 className="font-bold text-[#202326] text-2xl uppercase">
+          <div className="min-w-0">
+            <h2 className="font-bold text-[#202326] text-[16px] sm:text-xl md:text-2xl uppercase truncate">
               {role === "admin" ? "ADMIN PORTAL" : "SUPPLIER PORTAL"}
             </h2>
-            <p className="text-sm text-gray-500">Platform Overview</p>
+            <p className="text-[11px] sm:text-sm text-gray-500 truncate">Platform Overview</p>
           </div>
         </div>
 
@@ -74,7 +74,7 @@ const Header = ({ showDrawer }) => {
 
       {/* =============================Notification Dropdown============================= */}
       {showNotifications && (
-        <div className="absolute right-4 top-[72px] z-50 p-4 bg-white rounded-md shadow-xl w-80">
+        <div className="absolute right-4 top-[72px] z-50 p-4 bg-white rounded-md shadow-xl w-72 sm:w-80">
           <h2 className="text-lg font-semibold text-center border-b pb-2 text-[#2c3e50]">
             Notifications
           </h2>

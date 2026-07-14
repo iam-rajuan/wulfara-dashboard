@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 
 const Subscription = () => {
   const [billingCycle, setBillingCycle] = useState('monthly');
+  const [selectedPlan, setSelectedPlan] = useState('premium');
 
   const pricingData = {
     'monthly': {
@@ -106,7 +107,19 @@ const Subscription = () => {
         <div className="flex flex-col md:flex-row gap-6 lg:gap-8 items-stretch md:items-center justify-center">
 
           {/* Basic Plan */}
-          <div className="flex-1 bg-white rounded-xl border border-gray-200 p-8 flex flex-col shadow-sm">
+          <div 
+            onClick={() => setSelectedPlan('basic')}
+            className={`flex-1 bg-white rounded-xl p-8 flex flex-col cursor-pointer transition-all duration-300 relative ${
+              selectedPlan === 'basic'
+                ? 'border-2 border-[#D1A635] shadow-[0_8px_30px_rgb(0,0,0,0.08)] md:-mt-8 md:mb-8 z-10'
+                : 'border border-gray-200 shadow-sm hover:border-[#D1A635]/50 z-0'
+            }`}
+          >
+            {selectedPlan === 'basic' && (
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#D1A635] text-gray-900 text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-sm">
+                SELECTED
+              </div>
+            )}
             <div className="bg-[#EBF0FA] w-10 h-10 rounded-md flex items-center justify-center mb-6">
               <Store className="w-5 h-5 text-[#3B82F6]" />
             </div>
@@ -119,8 +132,8 @@ const Subscription = () => {
 
             <div className="space-y-4 flex-1 mb-8">
               <div className="flex items-start gap-3">
-                <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" />
-                <span className="text-[13px] text-gray-700">Standard Company Profile</span>
+                <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" strokeWidth={selectedPlan === 'basic' ? 3 : 2} />
+                <span className={`text-[13px] ${selectedPlan === 'basic' ? 'text-gray-900 font-bold' : 'text-gray-700'}`}>Standard Company Profile</span>
               </div>
               <div className="flex items-start gap-3">
                 <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" />
@@ -132,18 +145,40 @@ const Subscription = () => {
               </div>
             </div>
 
-            <Link to="/cart">
-              <button className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors">
+            {selectedPlan === 'basic' ? (
+              <Link to="/cart" className="mt-auto">
+                <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
+                  Continue with Basic
+                </button>
+              </Link>
+            ) : (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setSelectedPlan('basic'); }}
+                className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors mt-auto"
+              >
                 Choose Basic
               </button>
-            </Link>
+            )}
           </div>
 
           {/* Premium Plan (Highlighted) */}
-          <div className="flex-1 bg-white rounded-xl border-2 border-[#D1A635] p-8 flex flex-col relative shadow-[0_8px_30px_rgb(0,0,0,0.08)] md:-mt-8 md:mb-8">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#D1A635] text-gray-900 text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-sm">
-              RECOMMENDED
-            </div>
+          <div 
+            onClick={() => setSelectedPlan('premium')}
+            className={`flex-1 bg-white rounded-xl p-8 flex flex-col cursor-pointer transition-all duration-300 relative ${
+              selectedPlan === 'premium'
+                ? 'border-2 border-[#D1A635] shadow-[0_8px_30px_rgb(0,0,0,0.08)] md:-mt-8 md:mb-8 z-10'
+                : 'border border-gray-200 shadow-sm hover:border-[#D1A635]/50 z-0'
+            }`}
+          >
+            {selectedPlan === 'premium' ? (
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#D1A635] text-gray-900 text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-sm">
+                RECOMMENDED
+              </div>
+            ) : (
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-600 text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-sm">
+                POPULAR
+              </div>
+            )}
 
             <div className="bg-[#FFF9E6] w-10 h-10 rounded-md flex items-center justify-center mb-6">
               <Star className="w-5 h-5 text-[#D1A635] fill-current" />
@@ -157,8 +192,8 @@ const Subscription = () => {
 
             <div className="space-y-4 flex-1 mb-8">
               <div className="flex items-start gap-3">
-                <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" strokeWidth={3} />
-                <span className="text-[13px] text-gray-900 font-bold">Featured Company Profile</span>
+                <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" strokeWidth={selectedPlan === 'premium' ? 3 : 2} />
+                <span className={`text-[13px] ${selectedPlan === 'premium' ? 'text-gray-900 font-bold' : 'text-gray-700'}`}>Featured Company Profile</span>
               </div>
               <div className="flex items-start gap-3">
                 <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" />
@@ -178,15 +213,36 @@ const Subscription = () => {
               </div>
             </div>
 
-            <Link to="/cart">
-              <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
+            {selectedPlan === 'premium' ? (
+              <Link to="/cart" className="mt-auto">
+                <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
+                  Continue with Premium
+                </button>
+              </Link>
+            ) : (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setSelectedPlan('premium'); }}
+                className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors mt-auto"
+              >
                 Choose Premium
               </button>
-            </Link>
+            )}
           </div>
 
           {/* Pro Plan */}
-          <div className="flex-1 bg-white rounded-xl border border-gray-200 p-8 flex flex-col shadow-sm">
+          <div 
+            onClick={() => setSelectedPlan('pro')}
+            className={`flex-1 bg-white rounded-xl p-8 flex flex-col cursor-pointer transition-all duration-300 relative ${
+              selectedPlan === 'pro'
+                ? 'border-2 border-[#D1A635] shadow-[0_8px_30px_rgb(0,0,0,0.08)] md:-mt-8 md:mb-8 z-10'
+                : 'border border-gray-200 shadow-sm hover:border-[#D1A635]/50 z-0'
+            }`}
+          >
+            {selectedPlan === 'pro' && (
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#D1A635] text-gray-900 text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-sm">
+                SELECTED
+              </div>
+            )}
             <div className="bg-[#EBF0FA] w-10 h-10 rounded-md flex items-center justify-center mb-6">
               <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
             </div>
@@ -199,8 +255,8 @@ const Subscription = () => {
 
             <div className="space-y-4 flex-1 mb-8">
               <div className="flex items-start gap-3">
-                <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" />
-                <span className="text-[13px] text-gray-700">Enhanced Company Profile</span>
+                <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" strokeWidth={selectedPlan === 'pro' ? 3 : 2} />
+                <span className={`text-[13px] ${selectedPlan === 'pro' ? 'text-gray-900 font-bold' : 'text-gray-700'}`}>Enhanced Company Profile</span>
               </div>
               <div className="flex items-start gap-3">
                 <Check className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" />
@@ -216,11 +272,20 @@ const Subscription = () => {
               </div>
             </div>
 
-            <Link to="/cart">
-              <button className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors">
+            {selectedPlan === 'pro' ? (
+              <Link to="/cart" className="mt-auto">
+                <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
+                  Continue with Pro
+                </button>
+              </Link>
+            ) : (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setSelectedPlan('pro'); }}
+                className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-800 font-medium text-[13px] rounded-md hover:bg-gray-50 transition-colors mt-auto"
+              >
                 Choose Pro
               </button>
-            </Link>
+            )}
           </div>
 
         </div>

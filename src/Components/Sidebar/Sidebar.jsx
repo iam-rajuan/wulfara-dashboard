@@ -65,7 +65,7 @@ const Sidebar = ({ closeDrawer }) => {
   const menuItems = role === "admin" ? adminMenuItems : supplierMenuItems;
 
   return (
-    <div className="w-[285px] bg-[#0E1726] flex flex-col h-screen text-[#8892A3]">
+    <div className="w-full h-full min-h-screen bg-[#0E1726] flex flex-col text-[#8892A3]">
       {/* Logo & Header */}
       <div className="px-6 pt-8 pb-8 flex flex-col gap-6">
         <div className="flex items-center gap-3">
@@ -94,6 +94,7 @@ const Sidebar = ({ closeDrawer }) => {
               <Link
                 key={item.label}
                 to={item.Link}
+                onClick={closeDrawer}
                 className={`flex items-center justify-between px-4 py-3 rounded-md text-[14px] font-semibold transition-colors ${isActive
                   ? "bg-[#D4AF37] text-[#0E1726] shadow-sm"
                   : "text-[#8892A3] hover:text-white hover:bg-white/5"
