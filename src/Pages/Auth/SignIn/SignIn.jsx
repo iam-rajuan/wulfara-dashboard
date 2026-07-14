@@ -36,11 +36,11 @@ const SignIn = () => {
   return (
     <div className="min-h-screen bg-[#1F2937] flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-[440px] flex flex-col items-center">
-        
+
         {/* Logo Section */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 rounded-lg bg-[#D1A635] flex items-center justify-center">
-             <Globe className="w-6 h-6 text-[#1F2937]" strokeWidth={2.5} />
+            <Globe className="w-6 h-6 text-[#1F2937]" strokeWidth={2.5} />
           </div>
           <span className="text-3xl font-bold text-white tracking-wide">WULFARA</span>
         </div>
@@ -50,11 +50,12 @@ const SignIn = () => {
         <div className="bg-white rounded-xl shadow-xl w-full p-8 md:p-10 mb-6">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Secure Login</h1>
-            <p className="text-[14px] text-gray-500">Access the WULFARA management dashboard</p>
+            <p className="text-[14px] text-gray-500 mb-1">Access the WULFARA management dashboard</p>
+
           </div>
 
           <form onSubmit={onFinish} className="space-y-5">
-            
+
             {/* Email Field */}
             <div>
               <label className="block text-[13px] font-bold text-gray-700 mb-1.5">
@@ -135,8 +136,15 @@ const SignIn = () => {
                 {loading ? 'Logging in...' : 'Login to Terminal'}
                 {!loading && <ArrowRight className="w-4 h-4 font-bold" />}
               </button>
+
+              <p className="text-[14px] text-gray-500 text-center mt-6">
+                Don't have an account?{" "}
+                <Link to="/sign-up" className="text-[#D1A635] hover:text-[#C2982B] hover:underline font-bold transition-colors ml-1">
+                  Sign up
+                </Link>
+              </p>
             </div>
-            
+
           </form>
         </div>
 
