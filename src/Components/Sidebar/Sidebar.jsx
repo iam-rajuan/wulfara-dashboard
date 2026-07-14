@@ -2,26 +2,27 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import brandlogo from "../../assets/image/logo.png";
 import {
-  LayoutDashboard,
-  Building2,
   Package,
   Image as ImageIcon,
-  FileText,
   MessageSquare,
   CreditCard,
-  LineChart,
-  Settings,
   BadgeCheck,
-  Users,
-  LayoutList,
-  Box,
-  Tag,
-  File,
-  Globe,
   User,
-  Diamond,
   LogOut
 } from "lucide-react";
+import DashboardIcon from "../../svglogos/DashboardIcon";
+import BuyersIcon from "../../svglogos/BuyersIcon";
+import SuppliersIcon from "../../svglogos/SuppliersIcon";
+import ListingsIcon from "../../svglogos/ListingsIcon";
+import CategoriesIcon from "../../svglogos/CategoriesIcon";
+import SubscriptionsIcon from "../../svglogos/SubscriptionsIcon";
+import CompanyProfileIcon from "../../svglogos/CompanyProfileIcon";
+import ProductsIcon from "../../svglogos/ProductsIcon";
+import RFQsIcon from "../../svglogos/RFQsIcon";
+import ContentIcon from "../../svglogos/ContentIcon";
+import SEOIcon from "../../svglogos/SEOIcon";
+import RevenueIcon from "../../svglogos/RevenueIcon";
+import SettingsIcon from "../../svglogos/SettingsIcon";
 
 const Sidebar = ({ closeDrawer }) => {
   const location = useLocation();
@@ -37,29 +38,29 @@ const Sidebar = ({ closeDrawer }) => {
 
   // supplier route
   const supplierMenuItems = [
-    { icon: <LayoutDashboard size={18} />, label: "Dashboard", Link: "/" },
-    { icon: <Building2 size={18} />, label: "Company Profile", Link: "/profile" },
-    { icon: <Package size={18} />, label: "Products & Services", Link: "/products" },
+    { icon: <DashboardIcon />, label: "Dashboard", Link: "/" },
+    { icon: <CompanyProfileIcon />, label: "Company Profile", Link: "/profile" },
+    { icon: <ProductsIcon />, label: "Products & Services", Link: "/products" },
     { icon: <ImageIcon size={18} />, label: "Gallery", Link: "/gallery" },
-    { icon: <FileText size={18} />, label: "RFQs", Link: "/rfqs", badge: "12" },
+    { icon: <RFQsIcon />, label: "RFQs", Link: "/rfqs", badge: "12" },
     { icon: <MessageSquare size={18} />, label: "Messages", Link: "/messages" },
     { icon: <CreditCard size={18} />, label: "Subscription", Link: "/subscription" },
-    { icon: <Settings size={18} />, label: "Settings", Link: "/settings" },
+    { icon: <SettingsIcon />, label: "Settings", Link: "/settings" },
   ];
 
   // admin route
   const adminMenuItems = [
-    { icon: <LayoutDashboard size={18} />, label: "Dashboard", Link: "/" },
-    { icon: <Users size={18} />, label: "Buyers", Link: "/buyer-management" },
-    { icon: <Diamond size={18} />, label: "Suppliers", Link: "/supplier-management" },
-    { icon: <LayoutList size={18} />, label: "Listings", Link: "/listings" },
-    { icon: <Box size={18} />, label: "Categories", Link: "/categories" },
-    { icon: <Tag size={18} />, label: "Subscriptions", Link: "/subscriptions" },
-    { icon: <FileText size={18} />, label: "RFQs", Link: "/rfqs" },
-    { icon: <File size={18} />, label: "Content", Link: "/content" },
-    { icon: <Globe size={18} />, label: "SEO", Link: "/seo" },
-    { icon: <LineChart size={18} />, label: "Revenue", Link: "/revenue" },
-    { icon: <Settings size={18} />, label: "Settings", Link: "/settings" },
+    { icon: <DashboardIcon />, label: "Dashboard", Link: "/" },
+    { icon: <BuyersIcon />, label: "Buyers", Link: "/buyer-management" },
+    { icon: <SuppliersIcon />, label: "Suppliers", Link: "/supplier-management" },
+    { icon: <ListingsIcon />, label: "Listings", Link: "/listings" },
+    { icon: <CategoriesIcon />, label: "Categories", Link: "/categories" },
+    { icon: <SubscriptionsIcon />, label: "Subscriptions", Link: "/subscriptions" },
+    { icon: <RFQsIcon />, label: "RFQs", Link: "/rfqs" },
+    { icon: <ContentIcon />, label: "Content", Link: "/content" },
+    { icon: <SEOIcon />, label: "SEO", Link: "/seo" },
+    { icon: <RevenueIcon />, label: "Revenue", Link: "/revenue" },
+    { icon: <SettingsIcon />, label: "Settings", Link: "/settings" },
   ];
 
   const menuItems = role === "admin" ? adminMenuItems : supplierMenuItems;

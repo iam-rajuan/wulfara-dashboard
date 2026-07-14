@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake } from 'lucide-react';
-import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../Components/SvgIcons";
+import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../svglogos/SvgIcons";
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
