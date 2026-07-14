@@ -11,7 +11,7 @@ const Cart = () => {
   const basePrice = 38.99;
   const tax = 5.00;
   const heroPrice = 15.00;
-  
+
   const total = basePrice + tax + (addons.heroPlacement ? heroPrice : 0);
 
   const handleAddonChange = (addonName) => {
@@ -23,7 +23,7 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-sans flex flex-col">
-      
+
       {/* Top Header */}
       <div className="w-full text-center pt-12 pb-6 px-4">
         <h1 className="text-3xl md:text-4xl font-bold text-[#111827] mb-3">Your Cart</h1>
@@ -33,63 +33,65 @@ const Cart = () => {
       </div>
 
       {/* Progress Tracker */}
-      <div className="w-full max-w-[900px] mx-auto px-6 lg:px-8 mb-12">
-        <div className="relative flex justify-between items-center w-full">
-          {/* Connecting Lines */}
-          <div className="absolute top-[14px] left-[5%] right-[25%] h-[2px] bg-[#D1A635] -z-10"></div>
-          <div className="absolute top-[14px] left-[75%] right-[5%] h-[2px] bg-gray-200 -z-10"></div>
-          
-          {/* Step 1 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-[#D1A635] flex items-center justify-center">
-              <Check className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-[11px] font-bold text-gray-800 absolute top-9 whitespace-nowrap">Industry</span>
-          </div>
+      <div className="relative flex justify-between items-start w-full max-w-[900px] mb-20 mx-auto px-4 md:px-8">
+        {/* Connecting Lines */}
+        <div className="absolute top-[40px] left-[5%] right-[5%] flex z-0">
+          <div className="w-1/4 border-t-4  border-[#D4AF37]"></div>
+          <div className="w-1/4 border-t-2 border-[#D4AF37]"></div>
+          <div className="w-1/4 border-t-2 border-[#D4AF37]"></div>
+          <div className="w-1/4 border-t-2 border-[#C5C6CD]"></div>
+        </div>
 
-          {/* Step 2 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-[#D1A635] flex items-center justify-center">
-              <Check className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-[11px] font-bold text-gray-800 absolute top-9 whitespace-nowrap">Company Info</span>
+        {/* Step 1 */}
+        <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+          <div className="w-12 h-12 rounded-2xl bg-[#D1A635] flex items-center justify-center mb-3">
+            <Check className="w-6 h-6 text-white" strokeWidth={2.5} />
           </div>
+          <span className="text-[13px] font-bold text-[#000000] whitespace-nowrap">Industry</span>
+        </div>
 
-          {/* Step 3 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-[#D1A635] flex items-center justify-center">
-              <Check className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-[11px] font-bold text-gray-800 absolute top-9 whitespace-nowrap">Subscription</span>
+        {/* Step 2 */}
+        <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+          <div className="w-12 h-12 rounded-2xl bg-[#D1A635] border-2 border-[#D1A635] flex items-center justify-center mb-3">
+            <span className="text-[15px] font-bold text-white">2</span>
           </div>
+          <span className="text-[13px] font-extrabold text-[#000000] whitespace-nowrap">Company Info</span>
+        </div>
 
-          {/* Step 4 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-white border-2 border-[#D1A635] flex items-center justify-center">
-              <span className="text-[12px] font-bold text-[#D1A635]">4</span>
-            </div>
-            <span className="text-[11px] font-bold text-gray-900 absolute top-9 whitespace-nowrap">Payment</span>
+        {/* Step 3 */}
+        <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+          <div className="w-12 h-12 rounded-2xl bg-[#D1A635] border-2 border-[#D1A635] flex items-center justify-center mb-3">
+            <span className="text-[15px] font-bold text-white">3</span>
           </div>
+          <span className="text-[13px] font-bold ttext-[#000000] whitespace-nowrap">Subscription</span>
+        </div>
 
-          {/* Step 5 */}
-          <div className="flex flex-col items-center gap-2 relative z-10 bg-[#F9FAFB] px-2">
-            <div className="w-7 h-7 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-              <span className="text-[12px] font-bold text-gray-400">5</span>
-            </div>
-            <span className="text-[11px] font-bold text-gray-400 absolute top-9 whitespace-nowrap">Listed</span>
+        {/* Step 4 */}
+        <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+          <div className="w-12 h-12 rounded-2xl  border-2 border-[#D1A635] flex items-center justify-center mb-3">
+            <span className="text-[15px] font-bold text-[#9CA3AF]">4</span>
           </div>
+          <span className="text-[13px] font-bold text-[#000000] whitespace-nowrap">Payment</span>
+        </div>
+
+        {/* Step 5 */}
+        <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+          <div className="w-12 h-12 rounded-2xl bg-white border-2 border-[#C5C6CD] flex items-center justify-center mb-3">
+            <span className="text-[15px] font-bold text-[#9CA3AF]">5</span>
+          </div>
+          <span className="text-[13px] font-bold text-[#000000] whitespace-nowrap">Listed</span>
         </div>
       </div>
 
       {/* Main Content Layout */}
       <div className="flex-1 w-full max-w-[1000px] mx-auto px-6 lg:px-8 pb-24 flex flex-col lg:flex-row gap-8 items-start">
-        
+
         {/* Left Column */}
         <div className="w-full lg:w-[60%] space-y-6">
-          
+
           {/* Plan Details Card */}
           <div className="bg-white p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
-            
+
             <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-100">
               <div className="flex items-start gap-4">
                 <div className="bg-[#EBF0FA] w-10 h-10 rounded-md flex items-center justify-center shrink-0 mt-1">
@@ -121,7 +123,7 @@ const Cart = () => {
             {/* Optional Add-ons */}
             <div className="bg-[#F8F9FA] rounded-xl p-6 border border-gray-100">
               <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-5">Optional Listing Add-ons</h3>
-              
+
               <div className="space-y-5">
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <div className="flex items-center h-5 mt-0.5">
@@ -173,7 +175,7 @@ const Cart = () => {
         {/* Right Column - Order Summary */}
         <div className="w-full lg:w-[40%] sticky top-8">
           <div className="bg-white border border-gray-200 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8">
-            
+
             <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
 
             <div className="space-y-4 mb-6">
@@ -181,7 +183,7 @@ const Cart = () => {
                 <span className="text-gray-600">Premium Plan (12 Months)</span>
                 <span className="font-bold text-gray-900">${basePrice.toFixed(2)} <span className="font-normal text-[12px] text-gray-500">/mo</span></span>
               </div>
-              
+
               {addons.heroPlacement && (
                 <div className="flex justify-between items-center text-[14px]">
                   <span className="text-gray-600">Featured Hero Placement</span>
@@ -224,7 +226,7 @@ const Cart = () => {
             <div className="bg-[#F0F5FA] rounded-lg p-5 text-center mb-6 border border-[#E1EBF5]">
               <div className="text-[13px] font-bold text-gray-900 mb-1">Looking for better value?</div>
               <div className="text-[12px] text-gray-600 leading-relaxed">
-                Switch to the 24-month plan and save 15% annually. 
+                Switch to the 24-month plan and save 15% annually.
                 <button className="text-blue-600 font-bold ml-1 hover:underline">Switch Plan</button>
               </div>
             </div>

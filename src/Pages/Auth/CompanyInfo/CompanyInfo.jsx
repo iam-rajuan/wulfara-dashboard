@@ -23,7 +23,7 @@ const CompanyInfo = () => {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-sans flex flex-col">
-      
+
       {/* Top Progress Tracker & Header */}
       <div className="w-full max-w-[1200px] mx-auto pt-10 px-6 lg:px-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Company Contact Information</h1>
@@ -32,65 +32,66 @@ const CompanyInfo = () => {
         {/* Progress Tracker */}
         <div className="relative flex justify-between items-start w-full max-w-[900px] mb-20 mx-auto px-4 md:px-8">
           {/* Connecting Lines */}
-          <div className="absolute top-[20px] left-[5%] right-[5%] h-[2px] flex z-0">
-            <div className="w-1/4 bg-[#D1A635]"></div>
-            <div className="w-1/4 bg-gray-200"></div>
-            <div className="w-1/4 bg-gray-200"></div>
-            <div className="w-1/4 bg-gray-200"></div>
+          <div className="absolute top-[40px] left-[5%] right-[5%] flex z-0">
+            <div className="w-1/4 border-t-4  border-[#D4AF37]"></div>
+            <div className="w-1/4 border-t-2 border-[#C5C6CD]"></div>
+            <div className="w-1/4 border-t-2 border-[#C5C6CD]"></div>
+            <div className="w-1/4 border-t-2 border-[#C5C6CD]"></div>
           </div>
-          
+
           {/* Step 1 */}
-          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
-            <div className="w-10 h-10 rounded-[12px] bg-[#D1A635] flex items-center justify-center mb-3">
-              <Check className="w-5 h-5 text-white" strokeWidth={3} />
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+            <div className="w-12 h-12 rounded-2xl bg-[#D1A635] flex items-center justify-center mb-3">
+              <Check className="w-6 h-6 text-white" strokeWidth={2.5} />
             </div>
-            <span className="text-[13px] font-bold text-gray-700 whitespace-nowrap">Industry</span>
+            <span className="text-[13px] font-bold text-[#000000] whitespace-nowrap">Industry</span>
           </div>
 
           {/* Step 2 */}
-          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
-            <div className="w-10 h-10 rounded-[12px] bg-white border-2 border-[#D1A635] flex items-center justify-center mb-3">
-              <span className="text-[14px] font-bold text-[#D1A635]">2</span>
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+            <div className="w-12 h-12 rounded-2xl bg-white border-2 border-[#D1A635] flex items-center justify-center mb-3">
+              <span className="text-[15px] font-bold text-[#D1A635]">2</span>
             </div>
-            <span className="text-[13px] font-extrabold text-gray-900 whitespace-nowrap">Company Info</span>
+            <span className="text-[13px] font-extrabold text-[#000000] whitespace-nowrap">Company Info</span>
           </div>
 
           {/* Step 3 */}
-          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
-            <div className="w-10 h-10 rounded-[12px] bg-white border-2 border-gray-200 flex items-center justify-center mb-3">
-              <span className="text-[14px] font-bold text-gray-300">3</span>
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+            <div className="w-12 h-12 rounded-2xl bg-white border-2 border-[#C5C6CD] flex items-center justify-center mb-3">
+              <span className="text-[15px] font-bold text-[#9CA3AF]">3</span>
             </div>
-            <span className="text-[13px] font-bold text-gray-300 whitespace-nowrap">Subscription</span>
+            <span className="text-[13px] font-bold text-[#000000] whitespace-nowrap">Subscription</span>
           </div>
 
           {/* Step 4 */}
-          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
-            <div className="w-10 h-10 rounded-[12px] bg-white border-2 border-gray-200 flex items-center justify-center mb-3">
-              <span className="text-[14px] font-bold text-gray-300">4</span>
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+            <div className="w-12 h-12 rounded-2xl bg-white border-2 border-[#C5C6CD] flex items-center justify-center mb-3">
+              <span className="text-[15px] font-bold text-[#9CA3AF]">4</span>
             </div>
-            <span className="text-[13px] font-bold text-gray-300 whitespace-nowrap">Payment</span>
+            <span className="text-[13px] font-bold text-[#000000] whitespace-nowrap">Payment</span>
           </div>
 
           {/* Step 5 */}
-          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-3">
-            <div className="w-10 h-10 rounded-[12px] bg-white border-2 border-gray-200 flex items-center justify-center mb-3">
-              <span className="text-[14px] font-bold text-gray-300">5</span>
+          <div className="flex flex-col items-center relative z-10 bg-[#F9FAFB] px-2">
+            <div className="w-12 h-12 rounded-2xl bg-white border-2 border-[#C5C6CD] flex items-center justify-center mb-3">
+              <span className="text-[15px] font-bold text-[#9CA3AF]">5</span>
             </div>
-            <span className="text-[13px] font-bold text-gray-300 whitespace-nowrap">Listed</span>
+            <span className="text-[13px] font-bold text-[#000000] whitespace-nowrap">Listed</span>
           </div>
         </div>
+
       </div>
 
       {/* Main Content Layout */}
       <div className="flex-1 w-full max-w-[1200px] mx-auto px-6 lg:px-8 pb-24 flex flex-col lg:flex-row gap-6 items-start">
-        
+
         {/* Left Column - Forms */}
         <div className="w-full lg:w-[60%] space-y-6">
-          
+
           {/* Company Details Card */}
           <div className="bg-[#FAFAFA] p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
             <h2 className="text-[20px] font-bold text-gray-900 mb-6">Company Details</h2>
-            
+
             <div className="space-y-5">
               <div>
                 <label className="block text-[13px] font-bold text-gray-900 mb-2">Company Name</label>
@@ -179,24 +180,22 @@ const CompanyInfo = () => {
           {/* Listing Preferences Card */}
           <div className="bg-[#FAFAFA] p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
             <h2 className="text-[20px] font-bold text-gray-900 mb-6">Listing Preferences</h2>
-            
+
             <div className="space-y-6">
               <div>
                 <label className="block text-[13px] font-bold text-gray-900 mb-2">Pricing Strategy</label>
                 <div className="flex bg-[#EEF2F6] rounded-md p-1 w-full max-w-[400px]">
                   <button
                     onClick={() => setPricingStrategy('Negotiable Rate')}
-                    className={`flex-1 text-[13px] font-bold py-2 px-4 rounded-md transition-colors ${
-                      pricingStrategy === 'Negotiable Rate' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    className={`flex-1 text-[13px] font-bold py-2 px-4 rounded-md transition-colors ${pricingStrategy === 'Negotiable Rate' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                      }`}
                   >
                     Negotiable Rate
                   </button>
                   <button
                     onClick={() => setPricingStrategy('Non-Negotiable')}
-                    className={`flex-1 text-[13px] font-bold py-2 px-4 rounded-md transition-colors ${
-                      pricingStrategy === 'Non-Negotiable' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    className={`flex-1 text-[13px] font-bold py-2 px-4 rounded-md transition-colors ${pricingStrategy === 'Non-Negotiable' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                      }`}
                   >
                     Non-Negotiable
                   </button>
@@ -211,13 +210,11 @@ const CompanyInfo = () => {
                 {/* Custom Toggle Switch */}
                 <button
                   onClick={() => setRfqEnabled(!rfqEnabled)}
-                  className={`w-11 h-6 rounded-full relative transition-colors duration-200 ease-in-out flex-shrink-0 ${
-                    rfqEnabled ? 'bg-[#D1A635]' : 'bg-gray-300'
-                  }`}
+                  className={`w-11 h-6 rounded-full relative transition-colors duration-200 ease-in-out flex-shrink-0 ${rfqEnabled ? 'bg-[#D1A635]' : 'bg-gray-300'
+                    }`}
                 >
-                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-transform duration-200 ease-in-out ${
-                    rfqEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'
-                  }`}></div>
+                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-transform duration-200 ease-in-out ${rfqEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'
+                    }`}></div>
                 </button>
               </div>
             </div>
@@ -228,7 +225,7 @@ const CompanyInfo = () => {
         {/* Right Column - Live Preview */}
         <div className="w-full lg:w-[40%] sticky top-8">
           <div className="bg-[#FAFBFC] border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            
+
             {/* Live Preview Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-white">
               <span className="text-[11px] font-bold text-gray-600 tracking-wider">LIVE PREVIEW</span>
@@ -238,7 +235,7 @@ const CompanyInfo = () => {
             {/* Preview Card Body */}
             <div className="p-5">
               <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 relative overflow-hidden">
-                
+
                 {/* Subtle gradient background effect from screenshot */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-green-50/50 rounded-bl-full -z-0"></div>
 
