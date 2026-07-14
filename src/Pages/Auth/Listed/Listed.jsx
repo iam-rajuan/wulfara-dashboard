@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, FileText, Pencil, Inbox } from 'lucide-react';
+import { Check, FileText, Pencil, Inbox, Save } from 'lucide-react';
 
 const Listed = () => {
-  // Mock dynamic data that would normally come from context/state
-  const companyName = "Steel Company B";
-  const planName = "Premium Plan";
+  const [companyName, setCompanyName] = useState("Steel Company B");
+  const [planName, setPlanName] = useState("Premium Plan");
+  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-sans flex items-center justify-center p-6">
@@ -45,9 +45,11 @@ const Listed = () => {
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <button className="flex-1 max-w-[220px] mx-auto sm:mx-0 py-3 px-6 bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[13px] rounded-md transition-colors shadow-sm">
-                View Listing
-              </button>
+              <Link to="/profile" className="flex-1 w-full max-w-[220px] mx-auto sm:mx-0">
+                <button className="w-full py-3 px-6 bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[13px] rounded-md transition-colors shadow-sm">
+                  View Listing
+                </button>
+              </Link>
               <Link to="/dashboard" className="flex-1 w-full max-w-[220px] mx-auto sm:mx-0">
                 <button className="w-full py-3 px-6 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-bold text-[13px] rounded-md transition-colors shadow-sm">
                   Go to Supplier Dashboard
@@ -57,14 +59,28 @@ const Listed = () => {
 
             {/* Footer Links */}
             <div className="flex justify-center gap-12">
-              <button className="flex items-center gap-2 text-[12px] font-medium text-gray-500 hover:text-gray-900 transition-colors">
-                <Pencil className="w-3.5 h-3.5" />
-                Edit Company
+              <button 
+                onClick={() => setIsEditing(!isEditing)}
+                className={`flex items-center gap-2 text-[12px] font-medium transition-colors ${isEditing ? 'text-[#D1A635] hover:text-[#C2982B]' : 'text-gray-500 hover:text-gray-900'}`}
+              >
+                {isEditing ? (
+                  <>
+                    <Save className="w-3.5 h-3.5" />
+                    Save Changes
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit Company
+                  </>
+                )}
               </button>
-              <button className="flex items-center gap-2 text-[12px] font-medium text-gray-500 hover:text-gray-900 transition-colors">
-                <Inbox className="w-3.5 h-3.5" />
-                Manage RFQs
-              </button>
+              <Link to="/rfqs">
+                <button className="flex items-center gap-2 text-[12px] font-medium text-gray-500 hover:text-gray-900 transition-colors">
+                  <Inbox className="w-3.5 h-3.5" />
+                  Manage RFQs
+                </button>
+              </Link>
             </div>
 
           </div>
@@ -74,20 +90,45 @@ const Listed = () => {
         <div className="w-full lg:w-[40%] flex flex-col gap-6">
           
           {/* Listing Summary Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-2 mb-6">
-              <FileText className="w-5 h-5 text-gray-500" />
-              <h2 className="text-[15px] font-bold text-gray-800">Listing Summary</h2>
+          <div className={`bg-white rounded-xl shadow-sm border p-6 md:p-8 transition-colors ${isEditing ? 'border-[#D1A635]' : 'border-gray-100'}`}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-gray-500" />
+                <h2 className="text-[15px] font-bold text-gray-800">Listing Summary</h2>
+              </div>
+              {isEditing && <span className="text-[10px] font-bold text-[#D1A635] bg-[#FFF9E6] px-2 py-1 rounded-md uppercase tracking-wider">Editing</span>}
             </div>
 
             <div className="space-y-4">
               <div className="flex justify-between items-center border-b border-gray-50 pb-4">
                 <span className="text-[13px] text-gray-500">Company</span>
-                <span className="text-[13px] font-bold text-gray-900">{companyName}</span>
+                {isEditing ? (
+                  <input 
+                    type="text" 
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="text-[13px] font-bold text-gray-900 border border-gray-300 rounded px-2 py-1 outline-none text-right w-36 focus:border-[#D1A635]"
+                    autoFocus
+                  />
+                ) : (
+                  <span className="text-[13px] font-bold text-gray-900">{companyName}</span>
+                )}
               </div>
               <div className="flex justify-between items-center border-b border-gray-50 pb-4">
                 <span className="text-[13px] text-gray-500">Plan</span>
-                <span className="text-[13px] font-bold text-gray-900">{planName}</span>
+                {isEditing ? (
+                  <select 
+                    value={planName}
+                    onChange={(e) => setPlanName(e.target.value)}
+                    className="text-[13px] font-bold text-gray-900 border border-gray-300 rounded px-1 py-1 outline-none text-right focus:border-[#D1A635]"
+                  >
+                    <option value="Basic Plan">Basic Plan</option>
+                    <option value="Premium Plan">Premium Plan</option>
+                    <option value="Pro Plan">Pro Plan</option>
+                  </select>
+                ) : (
+                  <span className="text-[13px] font-bold text-gray-900">{planName}</span>
+                )}
               </div>
               <div className="flex justify-between items-center border-b border-gray-50 pb-4">
                 <span className="text-[13px] text-gray-500">Status</span>
