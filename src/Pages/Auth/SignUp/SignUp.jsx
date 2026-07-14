@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users } from 'lucide-react';
+import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake } from 'lucide-react';
+import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../Components/SvgIcons";
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +19,7 @@ const SignUp = () => {
 
           <div className="bg-white p-6 md:p-8 rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100">
             <form className="space-y-5">
-              
+
               <div>
                 <label className="block text-[13px] font-bold text-gray-900 mb-2">Full Name</label>
                 <input
@@ -138,12 +139,12 @@ const SignUp = () => {
       <div className="w-full md:w-1/2 bg-[#2B3543] p-6 md:p-12 flex justify-center items-center relative overflow-hidden">
         <div className="w-full max-w-[440px] relative z-10">
           <h2 className="text-[26px] font-bold text-white text-center mb-10">Grow your supplier business online</h2>
-          
+
           <div className="space-y-4 mb-14">
-            
+
             {/* Card 1 */}
             <div className="bg-white rounded-lg p-4 flex items-start gap-4">
-              <div className="bg-[#FFF9E6] p-2 rounded-md shrink-0 mt-0.5">
+              <div className="bg-[#f8f9ff] p-2 rounded-md shrink-0 mt-0.5">
                 <Search className="w-5 h-5 text-[#D1A635]" />
               </div>
               <div>
@@ -154,8 +155,8 @@ const SignUp = () => {
 
             {/* Card 2 */}
             <div className="bg-white rounded-lg p-4 flex items-start gap-4">
-              <div className="bg-[#FFF9E6] p-2 rounded-md shrink-0 mt-0.5">
-                <Mail className="w-5 h-5 text-[#D1A635]" />
+              <div className="bg-[#f8f9ff] p-2 rounded-md shrink-0 mt-0.5">
+                <CustomMailIcon className="w-5 h-5 text-[#D1A635]" />
               </div>
               <div>
                 <h3 className="font-bold text-[14px] text-gray-900 mb-1">Receive RFQs directly</h3>
@@ -165,8 +166,8 @@ const SignUp = () => {
 
             {/* Card 3 */}
             <div className="bg-white rounded-lg p-4 flex items-start gap-4">
-              <div className="bg-[#FFF9E6] p-2 rounded-md shrink-0 mt-0.5">
-                <Settings className="w-5 h-5 text-[#D1A635]" />
+              <div className="bg-[#f8f9ff] p-2 rounded-md shrink-0 mt-0.5">
+                <CustomSettingsIcon className="w-5 h-5 text-[#D1A635]" />
               </div>
               <div>
                 <h3 className="font-bold text-[14px] text-gray-900 mb-1">Manage your company listing</h3>
@@ -176,8 +177,8 @@ const SignUp = () => {
 
             {/* Card 4 */}
             <div className="bg-white rounded-lg p-4 flex items-start gap-4">
-              <div className="bg-[#FFF9E6] p-2 rounded-md shrink-0 mt-0.5">
-                <Network className="w-5 h-5 text-[#D1A635]" />
+              <div className="bg-[#f8f9ff] p-2 rounded-md shrink-0 mt-0.5">
+                <CustomNetworkIcon className="w-5 h-5 text-[#D1A635]" />
               </div>
               <div>
                 <h3 className="font-bold text-[14px] text-gray-900 mb-1">Grow your business network</h3>
@@ -189,48 +190,48 @@ const SignUp = () => {
 
           {/* Bottom Progress Steps */}
           <div className="bg-white rounded-xl p-5 flex justify-between items-center relative shadow-sm">
-            
+
             {/* Connecting lines container */}
             <div className="absolute inset-0 flex items-center px-10 pointer-events-none">
-                <div className="w-full flex h-[2px]">
-                    <div className="w-1/3 bg-gray-200"></div>
-                    <div className="w-1/3 bg-gray-200"></div>
-                    <div className="w-1/3 border-t-2 border-dashed border-[#10B981] mt-[1px]"></div>
-                </div>
+              <div className="w-full flex h-[2px]">
+                <div className="w-1/3 border-t-2  border-[#C5C6CD] mt-[-25px]"></div>
+                <div className="w-1/3 border-t-2  border-[#C5C6CD] mt-[-25px]"></div>
+                <div className="w-1/3 border-t-2 border-dashed border-[#10B981] mt-[-25px]"></div>
+              </div>
             </div>
 
             {/* Step 1 */}
-            <div className="relative z-10 flex flex-col items-center gap-2 bg-white px-1">
-              <div className="bg-[#2B3543] w-10 h-10 rounded-xl flex items-center justify-center">
-                <UserPlus className="w-5 h-5 text-white" />
+            <div className="relative z-10 flex flex-col items-center gap-2 bg-white px-2">
+              <div className="bg-[#1f2937] w-12 h-12 rounded-2xl flex items-center justify-center">
+                <UserPlus className="w-6 h-6 text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-[11px] font-bold text-gray-900">Account</span>
+              <span className="text-[13px] font-extrabold text-[#1f2937]">Account</span>
             </div>
 
             {/* Step 2 */}
-            <div className="relative z-10 flex flex-col items-center gap-2 bg-white px-1">
-              <div className="bg-[#EBF1F7] w-10 h-10 rounded-xl flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-[#1F2937]" />
+            <div className="relative z-10 flex flex-col items-center gap-2 bg-white px-2">
+              <div className="bg-[#e9f0f8] border border-[#d1d5db] w-12 h-12 rounded-2xl flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-[#1f2937]" strokeWidth={2.5} />
               </div>
-              <span className="text-[11px] font-bold text-gray-600">Profile</span>
+              <span className="text-[13px] font-bold text-[#4b5563]">Profile</span>
             </div>
 
             {/* Step 3 */}
-            <div className="relative z-10 flex flex-col items-center gap-2 bg-white px-1">
-              <div className="bg-[#EBF1F7] w-10 h-10 rounded-xl flex items-center justify-center">
-                <FileText className="w-5 h-5 text-[#1F2937]" />
+            <div className="relative z-10 flex flex-col items-center gap-2 bg-white px-2">
+              <div className="bg-[#e9f0f8] border border-[#d1d5db] w-12 h-12 rounded-2xl flex items-center justify-center">
+                <FileText className="w-5 h-5 text-[#1f2937]" strokeWidth={2.5} />
               </div>
-              <span className="text-[11px] font-bold text-gray-600">RFQs</span>
+              <span className="text-[13px] font-bold text-[#4b5563]">RFQs</span>
             </div>
 
             {/* Step 4 */}
-            <div className="relative z-10 flex flex-col items-center gap-2 bg-white px-1">
-              <div className="bg-[#D1A635] w-10 h-10 rounded-xl flex items-center justify-center">
-                <Users className="w-5 h-5 text-gray-900" />
+            <div className="relative z-10 flex flex-col items-center gap-2 bg-white px-2">
+              <div className="bg-[#d4af37] border-2 border-black w-12 h-12 rounded-2xl flex items-center justify-center">
+                <Handshake className="w-6 h-6 text-black" strokeWidth={2.5} />
               </div>
-              <span className="text-[11px] font-bold text-gray-900">Customers</span>
+              <span className="text-[13px] font-extrabold text-black">Customers</span>
             </div>
-            
+
           </div>
         </div>
       </div>
