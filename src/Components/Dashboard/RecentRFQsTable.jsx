@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const recentRFQs = [
   { id: 'RFQ-1048', buyer: 'David Carter', avatar: 'DC', product: 'Steel sheets', qty: '500 units', deadline: 'May 24', status: 'New', statusColor: 'bg-blue-100 text-blue-800', dot: 'bg-blue-600', action: 'View', actionStyle: 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50' },
@@ -14,7 +15,9 @@ export default function RecentRFQsTable() {
           <h3 className="font-bold text-[16px] text-[#0F172A] mb-1">Recent RFQs</h3>
           <p className="text-gray-500 text-[13px]">Latest requests from buyers</p>
         </div>
-        <button className="text-[13px] font-bold text-[#137847] hover:underline">View All</button>
+        <Link to="/rfqs" className="text-[13px] font-bold text-[#137847] hover:underline">
+          View All
+        </Link>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-[13px]">
@@ -51,9 +54,11 @@ export default function RecentRFQsTable() {
                   </span>
                 </td>
                 <td className="px-6 py-5">
-                  <button className={`px-4 py-1.5 rounded-[4px] text-[12px] font-bold transition ${rfq.actionStyle}`}>
-                    {rfq.action}
-                  </button>
+                  <Link to={rfq.action === 'Reply' ? `/rfqs/${rfq.id}/reply` : `/rfqs/${rfq.id}`}>
+                    <button className={`px-4 py-1.5 rounded-[4px] text-[12px] font-bold transition ${rfq.actionStyle}`}>
+                      {rfq.action}
+                    </button>
+                  </Link>
                 </td>
               </tr>
             ))}

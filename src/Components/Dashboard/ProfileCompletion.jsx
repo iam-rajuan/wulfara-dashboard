@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function ProfileCompletion() {
   return (
@@ -42,10 +43,12 @@ export default function ProfileCompletion() {
         </div>
       </div>
 
-      <button className="w-full py-3 bg-[#D4AF37] hover:bg-[#C29F31] transition text-[#0F172A] font-bold rounded-lg flex justify-center items-center gap-2 text-[14px]">
-        Complete Profile
-        <ArrowRight size={18} strokeWidth={2.5} />
-      </button>
+      <Link to="/profile" className="mt-auto">
+        <button className="w-full py-3 bg-[#D4AF37] hover:bg-[#C29F31] transition text-[#0F172A] font-bold rounded-lg flex justify-center items-center gap-2 text-[14px]">
+          Complete Profile
+          <ArrowRight size={18} strokeWidth={2.5} />
+        </button>
+      </Link>
     </div>
   );
 }

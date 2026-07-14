@@ -6,7 +6,7 @@ import RecentRFQsTable from '../../Components/Dashboard/RecentRFQsTable';
 
 export default function SupplierDashboard() {
   return (
-    <div className="w-full text-[#0F172A] font-sans overflow-hidden">
+    <div className="w-full text-[#0F172A] mt-5 font-sans overflow-hidden">
       <DashboardHeader />
 
       <DashboardStats />

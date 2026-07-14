@@ -1,7 +1,7 @@
 import React from 'react';
 import { Download, BadgeCheck, Clock } from 'lucide-react';
 
-export default function DashboardHeader() {
+export default function DashboardHeader({ onExport, exportText = "Export Report" }) {
   return (
     <div className='mt-16'>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -9,9 +9,12 @@ export default function DashboardHeader() {
           <h1 className="text-[28px] md:text-[32px] font-bold mb-1 tracking-tight">Supplier Dashboard</h1>
           <p className="text-gray-500 text-[13px] md:text-[14px]">Manage your WULFARA listing, RFQs, subscription, and supplier performance.</p>
         </div>
-        <button className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition w-full md:w-auto">
+        <button 
+          onClick={onExport}
+          className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition w-full md:w-auto"
+        >
           <Download size={16} />
-          Export Report
+          {exportText}
         </button>
       </div>
 
