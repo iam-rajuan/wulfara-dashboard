@@ -1,7 +1,6 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
-import FileTextIcon from '../../svglogos/FileTextIcon';
-import ActivityIcon from '../../svglogos/ActivityIcon';
+import { FileTextIcon, ActivityIcon } from '../../svglogos/SvgIcons';
 
 export default function DashboardStats() {
   return (

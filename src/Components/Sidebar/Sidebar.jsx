@@ -10,19 +10,21 @@ import {
   User,
   LogOut
 } from "lucide-react";
-import DashboardIcon from "../../svglogos/DashboardIcon";
-import BuyersIcon from "../../svglogos/BuyersIcon";
-import SuppliersIcon from "../../svglogos/SuppliersIcon";
-import ListingsIcon from "../../svglogos/ListingsIcon";
-import CategoriesIcon from "../../svglogos/CategoriesIcon";
-import SubscriptionsIcon from "../../svglogos/SubscriptionsIcon";
-import CompanyProfileIcon from "../../svglogos/CompanyProfileIcon";
-import ProductsIcon from "../../svglogos/ProductsIcon";
-import RFQsIcon from "../../svglogos/RFQsIcon";
-import ContentIcon from "../../svglogos/ContentIcon";
-import SEOIcon from "../../svglogos/SEOIcon";
-import RevenueIcon from "../../svglogos/RevenueIcon";
-import SettingsIcon from "../../svglogos/SettingsIcon";
+import {
+  DashboardIcon,
+  BuyersIcon,
+  SuppliersIcon,
+  ListingsIcon,
+  CategoriesIcon,
+  SubscriptionsIcon,
+  CompanyProfileIcon,
+  ProductsIcon,
+  RFQsIcon,
+  ContentIcon,
+  SEOIcon,
+  RevenueIcon,
+  SettingsIcon
+} from "../../svglogos/SvgIcons";
 
 const Sidebar = ({ closeDrawer }) => {
   const location = useLocation();
