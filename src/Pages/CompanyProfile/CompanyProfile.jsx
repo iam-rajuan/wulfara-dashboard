@@ -3,6 +3,7 @@ import ProfileHeader from '../../Components/CompanyProfile/ProfileHeader';
 import BusinessProfileForm from '../../Components/CompanyProfile/BusinessProfileForm';
 import ProfileCompletionCard from '../../Components/CompanyProfile/ProfileCompletionCard';
 import ListingPreviewCard from '../../Components/CompanyProfile/ListingPreviewCard';
+import { toast } from 'react-toastify';
 
 export default function CompanyProfile() {
   const [profileData, setProfileData] = useState({
@@ -42,7 +43,7 @@ export default function CompanyProfile() {
     // Simulate network request
     setTimeout(() => {
       setIsSaving(false);
-      alert("Profile data saved successfully!\n\nYour changes have been recorded.");
+      toast.success("Profile data saved successfully! Your changes have been recorded.");
     }, 1000);
   };
 
@@ -55,7 +56,7 @@ export default function CompanyProfile() {
         ? profileData.certifications.slice(0, 2) 
         : ["ISO 9001", "OEM/ODM"]
     });
-    alert("Listing preview updated with your current form data (see the card on the right)!");
+    toast.info("Listing preview updated with your current form data (see the card on the right)!");
   };
 
   return (

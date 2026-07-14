@@ -5,6 +5,7 @@ import GalleryTabs from '../../Components/Gallery/GalleryTabs';
 import GalleryGrid from '../../Components/Gallery/GalleryGrid';
 import GalleryTips from '../../Components/Gallery/GalleryTips';
 import GalleryModal from '../../Components/Gallery/GalleryModal';
+import { toast } from 'react-toastify';
 
 export default function Gallery() {
   const [activeTab, setActiveTab] = useState('All Files');
@@ -78,9 +79,32 @@ export default function Gallery() {
     setFiles([...files, newFile]);
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      setIsSaving(false);
+      toast.success(`Gallery saved successfully! You currently have ${files.length} items in your gallery.`);
+    }, 1000);
+  };
+
+  const handlePreview = () => {
+    const primaryImage = files.find(f => f.isPrimary);
+    if (primaryImage) {
+      toast.info(`Previewing Listing: Primary Image is "${primaryImage.title}" (Total Files: ${files.length})`);
+    } else {
+      toast.info(`Previewing Listing: Total Files: ${files.length}. No primary image set yet!`);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-16">
-      <GalleryHeader />
+      <GalleryHeader 
+        onPreview={handlePreview}
+        onSave={handleSave}
+        saveText={isSaving ? "Saving..." : "Save Gallery"}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content Area */}
