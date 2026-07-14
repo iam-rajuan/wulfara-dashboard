@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { IoMdNotifications } from "react-icons/io";
 import { Bell } from "lucide-react";
-import adminImage from "../../assets/image/adminkickclick.jpg";
 
 const Header = ({ showDrawer }) => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -64,7 +63,7 @@ const Header = ({ showDrawer }) => {
           <Link to="/settings">
             <div className="p-2 text-blue-700 transition border border-blue-500 rounded-full hover:bg-blue-50">
               <img
-                src={adminImage}
+                src="https://ui-avatars.com/api/?name=Admin&background=D1A635&color=fff"
                 alt="Admin"
                 className="object-cover w-6 h-6 rounded-full"
               />

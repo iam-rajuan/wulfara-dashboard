@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import brandLogo from "../../assets/image/image.png";
+import brandlogo from "../../assets/image/logo.png";
 import {
   LayoutDashboard,
   Building2,
@@ -71,7 +71,7 @@ const Sidebar = ({ closeDrawer }) => {
         <div className="flex items-center gap-3">
           {/* Custom Logo representation */}
           <div className="flex items-center justify-center">
-            <img src={brandLogo} alt="Logo" className="w-auto h-8 object-contain" />
+            <img src={brandlogo} alt="Logo" className="w-auto h-8 object-contain" />
           </div>
           <span className="text-[22px] font-extrabold tracking-wider text-white">
             WULFARA

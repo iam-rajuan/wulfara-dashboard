@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Info, ArrowRight, Globe } from "lucide-react";
-
+import brandlogo from "../../../assets/image/logo.png";
 const SignIn = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -39,9 +39,7 @@ const SignIn = () => {
 
         {/* Logo Section */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-[#D1A635] flex items-center justify-center">
-            <Globe className="w-6 h-6 text-[#1F2937]" strokeWidth={2.5} />
-          </div>
+          <img src={brandlogo} alt="Wulfara Logo" className="h-10 w-auto object-contain" />
           <span className="text-3xl font-bold text-white tracking-wide">WULFARA</span>
         </div>
         {/* The ADMIN PORTAL badge has been removed here as requested */}

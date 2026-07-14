@@ -3,7 +3,8 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { FaRegEye } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import brandlogo from "../../../assets/image/logo_yard.png";
+import brandlogo from "../../../assets/image/logo.png";
+
 
 const NewPass = () => {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ const NewPass = () => {
           >
             <div className="mx-auto ">
               <div className="flex justify-center "> 
-                <img  src={brandlogo} alt="brandlogo" className="w-auto my-3" />
+                <img  src={brandlogo} alt="brandlogo" className="w-auto h-10 object-contain my-3" />
               </div>
               <h2 className="mb-4 text-2xl font-bold text-gray-700 md:text-3xl">
                 Create New Password

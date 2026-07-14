@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import brandlogo from "../../../assets/image/logo_yard.png";
+import brandlogo from "../../../assets/image/logo.png";
+
 
 const VerifyCode = () => {
   const [code, setCode] = useState(["", "", "", "", ""]);
@@ -39,7 +40,7 @@ const VerifyCode = () => {
       <div className="py-10 md:py-12 mx-2 md:mx-0 px-6 md:px-10 rounded-2xl w-[580px] h-[525px] bg-white border-2 border-[#eef6ff] ">
         <div className="">
           <div className="flex justify-center">
-            <img className="w-auto" src={brandlogo} alt="brandlogo" />
+            <img className="w-auto h-10 object-contain" src={brandlogo} alt="brandlogo" />
           </div>
           <h1 className="text-2xl font-medium ">Verify Your Code</h1>
           <p className="mt-4 ">

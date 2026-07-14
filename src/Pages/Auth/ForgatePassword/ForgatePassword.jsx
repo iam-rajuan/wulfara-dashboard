@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
-import brandlogo from "../../../assets/image/logo_yard.png";
+import brandlogo from "../../../assets/image/logo.png";
+
 
 const ForgatePassword = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const ForgatePassword = () => {
     <div className="flex items-center justify-center min-h-screen bg-[#f9fafb]">
       <div className="py-10 md:py-12 mx-2 md:mx-0 px-6 md:px-10 rounded-2xl w-[580px] h-[525px] bg-white border-2 border-[#eef6ff] mt-10">
        <div className="flex justify-center">
-         <img className="w-auto" src={brandlogo} alt="brandlogo" />
+         <img className="w-auto h-10 object-contain" src={brandlogo} alt="brandlogo" />
        </div>
         <h1 className="my-2 font-bold">Forget password</h1>
         <p className="mb-4 text-gray-600 ">
