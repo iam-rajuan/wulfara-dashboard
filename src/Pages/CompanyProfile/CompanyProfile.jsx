@@ -29,24 +29,42 @@ export default function CompanyProfile() {
     ]
   };
 
-  const previewData = {
+  const [previewData, setPreviewData] = useState({
     name: "Wulfara Steel Corp",
     location: "Frankfurt, Germany",
     description: "Leading manufacturer of high-grade steel sheets and precision metal...",
     tags: ["ISO 9001", "OEM/ODM"]
-  };
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = () => {
-    console.log("Saving profile data...", profileData);
+    setIsSaving(true);
+    // Simulate network request
+    setTimeout(() => {
+      setIsSaving(false);
+      alert("Profile data saved successfully!\n\nYour changes have been recorded.");
+    }, 1000);
   };
 
   const handlePreview = () => {
-    console.log("Previewing listing...");
+    setPreviewData({
+      name: "Wulfara Steel Corp",
+      location: "Frankfurt, Germany",
+      description: profileData.description ? (profileData.description.slice(0, 100) + '...') : "Leading manufacturer of high-grade steel sheets and precision metal...",
+      tags: profileData.certifications && profileData.certifications.length > 0 
+        ? profileData.certifications.slice(0, 2) 
+        : ["ISO 9001", "OEM/ODM"]
+    });
+    alert("Listing preview updated with your current form data (see the card on the right)!");
   };
 
   return (
     <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-16">
-      <ProfileHeader onPreview={handlePreview} onSave={handleSave} />
+      <ProfileHeader 
+        onPreview={handlePreview} 
+        onSave={handleSave} 
+        saveText={isSaving ? "Saving..." : "Save Profile"} 
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <BusinessProfileForm data={profileData} onChange={setProfileData} />
