@@ -1,5 +1,21 @@
 import React from "react";
 import { MoreVertical } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const data = [
+  { name: 'Jan', revenue: 4000 },
+  { name: 'Feb', revenue: 3000 },
+  { name: 'Mar', revenue: 5000 },
+  { name: 'Apr', revenue: 4500 },
+  { name: 'May', revenue: 6000 },
+  { name: 'Jun', revenue: 5500 },
+  { name: 'Jul', revenue: 7000 },
+  { name: 'Aug', revenue: 8500 },
+  { name: 'Sep', revenue: 7500 },
+  { name: 'Oct', revenue: 9000 },
+  { name: 'Nov', revenue: 8000 },
+  { name: 'Dec', revenue: 10000 },
+];
 
 export default function RevenueOverview() {
   return (
@@ -13,10 +29,48 @@ export default function RevenueOverview() {
         </button>
       </div>
       
-      <div className="flex-1 bg-[#F4F7FB] rounded-lg border border-gray-100 flex items-center justify-center min-h-[250px]">
-        <p className="text-[13px] font-medium text-gray-400">
-          Interactive Monthly Trend Chart
-        </p>
+      <div className="flex-1 w-full min-h-[250px] mt-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart
+            data={data}
+            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#D1A635" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#D1A635" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <XAxis 
+              dataKey="name" 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fontSize: 12, fill: '#9CA3AF' }} 
+              dy={10} 
+            />
+            <YAxis 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fontSize: 12, fill: '#9CA3AF' }} 
+              tickFormatter={(value) => `$${value >= 1000 ? (value/1000)+'k' : value}`} 
+            />
+            <Tooltip 
+              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              itemStyle={{ color: '#0F172A', fontWeight: 'bold' }}
+              labelStyle={{ color: '#6B7280', marginBottom: '4px' }}
+              formatter={(value) => [`$${value.toLocaleString()}`, 'Revenue']}
+            />
+            <Area 
+              type="monotone" 
+              dataKey="revenue" 
+              stroke="#D1A635" 
+              strokeWidth={3} 
+              fillOpacity={1} 
+              fill="url(#colorRevenue)" 
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
