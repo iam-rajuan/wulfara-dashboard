@@ -14,7 +14,8 @@ export default function CreateCategory() {
   const [searchParams] = useSearchParams();
   const parentParam = searchParams.get("parent");
   
-  const { data: categories = [], isLoading: isLoadingCategories } = useGetCategoriesQuery();
+  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetCategoriesQuery();
+  const categories = categoriesResponse?.data || [];
   const [createCategory, { isLoading: isCreating, isError, isSuccess, error }] = useCreateCategoryMutation();
   const [getUploadUrl] = useGetUploadUrlMutation();
 

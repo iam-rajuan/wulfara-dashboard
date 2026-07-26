@@ -19,7 +19,8 @@ export default function EditCategory() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  const { data: categories = [] } = useGetCategoriesQuery();
+  const { data: categoriesResponse } = useGetCategoriesQuery();
+  const categories = categoriesResponse?.data || [];
   const { data: categoryResponse, isLoading: isLoadingCategory } = useGetCategoryQuery(id);
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [deleteCategory] = useDeleteCategoryMutation();
