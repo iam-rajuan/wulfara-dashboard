@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { createCategory, reset } from "../../../redux/features/categories/categorySlice";
+import categoryService from "../../../redux/features/categories/categoryService";
 import { 
   Info, 
   Image as ImageIcon, 
@@ -9,6 +12,16 @@ import {
 
 export default function CreateCategory() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
+  const { isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.category
+  );
+  const [localLoading, setLocalLoading] = useState(false);
+  const [localError, setLocalError] = useState("");
+
+  const [bannerFile, setBannerFile] = useState(null);
+  const [iconFile, setIconFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop");
   const [iconPreview, setIconPreview] = useState(null);
   const [formData, setFormData] = useState({
@@ -34,6 +47,17 @@ export default function CreateCategory() {
     }
   }, [formData.name]);
 
+  useEffect(() => {
+    if (isError) {
+      setLocalError(message);
+      dispatch(reset());
+    }
+    if (isSuccess) {
+      dispatch(reset());
+      navigate("/categories");
+    }
+  }, [isError, isSuccess, message, navigate, dispatch]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -42,6 +66,7 @@ export default function CreateCategory() {
   const handleBannerUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setBannerFile(file);
       setBannerPreview(URL.createObjectURL(file));
     }
   };
@@ -49,7 +74,57 @@ export default function CreateCategory() {
   const handleIconUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setIconFile(file);
       setIconPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async () => {
+    setLocalLoading(true);
+    setLocalError("");
+    try {
+      let iconUrl = "no-icon.png";
+      let bannerUrl = "no-banner.jpg";
+
+      const uploadTasks = [];
+
+      // Upload Icon
+      if (iconFile) {
+        uploadTasks.push((async () => {
+          const iconPresignData = await categoryService.getUploadUrl(iconFile.type);
+          if (iconPresignData.success) {
+            await categoryService.uploadFileToS3(iconPresignData.data.uploadUrl, iconFile);
+            iconUrl = iconPresignData.data.fileUrl;
+          }
+        })());
+      }
+
+      // Upload Banner
+      if (bannerFile) {
+        uploadTasks.push((async () => {
+          const bannerPresignData = await categoryService.getUploadUrl(bannerFile.type);
+          if (bannerPresignData.success) {
+            await categoryService.uploadFileToS3(bannerPresignData.data.uploadUrl, bannerFile);
+            bannerUrl = bannerPresignData.data.fileUrl;
+          }
+        })());
+      }
+
+      await Promise.all(uploadTasks);
+
+      const categoryData = {
+        ...formData,
+        parentCategory: formData.parentCategory === "None (Main Category)" ? null : undefined,
+        icon: iconUrl,
+        banner: bannerUrl
+      };
+
+      dispatch(createCategory(categoryData));
+    } catch (error) {
+      console.error(error);
+      setLocalError("Error creating category. Please try again.");
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -222,6 +297,13 @@ export default function CreateCategory() {
             </div>
 
           </div>
+
+          {localError && (
+            <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-lg text-[13px] font-bold">
+              {localError}
+            </div>
+          )}
+
         </div>
 
         {/* Right Column (Preview & Admin Summary) */}
@@ -308,10 +390,11 @@ export default function CreateCategory() {
           Cancel
         </button>
         <button 
-          onClick={() => navigate("/categories")}
-          className="px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
+          onClick={handleSubmit}
+          disabled={isLoading || localLoading}
+          className="px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm disabled:opacity-70"
         >
-          Save Category
+          {isLoading || localLoading ? "Saving..." : "Save Category"}
         </button>
       </div>
 
