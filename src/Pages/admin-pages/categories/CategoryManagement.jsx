@@ -67,6 +67,22 @@ export default function CategoryManagement() {
   const categoryTree = buildCategoryTree(categories);
   const flatCategories = categories;
 
+  // Calculate dynamic stats
+  const mainCategories = categories.filter(c => !c.parentCategory);
+  const subCategories = categories.filter(c => c.parentCategory);
+  
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const newMainCategoriesCount = mainCategories.filter(c => c.createdAt && new Date(c.createdAt) > oneWeekAgo).length;
+  
+  const activeSubcategoriesCount = subCategories.filter(c => c.status === 'Active').length;
+  
+  const activeCategoriesCount = categories.filter(c => c.status === 'Active').length;
+  const activeRatio = categories.length > 0 ? Math.round((activeCategoriesCount / categories.length) * 100) : 0;
+  
+  const hiddenCategoriesCount = categories.filter(c => c.status === 'Hidden').length;
+  const draftCategoriesCount = categories.filter(c => c.status === 'Draft').length;
+
   return (
     <div className="min-h-screen p-6 mt-16 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans pt-24">
 
@@ -103,10 +119,12 @@ export default function CategoryManagement() {
             <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
               <Folder size={20} />
             </div>
-            <span className="text-[11px] font-bold text-[#10B981]">+2 New</span>
+            <span className={`text-[11px] font-bold ${newMainCategoriesCount > 0 ? 'text-[#10B981]' : 'text-gray-400'}`}>
+              +{newMainCategoriesCount} New
+            </span>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-[#0F172A]">8</div>
+            <div className="text-3xl font-extrabold text-[#0F172A]">{mainCategories.length}</div>
             <div className="text-[12px] font-medium text-gray-400">Main Categories</div>
           </div>
         </div>
@@ -116,10 +134,10 @@ export default function CategoryManagement() {
             <div className="w-10 h-10 rounded-lg bg-[#F0FDF4] flex items-center justify-center text-[#10B981]">
               <Network size={20} />
             </div>
-            <span className="text-[11px] font-bold text-gray-400">42 Active</span>
+            <span className="text-[11px] font-bold text-[#10B981]">{activeSubcategoriesCount} Active</span>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-[#0F172A]">42</div>
+            <div className="text-3xl font-extrabold text-[#0F172A]">{subCategories.length}</div>
             <div className="text-[12px] font-medium text-gray-400">Subcategories</div>
           </div>
         </div>
@@ -129,10 +147,12 @@ export default function CategoryManagement() {
             <div className="w-10 h-10 rounded-lg bg-[#ECFDF5] flex items-center justify-center text-[#10B981]">
               <Eye size={20} />
             </div>
-            <span className="text-[11px] font-bold text-[#10B981]">96% Ratio</span>
+            <span className={`text-[11px] font-bold ${activeRatio >= 50 ? 'text-[#10B981]' : 'text-[#D97706]'}`}>
+              {activeRatio}% Ratio
+            </span>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-[#0F172A]">48</div>
+            <div className="text-3xl font-extrabold text-[#0F172A]">{activeCategoriesCount}</div>
             <div className="text-[12px] font-medium text-gray-400">Active Categories</div>
           </div>
         </div>
@@ -142,10 +162,14 @@ export default function CategoryManagement() {
             <div className="w-10 h-10 rounded-lg bg-[#FEF2F2] flex items-center justify-center text-[#EF4444]">
               <EyeOff size={20} />
             </div>
-            <span className="text-[11px] font-bold text-[#EF4444]">Review Needed</span>
+            {draftCategoriesCount > 0 ? (
+              <span className="text-[11px] font-bold text-[#D97706]">{draftCategoriesCount} Draft</span>
+            ) : (
+              <span className="text-[11px] font-bold text-gray-400">Review Done</span>
+            )}
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-[#0F172A]">2</div>
+            <div className="text-3xl font-extrabold text-[#0F172A]">{hiddenCategoriesCount}</div>
             <div className="text-[12px] font-medium text-gray-400">Hidden Categories</div>
           </div>
         </div>
