@@ -133,7 +133,7 @@ const Sidebar = ({ closeDrawer }) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-medium text-white truncate">
-                SIUUUU Ronaldo
+                {user?.name || "Admin User"}
               </p>
               <div className="flex items-center gap-1 text-[#D4AF37] text-[11px] mt-0.5">
                 <span className="font-medium">Admin</span>
@@ -143,11 +143,11 @@ const Sidebar = ({ closeDrawer }) => {
         ) : (
           <div className="bg-[#152136] rounded-xl p-3 flex items-center gap-3 mb-4 border border-[#1C273C]">
             <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center text-[13px]">
-              SC
+              {user?.name ? user.name.substring(0, 2).toUpperCase() : "SP"}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-medium text-white truncate">
-                Steel Company B
+                {user?.name || "Supplier User"}
               </p>
               <div className="flex items-center gap-1 text-[#D4AF37] text-[11px] mt-0.5">
                 <BadgeCheck size={12} strokeWidth={2.5} />

@@ -53,6 +53,7 @@ const SignIn = () => {
   };
 
   return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0F172A] p-6">
       <div className="w-full max-w-[440px] flex flex-col items-center">
 
         {/* Logo Section */}
@@ -169,6 +170,7 @@ const SignIn = () => {
         </div>
 
       </div>
+    </div>
   );
 };
 
