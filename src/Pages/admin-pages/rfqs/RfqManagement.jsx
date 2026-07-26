@@ -1,22 +1,38 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getRfqs, createRfq } from "../../../redux/features/rfqs/rfqsSlice";
 import { Download, Plus } from "lucide-react";
 import RfqMetrics from "../../../Components/admin-components/rfqs/RfqMetrics";
 import RfqFilters from "../../../Components/admin-components/rfqs/RfqFilters";
 import RfqTable from "../../../Components/admin-components/rfqs/RfqTable";
 import ManualEntryModal from "../../../Components/admin-components/rfqs/ManualEntryModal";
 
-const INITIAL_RFQS = [
-  { id: "#RFQ-2024-8842", buyer: { name: "Astra Zen Limited", logo: "AZ", color: "bg-gray-200 text-gray-700" }, supplier: "Global Logis-X", category: "HARDWARE", status: "Responded", statusColor: "bg-[#D4AF37]", created: "Oct 12, 2024", dispute: "No" },
-  { id: "#RFQ-2024-8843", buyer: { name: "TechCorp Inc", logo: "TC", color: "bg-blue-100 text-blue-700" }, supplier: "Silicon Valley Parts", category: "SOFTWARE", status: "Closed", statusColor: "bg-gray-400", created: "Oct 11, 2024", dispute: "No" },
-  { id: "#RFQ-2024-8844", buyer: { name: "Mega Build", logo: "MB", color: "bg-green-100 text-green-700" }, supplier: "BuildMat Pro", category: "LOGISTICS", status: "Responded", statusColor: "bg-[#D4AF37]", created: "Oct 10, 2024", dispute: "Yes" },
-  { id: "#RFQ-2024-8845", buyer: { name: "Astra Zen Limited", logo: "AZ", color: "bg-gray-200 text-gray-700" }, supplier: "Tech Systems", category: "HARDWARE", status: "Closed", statusColor: "bg-gray-400", created: "Oct 09, 2024", dispute: "No" },
-  { id: "#RFQ-2024-8846", buyer: { name: "Eco Energy", logo: "EE", color: "bg-green-100 text-green-700" }, supplier: "Solar Panels Inc", category: "HARDWARE", status: "Responded", statusColor: "bg-[#D4AF37]", created: "Oct 08, 2024", dispute: "Yes" },
-  { id: "#RFQ-2024-8847", buyer: { name: "TechCorp Inc", logo: "TC", color: "bg-blue-100 text-blue-700" }, supplier: "Cloud Services LLC", category: "SOFTWARE", status: "Responded", statusColor: "bg-[#D4AF37]", created: "Oct 07, 2024", dispute: "No" },
-  { id: "#RFQ-2024-8848", buyer: { name: "Fast Track", logo: "FT", color: "bg-purple-100 text-purple-700" }, supplier: "Global Logis-X", category: "LOGISTICS", status: "Closed", statusColor: "bg-gray-400", created: "Oct 06, 2024", dispute: "No" },
-];
-
 export default function RfqManagement() {
-  const [rfqsList, setRfqsList] = useState(INITIAL_RFQS);
+  const dispatch = useDispatch();
+  const { rfqs, isLoading } = useSelector((state) => state.rfqs);
+
+  useEffect(() => {
+    dispatch(getRfqs());
+  }, [dispatch]);
+
+  const rfqsList = useMemo(() => {
+    return rfqs.map(rfq => ({
+      id: rfq._id,
+      displayId: `#RFQ-${rfq._id.substring(0, 8).toUpperCase()}`,
+      buyer: { 
+        name: rfq.buyerName || (rfq.buyerUser ? rfq.buyerUser.name : "Unknown Buyer"), 
+        logo: (rfq.buyerName || rfq.buyerUser?.name || "UK").substring(0, 2).toUpperCase(), 
+        color: "bg-blue-100 text-blue-700" 
+      },
+      supplier: rfq.supplier ? rfq.supplier.companyName : "Unknown Supplier",
+      category: "GENERAL",
+      status: rfq.status.charAt(0).toUpperCase() + rfq.status.slice(1), // e.g., 'pending' -> 'Pending'
+      statusColor: rfq.status === "closed" ? "bg-gray-400" : (rfq.status === 'responded' ? "bg-green-500" : "bg-[#D4AF37]"),
+      created: new Date(rfq.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      dispute: rfq.status === 'disputed' ? "Yes" : "No"
+    }));
+  }, [rfqs]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [selectedRfq, setSelectedRfq] = useState(null);
@@ -37,44 +53,16 @@ export default function RfqManagement() {
   };
 
   const handleCreateEntry = (entryData) => {
-    if (modalMode === "edit" && selectedRfq) {
-      const updatedList = rfqsList.map(rfq => {
-        if (rfq.id === selectedRfq.id) {
-          return {
-            ...rfq,
-            buyer: {
-              ...rfq.buyer,
-              name: entryData.buyerName || "Unknown Buyer",
-              logo: entryData.buyerName ? entryData.buyerName.substring(0, 2).toUpperCase() : "UK"
-            },
-            supplier: entryData.supplierName || "Unknown Supplier",
-            category: entryData.category || "LOGISTICS",
-            status: entryData.status || "Responded",
-            statusColor: entryData.status === "Closed" ? "bg-gray-400" : "bg-[#D4AF37]",
-            dispute: entryData.dispute || "No"
-          };
-        }
-        return rfq;
-      });
-      setRfqsList(updatedList);
-    } else {
-      const newId = `#RFQ-2024-${8848 + rfqsList.length + 1}`;
-      const newRfq = {
-        id: newId,
-        buyer: { 
-          name: entryData.buyerName || "Unknown Buyer", 
-          logo: entryData.buyerName ? entryData.buyerName.substring(0, 2).toUpperCase() : "UK", 
-          color: "bg-blue-100 text-blue-700" 
-        },
-        supplier: entryData.supplierName || "Unknown Supplier",
-        category: entryData.category || "LOGISTICS",
-        status: entryData.status || "Responded",
-        statusColor: entryData.status === "Closed" ? "bg-gray-400" : "bg-[#D4AF37]",
-        created: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        dispute: entryData.dispute || "No"
-      };
-      setRfqsList([newRfq, ...rfqsList]);
-    }
+    // Dispatch the actual creation to Redux and MongoDB
+    dispatch(createRfq({
+      supplierId: entryData.supplierId, // We must have added this to the modal
+      buyerName: entryData.buyerName,
+      buyerEmail: entryData.buyerEmail,
+      subject: entryData.subject,
+      details: entryData.details,
+      quantity: entryData.quantity || 1
+    }));
+    setIsModalOpen(false);
   };
 
   const handleOpenCreate = () => {

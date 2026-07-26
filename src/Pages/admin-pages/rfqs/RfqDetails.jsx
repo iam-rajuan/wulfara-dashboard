@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getRfq, getRfqMessages, updateRfqStatus } from "../../../redux/features/rfqs/rfqsSlice";
 import { ChevronRight, FileText, Check } from "lucide-react";
 import DisputeMetrics from "../../../Components/admin-components/rfqs/dispute/DisputeMetrics";
 import DisputeProfiles from "../../../Components/admin-components/rfqs/dispute/DisputeProfiles";
@@ -10,84 +12,75 @@ import DisputeQuickActions from "../../../Components/admin-components/rfqs/dispu
 
 export default function RfqDetails() {
   const { id } = useParams();
+  const dispatch = useDispatch();
   
-  // Use the ID from the URL if available, otherwise fallback
-  const displayId = id ? id.replace('#', '') : "RFQ-10476";
+  const { rfq, messages, isLoading } = useSelector((state) => state.rfqs);
 
-  const [disputeData, setDisputeData] = React.useState({
-    id: displayId,
-    status: "Disputed",
-    createdDate: "Oct 12, 2023",
-    lastUpdate: "2 hours ago",
-    buyer: {
-      name: "Robert Kim",
-      role: "Strategic Procurement Manager",
-      company: "Apex Manufacturing",
-      rating: "4.8 / 5.0",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-    },
-    supplier: {
-      name: "Rapid Logistics USA",
-      role: "Fleet Operations Lead",
-      contact: "Sarah Jenkins",
-      rating: "4.2 / 5.0",
-      initials: "RL"
-    },
-    scope: {
-      quote: "$42,500.00",
-      cargo: "3x Industrial CNC Mills, 4500kg total. Oversized load requirements. Temperature sensitive components included.",
-      incident: "Delayed arrival (48h) + Minor scratches reported on Unit B enclosure. Buyer claims packaging violation.",
-      route: "Detroit, MI → Houston, TX",
-      images: [
-        "https://images.unsplash.com/photo-1587302484606-44439eb4c2f8?auto=format&fit=crop&q=80&w=100&h=100",
-        "https://images.unsplash.com/photo-1596700057218-0902c3b88b2f?auto=format&fit=crop&q=80&w=100&h=100"
-      ]
-    },
-    resolution: {
-      status: "In Progress",
-      priority: "Medium",
-      notes: ""
-    },
-    timeline: [
-      {
-        id: 1,
-        type: "buyer",
-        author: "Robert Kim",
-        time: "Oct 14, 09:12 AM",
-        content: "Dispute formally filed. The shipment arrived 48 hours late and Unit B has visible surface damage. This is not the service level agreed upon in the $42.5k contract."
-      },
-      {
-        id: 2,
-        type: "system",
-        author: "System",
-        time: "",
-        content: "RFQ Status updated to \"Disputed\". Admin notified. Dispute ticket #D-9003 created."
-      },
-      {
-        id: 3,
-        type: "supplier",
-        author: "Rapid Logistics USA (Sarah)",
-        time: "Oct 14, 11:45 AM",
-        content: "We acknowledge the delay due to the weather advisory in the Midwest. Regarding the scratch, our pre-load photos (attached in RFQ vault) show the unit was pristine. We believe this occurred during the client's own offloading process."
-      },
-      {
-        id: 4,
-        type: "admin",
-        author: "System Admin",
-        time: "Today, 08:30 AM",
-        content: "Reviewing cargo insurance logs and Midwest meteorological data. Both parties please standby for final resolution proposal by EOD."
-      }
-    ]
+  useEffect(() => {
+    if (id) {
+      dispatch(getRfq(id));
+      dispatch(getRfqMessages(id));
+    }
+  }, [id, dispatch]);
+
+  const [resolution, setResolution] = useState({
+    status: "In Progress",
+    priority: "Medium",
+    notes: ""
   });
 
   const handleResolutionChange = (field, value) => {
-    setDisputeData(prev => ({
+    setResolution(prev => ({
       ...prev,
-      resolution: {
-        ...prev.resolution,
-        [field]: value
-      }
+      [field]: value
     }));
+  };
+
+  const handleUpdateStatus = (newStatus) => {
+    dispatch(updateRfqStatus({ id, status: newStatus }));
+  };
+
+  if (isLoading || !rfq) {
+    return <div className="min-h-screen pt-32 pb-32 flex justify-center text-gray-500">Loading RFQ details...</div>;
+  }
+
+  const displayId = `RFQ-${rfq._id.substring(0, 8).toUpperCase()}`;
+
+  // Map backend RFQ data to the existing Dispute UI structure
+  const disputeData = {
+    id: displayId,
+    status: rfq.status.charAt(0).toUpperCase() + rfq.status.slice(1),
+    createdDate: new Date(rfq.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+    lastUpdate: new Date(rfq.updatedAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+    buyer: {
+      name: rfq.buyerName || (rfq.buyerUser ? rfq.buyerUser.name : "Unknown"),
+      role: rfq.buyerUser ? rfq.buyerUser.role : "Guest Buyer",
+      company: "Company N/A",
+      rating: "N/A",
+      avatar: ""
+    },
+    supplier: {
+      name: rfq.supplier?.companyName || "Unknown",
+      role: "Supplier",
+      contact: rfq.supplier?.contactEmail || "",
+      rating: "N/A",
+      initials: (rfq.supplier?.companyName || "UK").substring(0, 2).toUpperCase()
+    },
+    scope: {
+      quote: "TBD",
+      cargo: `Quantity: ${rfq.quantity}`,
+      incident: rfq.details,
+      route: "N/A",
+      images: rfq.attachments || []
+    },
+    resolution: resolution,
+    timeline: messages.map(msg => ({
+      id: msg._id,
+      type: msg.sender?.role === 'admin' ? 'admin' : (msg.sender?.role === 'supplier' ? 'supplier' : 'buyer'),
+      author: msg.sender?.name || "Unknown",
+      time: new Date(msg.createdAt).toLocaleString(),
+      content: msg.text
+    }))
   };
 
   return (
@@ -99,7 +92,7 @@ export default function RfqDetails() {
         <ChevronRight size={12} />
         <span>{displayId}</span>
         <ChevronRight size={12} />
-        <span className="text-[#D4AF37]">Dispute Detail</span>
+        <span className="text-[#D4AF37]">Details</span>
       </div>
 
       {/* Header */}
@@ -107,22 +100,22 @@ export default function RfqDetails() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight mb-1">
-              Dispute Investigation: #{displayId}
+              RFQ Details: {displayId}
             </h1>
             <p className="text-[14px] text-gray-500 font-medium">
-              Heavy Machinery Logistics - Q4 Operations
+              {rfq.subject}
             </p>
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-              <FileText size={14} />
-              Generate Report
-            </button>
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-extrabold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm">
-              <Check size={16} />
-              Mark Resolved
-            </button>
+            {rfq.status !== 'closed' && (
+               <button 
+                 onClick={() => handleUpdateStatus('closed')}
+                 className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-extrabold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm">
+                 <Check size={16} />
+                 Mark Closed
+               </button>
+            )}
           </div>
         </div>
       </div>

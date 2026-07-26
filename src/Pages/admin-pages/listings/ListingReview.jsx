@@ -1,52 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getListings, reviewListing } from "../../../redux/features/listings/listingsSlice";
 import { ChevronRight, Filter, Download, Search, Hourglass, CheckCircle2, XCircle, Star, TrendingUp } from "lucide-react";
 import ListingTable from "../../../Components/admin-components/listings/ListingTable";
 
-const MOCK_LISTINGS = [
-  {
-    id: 1,
-    companyName: "Steel Company B",
-    category: "Raw Material\nSuppliers",
-    submitted: "Jan 15\n2026",
-    supplier: "John\nDoe",
-    plan: "Pro",
-    status: "Pending",
-    quality: 86
-  },
-  {
-    id: 2,
-    companyName: "TechCorp Manufacturing",
-    category: "Electronics\nAssembly",
-    submitted: "Jan 14\n2026",
-    supplier: "Alice\nSmith",
-    plan: "Enterprise",
-    status: "Pending",
-    quality: 92
-  },
-  {
-    id: 3,
-    companyName: "Global Logistics Inc.",
-    category: "Freight &\nShipping",
-    submitted: "Jan 12\n2026",
-    supplier: "Robert\nChen",
-    plan: "Basic",
-    status: "Pending",
-    quality: 45
-  }
-];
-
 export default function ListingReview() {
-  const [listings, setListings] = useState(MOCK_LISTINGS);
+  const dispatch = useDispatch();
+  const { listings, isLoading } = useSelector((state) => state.listings);
+
+  useEffect(() => {
+    dispatch(getListings());
+  }, [dispatch]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
 
+  // Calculate profile completeness for quality score
+  const calculateQualityScore = (listing) => {
+    let score = 0;
+    if (listing.companyName) score += 20;
+    if (listing.description) score += 20;
+    if (listing.contactEmail) score += 20;
+    if (listing.logo && listing.logo !== 'no-logo.jpg') score += 20;
+    if (listing.categories && listing.categories.length > 0) score += 20;
+    return score;
+  };
+
+  const mappedListings = useMemo(() => {
+    return listings.map(l => ({
+      id: l._id,
+      companyName: l.companyName,
+      category: l.categories && l.categories.length > 0 ? l.categories[0].name : "Uncategorized",
+      submitted: new Date(l.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      supplier: l.user ? (l.user.name || "Unknown") : "Unknown", // user is populated if possible, otherwise we might need to rely on companyName
+      plan: l.subscriptionPlan === 'premium' ? 'Pro' : 'Basic',
+      status: l.listingStatus || 'Pending',
+      quality: calculateQualityScore(l)
+    }));
+  }, [listings]);
+
+  const filteredListings = mappedListings.filter(l =>
+    l.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    l.supplier?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleApprove = (id) => {
-    setListings(listings.map(l => l.id === id ? { ...l, status: "Approved" } : l));
+    dispatch(reviewListing({ id, listingStatus: 'Approved' }));
   };
 
   const handleReject = (id) => {
-    setListings(listings.map(l => l.id === id ? { ...l, status: "Rejected" } : l));
+    dispatch(reviewListing({ id, listingStatus: 'Rejected' }));
   };
 
   const handleSelect = (id) => {
@@ -61,10 +65,9 @@ export default function ListingReview() {
     }
   };
 
-  const filteredListings = listings.filter(l =>
-    l.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    l.supplier.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const pendingCount = mappedListings.filter(l => l.status === 'Pending').length;
+  const approvedCount = mappedListings.filter(l => l.status === 'Approved').length;
+  const rejectedCount = mappedListings.filter(l => l.status === 'Rejected').length;
 
   return (
     <div className="min-h-screen p-6 mt-16 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans pt-24">
@@ -96,7 +99,7 @@ export default function ListingReview() {
             <h3 className="text-[14px] font-bold text-gray-500">Pending Review</h3>
             <Hourglass size={20} className="text-[#D97706]" />
           </div>
-          <div className="text-4xl font-extrabold text-[#0F172A] mb-3">24</div>
+          <div className="text-4xl font-extrabold text-[#0F172A] mb-3">{pendingCount}</div>
           <div className="flex items-center gap-1.5 text-[12px] font-bold text-[#10B981]">
             <TrendingUp size={14} />
             +3 today
@@ -109,7 +112,7 @@ export default function ListingReview() {
             <h3 className="text-[14px] font-bold text-gray-500">Approved</h3>
             <CheckCircle2 size={20} className="text-[#10B981]" />
           </div>
-          <div className="text-4xl font-extrabold text-[#0F172A] mb-3">18</div>
+          <div className="text-4xl font-extrabold text-[#0F172A] mb-3">{approvedCount}</div>
           <div className="text-[12px] font-medium text-gray-400">
             Last 7 days
           </div>
@@ -121,7 +124,7 @@ export default function ListingReview() {
             <h3 className="text-[14px] font-bold text-gray-500">Rejected</h3>
             <XCircle size={20} className="text-[#EF4444]" />
           </div>
-          <div className="text-4xl font-extrabold text-[#0F172A] mb-3">5</div>
+          <div className="text-4xl font-extrabold text-[#0F172A] mb-3">{rejectedCount}</div>
           <div className="text-[12px] font-medium text-gray-400">
             Last 7 days
           </div>

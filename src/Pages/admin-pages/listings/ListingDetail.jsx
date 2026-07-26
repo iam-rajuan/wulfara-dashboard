@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getListing, reviewListing } from "../../../redux/features/listings/listingsSlice";
 import {
   ChevronRight,
   XCircle,
@@ -15,8 +17,16 @@ import {
 
 export default function ListingDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { listing, isLoading } = useSelector((state) => state.listings);
 
-  const [status, setStatus] = useState("Pending Review");
+  useEffect(() => {
+    if (id) {
+      dispatch(getListing(id));
+    }
+  }, [id, dispatch]);
+
   const [checklist, setChecklist] = useState({
     companyInfo: true,
     mediaAssets: true,
@@ -26,6 +36,16 @@ export default function ListingDetail() {
   const toggleChecklist = (key) => {
     setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const handleApprove = () => {
+    dispatch(reviewListing({ id, listingStatus: 'Approved' }));
+  };
+
+  const handleReject = () => {
+    dispatch(reviewListing({ id, listingStatus: 'Rejected' }));
+  };
+
+  const status = listing ? listing.listingStatus : "Pending";
 
   const getStatusBadge = () => {
     if (status === "Approved") {
@@ -52,11 +72,22 @@ export default function ListingDetail() {
     );
   };
 
+  if (isLoading || !listing) {
+    return <div className="min-h-screen p-6 mt-16 lg:p-8 flex items-center justify-center">Loading...</div>;
+  }
+
+  // Calculate quality score
+  let qualityScore = 0;
+  if (listing.companyName) qualityScore += 20;
+  if (listing.description) qualityScore += 20;
+  if (listing.contactEmail) qualityScore += 20;
+  if (listing.logo && listing.logo !== 'no-logo.jpg') qualityScore += 20;
+  if (listing.categories && listing.categories.length > 0) qualityScore += 20;
+
   return (
     <div className="min-h-screen p-6 mt-16 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans pt-24">
       {/* Breadcrumbs */}
       <div className="flex items-center text-[13px] font-medium text-gray-500 mb-6 gap-2">
-
         <Link to="/listings" className="hover:text-gray-700">Listings</Link>
         <ChevronRight size={14} />
         <span className="text-[#D4AF37] font-bold">Review</span>
@@ -65,39 +96,44 @@ export default function ListingDetail() {
       {/* Top Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex items-center gap-5">
-          <div className="w-14 h-14 bg-[#0F172A] rounded-xl flex items-center justify-center flex-shrink-0">
-            {/* Simple logo placeholder */}
-            <div className="text-white opacity-80">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-            </div>
+          <div className="w-14 h-14 bg-[#0F172A] rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+             {listing.logo && listing.logo !== 'no-logo.jpg' ? (
+                <img src={listing.logo} alt="Logo" className="w-full h-full object-cover" />
+             ) : (
+                <div className="text-white opacity-80 font-bold text-xl">{listing.companyName.charAt(0)}</div>
+             )}
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#0F172A] mb-2">Steel Company B</h1>
+            <h1 className="text-2xl font-extrabold text-[#0F172A] mb-2">{listing.companyName}</h1>
             <div className="flex items-center gap-3">
               {getStatusBadge()}
               <div className="flex items-center gap-1 text-[13px] font-medium text-[#2563EB]">
                 <CheckCircle size={14} />
-                Quality Score: <strong>86%</strong>
+                Quality Score: <strong>{qualityScore}%</strong>
               </div>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <button
-            onClick={() => setStatus("Rejected")}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-[#EF4444] rounded-md text-[13px] font-bold text-[#EF4444] hover:bg-red-50 transition-colors shadow-sm"
-          >
-            <XCircle size={16} />
-            Reject
-          </button>
-          <button
-            onClick={() => setStatus("Approved")}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
-          >
-            <CheckCircle size={16} className="text-[#0F172A]" strokeWidth={1} />
-            Approve
-          </button>
+          {status !== "Rejected" && (
+            <button
+              onClick={handleReject}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-[#EF4444] rounded-md text-[13px] font-bold text-[#EF4444] hover:bg-red-50 transition-colors shadow-sm"
+            >
+              <XCircle size={16} />
+              Reject
+            </button>
+          )}
+          {status !== "Approved" && (
+            <button
+              onClick={handleApprove}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
+            >
+              <CheckCircle size={16} className="text-[#0F172A]" strokeWidth={1} />
+              Approve
+            </button>
+          )}
         </div>
       </div>
 
@@ -152,8 +188,8 @@ export default function ListingDetail() {
 
                   <section>
                     <h3 className="text-[18px] font-extrabold text-[#0F172A] mb-4 border-b border-gray-100 pb-2">About Us</h3>
-                    <p className="text-[14px] text-[#64748B] leading-relaxed font-medium">
-                      Leading manufacturer of high-grade structural steel components. With over 20 years of experience, we specialize in precision-engineered I-beams, custom fabricated joints, and industrial-scale architectural elements. Our facility employs state-of-the-art CNC machining to ensure tolerances down to the micrometer.
+                    <p className="text-[14px] text-[#64748B] leading-relaxed font-medium whitespace-pre-line">
+                      {listing.description || "No description provided."}
                     </p>
                   </section>
 
@@ -161,35 +197,23 @@ export default function ListingDetail() {
                     <h3 className="text-[18px] font-extrabold text-[#0F172A] mb-4 border-b border-gray-100 pb-2">Core Products</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Product 1 */}
-                      <div className="bg-[#F8F9FB] rounded-xl border border-gray-200 overflow-hidden group">
-                        <div className="h-32 bg-gray-200 overflow-hidden">
-                          <img
-                            src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop"
-                            alt="I-Beams"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">Structural I-Beams</h4>
-                          <p className="text-[12px] text-[#64748B] leading-relaxed">ASTM A992 Grade, customizable lengths.</p>
-                        </div>
-                      </div>
-
-                      {/* Product 2 */}
-                      <div className="bg-[#F8F9FB] rounded-xl border border-gray-200 overflow-hidden group">
-                        <div className="h-32 bg-gray-200 overflow-hidden">
-                          <img
-                            src="https://images.unsplash.com/photo-1590059346617-ce7cc8633355?q=80&w=2070&auto=format&fit=crop"
-                            alt="Custom Joints"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">Custom Joints</h4>
-                          <p className="text-[12px] text-[#64748B] leading-relaxed">Precision CNC milled connecting elements.</p>
-                        </div>
-                      </div>
+                      {listing.products && listing.products.length > 0 ? (
+                        listing.products.map((product, index) => (
+                          <div key={index} className="bg-[#F8F9FB] rounded-xl border border-gray-200 overflow-hidden group">
+                            <div className="h-32 bg-gray-200 overflow-hidden flex items-center justify-center">
+                              {/* Placeholder for product image since it's not in the model yet */}
+                              <span className="text-gray-400 font-bold">No Image</span>
+                            </div>
+                            <div className="p-4">
+                              <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">{product.name}</h4>
+                              <p className="text-[12px] text-[#64748B] leading-relaxed">{product.description || "No description."}</p>
+                              {product.price && <p className="text-[13px] font-bold text-[#2563EB] mt-2">${product.price}</p>}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[13px] text-gray-500 col-span-2">No products added yet.</p>
+                      )}
                     </div>
                   </section>
 
@@ -203,26 +227,31 @@ export default function ListingDetail() {
                     <div className="flex items-start gap-3">
                       <MapPin size={16} className="text-[#D4AF37] mt-0.5" />
                       <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Location</p>
-                        <p className="text-[13px] font-bold text-[#0F172A] leading-snug">Frankfurt,<br />Germany</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Contact</p>
+                        <p className="text-[13px] font-bold text-[#0F172A] leading-snug">{listing.contactEmail || "N/A"}<br />{listing.contactPhone}</p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
                       <Factory size={16} className="text-[#D4AF37] mt-0.5" />
                       <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Capacity</p>
-                        <p className="text-[13px] font-bold text-[#0F172A] leading-snug">50,000<br />Tons/Year</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Website</p>
+                        <p className="text-[13px] font-bold text-[#2563EB] leading-snug overflow-hidden text-ellipsis">{listing.website || "N/A"}</p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
                       <Award size={16} className="text-[#D4AF37] mt-0.5" />
                       <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Certifications</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Categories</p>
                         <div className="flex flex-wrap gap-2">
-                          <span className="px-2 py-1 bg-white border border-gray-200 text-[11px] font-bold text-gray-600 rounded">ISO 9001</span>
-                          <span className="px-2 py-1 bg-white border border-gray-200 text-[11px] font-bold text-gray-600 rounded">CE</span>
+                          {listing.categories && listing.categories.length > 0 ? (
+                             listing.categories.map(cat => (
+                               <span key={cat._id} className="px-2 py-1 bg-white border border-gray-200 text-[11px] font-bold text-gray-600 rounded">{cat.name}</span>
+                             ))
+                          ) : (
+                             <span className="text-[11px] text-gray-400">None</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -301,15 +330,15 @@ export default function ListingDetail() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-medium text-gray-500">Submitted:</span>
-                <span className="text-[13px] font-bold text-[#0F172A]">Oct 24, 2023 14:32</span>
+                <span className="text-[13px] font-bold text-[#0F172A]">{new Date(listing.createdAt).toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-medium text-gray-500">Submitted By:</span>
-                <span className="text-[13px] font-bold text-[#D97706]">user_a89x2</span>
+                <span className="text-[13px] font-bold text-[#D97706]">{listing.user?.name || "Unknown"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-medium text-gray-500">Listing ID:</span>
-                <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded text-[11px] font-bold">LST-992-B</span>
+                <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded text-[11px] font-bold">{listing._id.substring(0, 8).toUpperCase()}</span>
               </div>
             </div>
           </div>
