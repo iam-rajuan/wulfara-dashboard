@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Download, Plus, ChevronDown, Search, Filter } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { getUsers, updateUser, deleteUser } from "../../../redux/features/users/usersSlice";
+import { getUsers, createUser, updateUser, deleteUser } from "../../../redux/features/users/usersSlice";
 import SupplierTable from "../../../Components/admin-components/supplier/SupplierTable";
 import SupplierFormModal from "../../../Components/admin-components/supplier/SupplierFormModal";
 import SupplierDetailsModal from "../../../Components/admin-components/supplier/SupplierDetailsModal";
@@ -48,6 +48,14 @@ export default function SupplierManagement() {
       dispatch(updateUser({ 
         id: savedSupplier.id, 
         userData: { name: savedSupplier.name, email: savedSupplier.email } 
+      }));
+    } else {
+      dispatch(createUser({
+        name: savedSupplier.name,
+        email: savedSupplier.email,
+        password: "DefaultPassword123!", // Require strong default for now
+        role: "supplier",
+        status: "Active" // Ensure default status
       }));
     }
     setEditingSupplier(null);

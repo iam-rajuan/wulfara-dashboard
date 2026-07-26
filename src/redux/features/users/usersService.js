@@ -18,6 +18,12 @@ const getUsers = async () => {
   return response.data.data;
 };
 
+// Create a user
+const createUser = async (userData) => {
+  const response = await axios.post(API_URL, userData, getConfig());
+  return response.data.data;
+};
+
 // Update a user (e.g., status, isVerified)
 const updateUser = async (id, userData) => {
   const response = await axios.put(API_URL + id, userData, getConfig());
@@ -32,6 +38,7 @@ const deleteUser = async (id) => {
 
 const usersService = {
   getUsers,
+  createUser,
   updateUser,
   deleteUser,
 };

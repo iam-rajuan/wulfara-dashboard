@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Download, Plus, ChevronDown } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { getUsers, updateUser, deleteUser } from "../../../redux/features/users/usersSlice";
+import { getUsers, createUser, updateUser, deleteUser } from "../../../redux/features/users/usersSlice";
 import BuyerTable, { Pagination } from "../../../Components/admin-components/buyer/BuyerTable";
 import BuyerFormModal from "../../../Components/admin-components/buyer/BuyerFormModal";
 
@@ -39,12 +39,18 @@ export default function BuyerManagement() {
   const pageSize = 6;
 
   const handleSaveBuyer = (savedBuyer) => {
-    // For now, this just updates state locally if it's new.
-    // In reality, we should dispatch(updateUser) or a register action.
     if (editingBuyer) {
       dispatch(updateUser({ 
         id: savedBuyer.id, 
         userData: { name: savedBuyer.name, email: savedBuyer.email, status: savedBuyer.status } 
+      }));
+    } else {
+      dispatch(createUser({
+        name: savedBuyer.name,
+        email: savedBuyer.email,
+        password: "DefaultPassword123!", // Require strong default for now
+        role: "buyer",
+        status: savedBuyer.status,
       }));
     }
     setEditingBuyer(null);
