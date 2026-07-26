@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { registerUser, reset } from '../../../redux/features/auth/authSlice';
+import { setCredentials } from '../../../redux/features/auth/authSlice';
+import { useRegisterMutation } from '../../../redux/features/auth/authApi';
 import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake } from 'lucide-react';
 import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../svglogos/SvgIcons";
 
@@ -24,19 +25,17 @@ const SignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localError, setLocalError] = useState('');
 
-  const { user, isLoading, isError, isSuccess, message } = useSelector(
-    (state) => state.auth
-  );
+  const { user } = useSelector((state) => state.auth);
+  const [register, { isLoading, isError, error }] = useRegisterMutation();
 
   useEffect(() => {
-    if (isError) {
-      setLocalError(message);
+    if (isError && error) {
+      setLocalError(error.data?.message || 'Registration failed');
     }
-    if (isSuccess || user) {
+    if (user) {
       navigate("/dashboard");
     }
-    dispatch(reset());
-  }, [user, isError, isSuccess, message, navigate, dispatch]);
+  }, [user, isError, error, navigate]);
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -46,7 +45,7 @@ const SignUp = () => {
     }));
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setLocalError('');
     if (password !== confirmPassword) {
@@ -57,15 +56,24 @@ const SignUp = () => {
       setLocalError('You must agree to the Terms and Supplier Listing Policy');
       return;
     }
-    const userData = {
-      name,
-      email,
-      password,
-      companyName,
-      phone,
-      role: 'supplier'
-    };
-    dispatch(registerUser(userData));
+    const userData = { name, email, password, companyName, phone, role: 'supplier' };
+    
+    try {
+      const { token } = await register(userData).unwrap();
+      
+      // Store token so the fetch can be authenticated if needed
+      localStorage.setItem("token", token);
+      
+      const response = await fetch("http://localhost:5000/api/v1/auth/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const userResponse = await response.json();
+      
+      dispatch(setCredentials({ user: userResponse.data, token }));
+      navigate("/dashboard");
+    } catch (err) {
+      setLocalError(err.data?.message || 'Registration failed');
+    }
   };
 
   return (

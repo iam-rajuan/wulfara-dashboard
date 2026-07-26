@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { getRfq, getRfqMessages, updateRfqStatus } from "../../../redux/features/rfqs/rfqsSlice";
+import { useGetRfqQuery, useGetRfqMessagesQuery, useUpdateRfqStatusMutation } from "../../../redux/features/rfqs/rfqsApi";
 import { ChevronRight, FileText, Check } from "lucide-react";
 import DisputeMetrics from "../../../Components/admin-components/rfqs/dispute/DisputeMetrics";
 import DisputeProfiles from "../../../Components/admin-components/rfqs/dispute/DisputeProfiles";
@@ -12,16 +11,14 @@ import DisputeQuickActions from "../../../Components/admin-components/rfqs/dispu
 
 export default function RfqDetails() {
   const { id } = useParams();
-  const dispatch = useDispatch();
   
-  const { rfq, messages, isLoading } = useSelector((state) => state.rfqs);
-
-  useEffect(() => {
-    if (id) {
-      dispatch(getRfq(id));
-      dispatch(getRfqMessages(id));
-    }
-  }, [id, dispatch]);
+  const { data: rfqResponse, isLoading: rfqLoading } = useGetRfqQuery(id, { skip: !id });
+  const { data: messagesResponse, isLoading: messagesLoading } = useGetRfqMessagesQuery(id, { skip: !id });
+  const [updateRfqStatus] = useUpdateRfqStatusMutation();
+  
+  const rfq = rfqResponse?.data;
+  const messages = messagesResponse?.data || [];
+  const isLoading = rfqLoading || messagesLoading;
 
   const [resolution, setResolution] = useState({
     status: "In Progress",
@@ -36,8 +33,13 @@ export default function RfqDetails() {
     }));
   };
 
-  const handleUpdateStatus = (newStatus) => {
-    dispatch(updateRfqStatus({ id, status: newStatus }));
+  const handleUpdateStatus = async (newStatus) => {
+    try {
+      await updateRfqStatus({ id, status: newStatus }).unwrap();
+    } catch (err) {
+      console.error(err);
+      alert("Error updating RFQ status");
+    }
   };
 
   if (isLoading || !rfq) {

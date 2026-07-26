@@ -1,17 +1,20 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Download, Plus, ChevronDown } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import { getUsers, createUser, updateUser, deleteUser } from "../../../redux/features/users/usersSlice";
+import { 
+  useGetUsersQuery, 
+  useCreateUserMutation, 
+  useUpdateUserMutation, 
+  useDeleteUserMutation 
+} from "../../../redux/features/users/usersApi";
 import BuyerTable, { Pagination } from "../../../Components/admin-components/buyer/BuyerTable";
 import BuyerFormModal from "../../../Components/admin-components/buyer/BuyerFormModal";
 
 export default function BuyerManagement() {
-  const dispatch = useDispatch();
-  const { users, isLoading, isError, message } = useSelector((state) => state.users);
-
-  useEffect(() => {
-    dispatch(getUsers());
-  }, [dispatch]);
+  const { data: usersResponse, isLoading } = useGetUsersQuery();
+  const users = usersResponse?.data || [];
+  const [createUser] = useCreateUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
   // Filter only buyers
   const buyers = useMemo(() => {
@@ -38,28 +41,38 @@ export default function BuyerManagement() {
   const [verificationFilter, setVerificationFilter] = useState("All");
   const pageSize = 6;
 
-  const handleSaveBuyer = (savedBuyer) => {
-    if (editingBuyer) {
-      dispatch(updateUser({ 
-        id: savedBuyer.id, 
-        userData: { name: savedBuyer.name, email: savedBuyer.email, status: savedBuyer.status } 
-      }));
-    } else {
-      dispatch(createUser({
-        name: savedBuyer.name,
-        email: savedBuyer.email,
-        password: "DefaultPassword123!", // Require strong default for now
-        role: "buyer",
-        status: savedBuyer.status,
-      }));
+  const handleSaveBuyer = async (savedBuyer) => {
+    try {
+      if (editingBuyer) {
+        await updateUser({ 
+          id: savedBuyer.id, 
+          userData: { name: savedBuyer.name, email: savedBuyer.email, status: savedBuyer.status } 
+        }).unwrap();
+      } else {
+        await createUser({
+          name: savedBuyer.name,
+          email: savedBuyer.email,
+          password: "DefaultPassword123!", // Require strong default for now
+          role: "buyer",
+          status: savedBuyer.status,
+        }).unwrap();
+      }
+      setEditingBuyer(null);
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error saving buyer");
     }
-    setEditingBuyer(null);
-    setIsModalOpen(false);
   };
 
-  const handleDeleteBuyer = (id) => {
+  const handleDeleteBuyer = async (id) => {
     if (window.confirm("Are you sure you want to delete this buyer?")) {
-      dispatch(deleteUser(id));
+      try {
+        await deleteUser(id).unwrap();
+      } catch (err) {
+        console.error(err);
+        alert("Error deleting buyer");
+      }
     }
   };
 
@@ -104,18 +117,28 @@ export default function BuyerManagement() {
     }
   };
 
-  const handleBulkVerify = () => {
-    selectedIds.forEach(id => {
-      dispatch(updateUser({ id, userData: { isVerified: true } }));
-    });
-    setSelectedIds([]);
+  const handleBulkVerify = async () => {
+    try {
+      await Promise.all(selectedIds.map(id => 
+        updateUser({ id, userData: { isVerified: true } }).unwrap()
+      ));
+      setSelectedIds([]);
+    } catch (err) {
+      console.error(err);
+      alert("Error verifying buyers");
+    }
   };
 
-  const handleBulkSuspend = () => {
-    selectedIds.forEach(id => {
-      dispatch(updateUser({ id, userData: { status: 'Suspended' } }));
-    });
-    setSelectedIds([]);
+  const handleBulkSuspend = async () => {
+    try {
+      await Promise.all(selectedIds.map(id => 
+        updateUser({ id, userData: { status: 'Suspended' } }).unwrap()
+      ));
+      setSelectedIds([]);
+    } catch (err) {
+      console.error(err);
+      alert("Error suspending buyers");
+    }
   };
 
   const hasSelection = selectedIds.length > 0;

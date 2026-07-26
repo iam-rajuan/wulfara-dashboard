@@ -17,9 +17,7 @@ import {
 import CategoryHierarchyPanel from "../../../Components/admin-components/categories/CategoryHierarchyPanel";
 import CategoryRegistryTable from "../../../Components/admin-components/categories/CategoryRegistryTable";
 import { Link } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { getCategories, deleteCategory } from "../../../redux/features/categories/categorySlice";
-import { useEffect } from "react";
+import { useGetCategoriesQuery, useDeleteCategoryMutation } from "../../../redux/features/categories/categoryApi";
 
 // Helper to build tree from flat list
 const buildCategoryTree = (flatCats) => {
@@ -43,24 +41,25 @@ const buildCategoryTree = (flatCats) => {
 };
 
 export default function CategoryManagement() {
-  const dispatch = useDispatch();
-  const { categories, isLoading } = useSelector((state) => state.category);
+  const { data: categoriesResponse, isLoading } = useGetCategoriesQuery();
+  const categories = categoriesResponse?.data || [];
+  const [deleteCategory] = useDeleteCategoryMutation();
   const [activeCategoryId, setActiveCategoryId] = useState(null);
-
-  useEffect(() => {
-    dispatch(getCategories());
-  }, [dispatch]);
 
   const handleUpdateCategory = (categoryId, updates) => {
     // For now, this is mock UI update. Proper implementation needs PUT API.
     console.log("Update requested for", categoryId, updates);
   };
 
-  const handleDeleteCategory = (categoryId) => {
+  const handleDeleteCategory = async (categoryId) => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
-    dispatch(deleteCategory(categoryId));
-    if (activeCategoryId === categoryId) {
-      setActiveCategoryId(null);
+    try {
+      await deleteCategory(categoryId).unwrap();
+      if (activeCategoryId === categoryId) {
+        setActiveCategoryId(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete category", err);
     }
   };
 

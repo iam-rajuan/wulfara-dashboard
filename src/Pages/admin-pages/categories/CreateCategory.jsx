@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { createCategory, getCategories, reset } from "../../../redux/features/categories/categorySlice";
-import categoryService from "../../../redux/features/categories/categoryService";
+import { useGetCategoriesQuery, useCreateCategoryMutation, useGetUploadUrlMutation } from "../../../redux/features/categories/categoryApi";
+import axios from "axios";
 import { 
   Info, 
   Image as ImageIcon, 
@@ -12,13 +11,13 @@ import {
 
 export default function CreateCategory() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const parentParam = searchParams.get("parent");
   
-  const { categories, isLoading, isError, isSuccess, message } = useSelector(
-    (state) => state.category
-  );
+  const { data: categories = [], isLoading: isLoadingCategories } = useGetCategoriesQuery();
+  const [createCategory, { isLoading: isCreating, isError, isSuccess, error }] = useCreateCategoryMutation();
+  const [getUploadUrl] = useGetUploadUrlMutation();
+
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -51,22 +50,14 @@ export default function CreateCategory() {
   }, [formData.name]);
 
   useEffect(() => {
-    if (categories.length === 0) {
-      dispatch(getCategories());
-    }
-  }, [categories.length, dispatch]);
-
-  useEffect(() => {
     if (isError && submitted) {
-      setLocalError(message);
-      dispatch(reset());
+      setLocalError(error?.data?.message || "Error creating category");
       setSubmitted(false);
     }
     if (isSuccess && submitted) {
-      dispatch(reset());
       navigate("/categories");
     }
-  }, [isError, isSuccess, message, navigate, dispatch, submitted]);
+  }, [isError, isSuccess, error, navigate, submitted]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,6 +80,14 @@ export default function CreateCategory() {
     }
   };
 
+  const uploadFileToS3 = async (uploadUrl, file) => {
+    return axios.put(uploadUrl, file, {
+      headers: {
+        'Content-Type': file.type
+      }
+    });
+  };
+
   const handleSubmit = async () => {
     setLocalLoading(true);
     setLocalError("");
@@ -101,9 +100,9 @@ export default function CreateCategory() {
       // Upload Icon
       if (iconFile) {
         uploadTasks.push((async () => {
-          const iconPresignData = await categoryService.getUploadUrl(iconFile.type);
+          const iconPresignData = await getUploadUrl(iconFile.type).unwrap();
           if (iconPresignData.success) {
-            await categoryService.uploadFileToS3(iconPresignData.data.uploadUrl, iconFile);
+            await uploadFileToS3(iconPresignData.data.uploadUrl, iconFile);
             iconUrl = iconPresignData.data.fileUrl;
           }
         })());
@@ -112,9 +111,9 @@ export default function CreateCategory() {
       // Upload Banner
       if (bannerFile) {
         uploadTasks.push((async () => {
-          const bannerPresignData = await categoryService.getUploadUrl(bannerFile.type);
+          const bannerPresignData = await getUploadUrl(bannerFile.type).unwrap();
           if (bannerPresignData.success) {
-            await categoryService.uploadFileToS3(bannerPresignData.data.uploadUrl, bannerFile);
+            await uploadFileToS3(bannerPresignData.data.uploadUrl, bannerFile);
             bannerUrl = bannerPresignData.data.fileUrl;
           }
         })());
@@ -130,10 +129,11 @@ export default function CreateCategory() {
       };
 
       setSubmitted(true);
-      dispatch(createCategory(categoryData));
-    } catch (error) {
-      console.error(error);
+      await createCategory(categoryData).unwrap();
+    } catch (err) {
+      console.error(err);
       setLocalError("Error creating category. Please try again.");
+      setSubmitted(false);
     } finally {
       setLocalLoading(false);
     }
@@ -403,10 +403,10 @@ export default function CreateCategory() {
         </button>
         <button 
           onClick={handleSubmit}
-          disabled={isLoading || localLoading}
+          disabled={isCreating || localLoading}
           className="px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm disabled:opacity-70"
         >
-          {isLoading || localLoading ? "Saving..." : "Save Category"}
+          {isCreating || localLoading ? "Saving..." : "Save Category"}
         </button>
       </div>
 

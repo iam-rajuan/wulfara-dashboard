@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser, reset } from "../../../redux/features/auth/authSlice";
+import { setCredentials } from "../../../redux/features/auth/authSlice";
+import { useLoginMutation } from "../../../redux/features/auth/authApi";
 import { Mail, Lock, Eye, EyeOff, Info, ArrowRight, Globe } from "lucide-react";
 import brandlogo from "../../../assets/image/logo.png";
+
 const SignIn = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -12,33 +14,45 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState("");
 
-  const { user, isLoading, isError, isSuccess, message } = useSelector(
-    (state) => state.auth
-  );
+  const { user } = useSelector((state) => state.auth);
+  const [login, { isLoading, isError, error }] = useLoginMutation();
 
   useEffect(() => {
-    if (isError) {
-      setLocalError(message);
+    if (isError && error) {
+      setLocalError(error.data?.message || "Login failed");
     }
-    if (isSuccess || user) {
+    if (user) {
       navigate("/dashboard");
     }
-    dispatch(reset());
-  }, [user, isError, isSuccess, message, navigate, dispatch]);
+  }, [user, isError, error, navigate]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  const onFinish = (e) => {
+  const onFinish = async (e) => {
     e.preventDefault();
     setLocalError("");
-    const userData = { email, password };
-    dispatch(loginUser(userData));
+    try {
+      const { token } = await login({ email, password }).unwrap();
+      // Temporarily store token so the getMe query or manual fetch works
+      localStorage.setItem("token", token);
+      
+      // We can use a direct fetch here to get user details for the credentials, 
+      // since useQuery is a hook and we are inside a callback.
+      const response = await fetch("http://localhost:5000/api/v1/auth/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const userData = await response.json();
+      
+      dispatch(setCredentials({ user: userData.data, token }));
+      navigate("/dashboard");
+    } catch (err) {
+      setLocalError(err.data?.message || "Login failed");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#1F2937] flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-[440px] flex flex-col items-center">
 
         {/* Logo Section */}
@@ -155,7 +169,6 @@ const SignIn = () => {
         </div>
 
       </div>
-    </div>
   );
 };
 

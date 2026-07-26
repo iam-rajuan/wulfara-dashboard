@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { getListings, reviewListing } from "../../../redux/features/listings/listingsSlice";
+import { useGetListingsQuery, useReviewListingMutation } from "../../../redux/features/listings/listingsApi";
 import { ChevronRight, Filter, Download, Search, Hourglass, CheckCircle2, XCircle, Star, TrendingUp } from "lucide-react";
 import ListingTable from "../../../Components/admin-components/listings/ListingTable";
 
 export default function ListingReview() {
-  const dispatch = useDispatch();
-  const { listings, isLoading } = useSelector((state) => state.listings);
-
-  useEffect(() => {
-    dispatch(getListings());
-  }, [dispatch]);
+  const { data: listingsResponse, isLoading } = useGetListingsQuery();
+  const [reviewListing] = useReviewListingMutation();
+  
+  const listings = listingsResponse?.data || [];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
@@ -45,12 +42,22 @@ export default function ListingReview() {
     l.supplier?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleApprove = (id) => {
-    dispatch(reviewListing({ id, listingStatus: 'Approved' }));
+  const handleApprove = async (id) => {
+    try {
+      await reviewListing({ id, listingStatus: 'Approved' }).unwrap();
+    } catch (err) {
+      console.error(err);
+      alert("Error approving listing");
+    }
   };
 
-  const handleReject = (id) => {
-    dispatch(reviewListing({ id, listingStatus: 'Rejected' }));
+  const handleReject = async (id) => {
+    try {
+      await reviewListing({ id, listingStatus: 'Rejected' }).unwrap();
+    } catch (err) {
+      console.error(err);
+      alert("Error rejecting listing");
+    }
   };
 
   const handleSelect = (id) => {

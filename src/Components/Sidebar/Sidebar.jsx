@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logoutUser, reset } from "../../redux/features/auth/authSlice";
+import { logout } from "../../redux/features/auth/authSlice";
 import brandlogo from "../../assets/image/logo.png";
 import {
   Package,
@@ -37,8 +37,7 @@ const Sidebar = ({ closeDrawer }) => {
   const role = user?.role || "supplier";
 
   const handleLogout = () => {
-    dispatch(logoutUser());
-    dispatch(reset());
+    dispatch(logout());
     navigate("/sign-in");
   };
 

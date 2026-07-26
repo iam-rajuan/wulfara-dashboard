@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { useGetPlanQuery } from "../../../redux/features/subscriptions/subscriptionsApi";
 import EditPackageHeader from "../../../Components/admin-components/subscriptions/EditPackageHeader";
 import PackageInfoForm from "../../../Components/admin-components/subscriptions/PackageInfoForm";
 import PricingPeriodsForm from "../../../Components/admin-components/subscriptions/PricingPeriodsForm";
@@ -14,6 +15,9 @@ import LivePreviewCard from "../../../Components/admin-components/subscriptions/
 export default function EditSubscription() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("Overview");
+  
+  const { data: planResponse, isLoading } = useGetPlanQuery(id, { skip: !id });
+  
   const [formData, setFormData] = useState({
     name: "Premium Plan",
     slug: "premium-plan",
@@ -24,6 +28,22 @@ export default function EditSubscription() {
     basePrice: "4,900",
     features: [1, 2, 3, 4] // feature IDs that are checked
   });
+
+  useEffect(() => {
+    if (planResponse?.data) {
+      const plan = planResponse.data;
+      setFormData({
+        name: plan.name || "",
+        slug: plan.slug || "",
+        status: plan.isActive ? "Published" : "Draft",
+        description: plan.description || "",
+        badge: plan.badgeText || "",
+        publicVisibility: plan.isActive,
+        basePrice: plan.price || "0",
+        features: [1, 2, 3, 4] // feature IDs that are checked
+      });
+    }
+  }, [planResponse]);
 
   const handleChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));

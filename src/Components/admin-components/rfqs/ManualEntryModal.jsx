@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { getListings } from "../../../redux/features/listings/listingsSlice";
+import { useGetListingsQuery } from "../../../redux/features/listings/listingsApi";
 import { X } from "lucide-react";
 
 export default function ManualEntryModal({ isOpen, onClose, onSubmit, mode = "create", initialData = null }) {
-  const dispatch = useDispatch();
-  const { listings } = useSelector((state) => state.listings);
-
-  useEffect(() => {
-    if (isOpen && listings.length === 0) {
-      dispatch(getListings());
-    }
-  }, [isOpen, dispatch, listings.length]);
+  const { data: listingsResponse } = useGetListingsQuery(undefined, { skip: !isOpen });
+  const listings = listingsResponse?.data || [];
 
   const [formData, setFormData] = useState({
     supplierId: "",

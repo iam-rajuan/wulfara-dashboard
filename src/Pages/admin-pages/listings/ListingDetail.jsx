@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { getListing, reviewListing } from "../../../redux/features/listings/listingsSlice";
+import { useGetListingQuery, useReviewListingMutation } from "../../../redux/features/listings/listingsApi";
 import {
   ChevronRight,
   XCircle,
@@ -18,14 +17,10 @@ import {
 export default function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { listing, isLoading } = useSelector((state) => state.listings);
-
-  useEffect(() => {
-    if (id) {
-      dispatch(getListing(id));
-    }
-  }, [id, dispatch]);
+  
+  const { data: listingResponse, isLoading } = useGetListingQuery(id);
+  const [reviewListing] = useReviewListingMutation();
+  const listing = listingResponse?.data;
 
   const [checklist, setChecklist] = useState({
     companyInfo: true,
@@ -37,12 +32,22 @@ export default function ListingDetail() {
     setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleApprove = () => {
-    dispatch(reviewListing({ id, listingStatus: 'Approved' }));
+  const handleApprove = async () => {
+    try {
+      await reviewListing({ id, listingStatus: 'Approved' }).unwrap();
+    } catch (err) {
+      console.error(err);
+      alert("Error approving listing");
+    }
   };
 
-  const handleReject = () => {
-    dispatch(reviewListing({ id, listingStatus: 'Rejected' }));
+  const handleReject = async () => {
+    try {
+      await reviewListing({ id, listingStatus: 'Rejected' }).unwrap();
+    } catch (err) {
+      console.error(err);
+      alert("Error rejecting listing");
+    }
   };
 
   const status = listing ? listing.listingStatus : "Pending";

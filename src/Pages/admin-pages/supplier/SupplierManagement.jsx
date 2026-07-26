@@ -1,19 +1,22 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Download, Plus, ChevronDown, Search, Filter } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import { getUsers, createUser, updateUser, deleteUser } from "../../../redux/features/users/usersSlice";
+import { 
+  useGetUsersQuery, 
+  useCreateUserMutation, 
+  useUpdateUserMutation, 
+  useDeleteUserMutation 
+} from "../../../redux/features/users/usersApi";
 import SupplierTable from "../../../Components/admin-components/supplier/SupplierTable";
 import SupplierFormModal from "../../../Components/admin-components/supplier/SupplierFormModal";
 import SupplierDetailsModal from "../../../Components/admin-components/supplier/SupplierDetailsModal";
 import { Pagination } from "../../../Components/admin-components/buyer/BuyerTable"; // Reuse pagination
 
 export default function SupplierManagement() {
-  const dispatch = useDispatch();
-  const { users, isLoading } = useSelector((state) => state.users);
-
-  useEffect(() => {
-    dispatch(getUsers());
-  }, [dispatch]);
+  const { data: usersResponse, isLoading } = useGetUsersQuery();
+  const users = usersResponse?.data || [];
+  const [createUser] = useCreateUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
   // Filter only suppliers
   const suppliers = useMemo(() => {
@@ -43,33 +46,48 @@ export default function SupplierManagement() {
   const [bulkAction, setBulkAction] = useState("");
   const pageSize = 4; // Design shows 4 items per page
 
-  const handleSaveSupplier = (savedSupplier) => {
-    if (editingSupplier) {
-      dispatch(updateUser({ 
-        id: savedSupplier.id, 
-        userData: { name: savedSupplier.name, email: savedSupplier.email } 
-      }));
-    } else {
-      dispatch(createUser({
-        name: savedSupplier.name,
-        email: savedSupplier.email,
-        password: "DefaultPassword123!", // Require strong default for now
-        role: "supplier",
-        status: "Active" // Ensure default status
-      }));
+  const handleSaveSupplier = async (savedSupplier) => {
+    try {
+      if (editingSupplier) {
+        await updateUser({ 
+          id: savedSupplier.id, 
+          userData: { name: savedSupplier.name, email: savedSupplier.email } 
+        }).unwrap();
+      } else {
+        await createUser({
+          name: savedSupplier.name,
+          email: savedSupplier.email,
+          password: "DefaultPassword123!", // Require strong default for now
+          role: "supplier",
+          status: "Active" // Ensure default status
+        }).unwrap();
+      }
+      setEditingSupplier(null);
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error saving supplier");
     }
-    setEditingSupplier(null);
-    setIsModalOpen(false);
   };
 
-  const handleDeleteSupplier = (id) => {
+  const handleDeleteSupplier = async (id) => {
     if (window.confirm("Are you sure you want to delete this supplier?")) {
-      dispatch(deleteUser(id));
+      try {
+        await deleteUser(id).unwrap();
+      } catch (err) {
+        console.error(err);
+        alert("Error deleting supplier");
+      }
     }
   };
 
-  const handleApproveSupplier = (supplier) => {
-    dispatch(updateUser({ id: supplier.id, userData: { isVerified: true, status: 'Active' } }));
+  const handleApproveSupplier = async (supplier) => {
+    try {
+      await updateUser({ id: supplier.id, userData: { isVerified: true, status: 'Active' } }).unwrap();
+    } catch (err) {
+      console.error(err);
+      alert("Error approving supplier");
+    }
   };
 
   const openAddModal = () => {
@@ -123,25 +141,29 @@ export default function SupplierManagement() {
     }
   };
 
-  const handleApplyBulkAction = () => {
+  const handleApplyBulkAction = async () => {
     if (!bulkAction || selectedIds.length === 0) return;
     
-    if (bulkAction === "verify") {
-      selectedIds.forEach(id => {
-        dispatch(updateUser({ id, userData: { isVerified: true } }));
-      });
-    } else if (bulkAction === "suspend") {
-      selectedIds.forEach(id => {
-        dispatch(updateUser({ id, userData: { status: 'Suspended' } }));
-      });
-    } else if (bulkAction === "delete") {
-      selectedIds.forEach(id => {
-        dispatch(deleteUser(id));
-      });
+    try {
+      if (bulkAction === "verify") {
+        await Promise.all(selectedIds.map(id => 
+          updateUser({ id, userData: { isVerified: true } }).unwrap()
+        ));
+      } else if (bulkAction === "suspend") {
+        await Promise.all(selectedIds.map(id => 
+          updateUser({ id, userData: { status: 'Suspended' } }).unwrap()
+        ));
+      } else if (bulkAction === "delete") {
+        await Promise.all(selectedIds.map(id => 
+          deleteUser(id).unwrap()
+        ));
+      }
+      setSelectedIds([]);
+      setBulkAction("");
+    } catch (err) {
+      console.error(err);
+      alert("Error applying bulk action");
     }
-    
-    setSelectedIds([]);
-    setBulkAction("");
   };
 
   const hasSelection = selectedIds.length > 0;

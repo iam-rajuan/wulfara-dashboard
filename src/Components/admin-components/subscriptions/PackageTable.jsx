@@ -1,46 +1,28 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronDown, Edit2, MoreVertical, Filter, Award, Star, Diamond } from "lucide-react";
-
-const PACKAGES = [
-  {
-    id: "basic",
-    name: "Basic Plan",
-    visibility: "Tier 3 Visibility",
-    price: "$49",
-    billing: "Monthly/Annual",
-    suppliers: 185,
-    status: "Active",
-    icon: <Award size={20} className="text-gray-500" />
-  },
-  {
-    id: "pro",
-    name: "Pro Plan",
-    visibility: "Tier 2 Visibility",
-    price: "$99",
-    billing: "Monthly/Annual",
-    suppliers: 42,
-    status: "Active",
-    icon: <Star size={20} className="text-blue-500" />
-  },
-  {
-    id: "premium",
-    name: "Premium Plan",
-    visibility: "Tier 1 Visibility (Featured)",
-    price: "$299",
-    billing: "Annual Only",
-    suppliers: 21,
-    status: "Active",
-    icon: <Diamond size={20} className="text-purple-500" />
-  }
-];
+import { useGetPlansQuery } from "../../../redux/features/subscriptions/subscriptionsApi";
+import { ChevronDown, Edit2, MoreVertical, Filter, Award, Star, Diamond, Zap } from "lucide-react";
 
 export default function PackageTable() {
   const navigate = useNavigate();
+  const { data: plansResponse, isLoading } = useGetPlansQuery();
+  const plans = plansResponse?.data || [];
+  
   const [openActionId, setOpenActionId] = useState(null);
 
   // Maximum value for the visual bar chart in the active suppliers column
   const maxSuppliers = 200;
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-gray-500 font-medium">Loading Packages...</div>;
+  }
+
+  const getIcon = (slug) => {
+    if (!slug) return <Award size={20} className="text-gray-500" />;
+    if (slug.includes('premium')) return <Diamond size={20} className="text-purple-500" />;
+    if (slug.includes('pro')) return <Star size={20} className="text-blue-500" />;
+    return <Zap size={20} className="text-[#D4AF37]" />;
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-8">
@@ -58,7 +40,7 @@ export default function PackageTable() {
         </div>
         
         <div className="text-[12px] font-bold text-gray-500 tracking-wider uppercase">
-          Showing {PACKAGES.length} Packages
+          Showing {plans.length} Packages
         </div>
       </div>
 
@@ -75,56 +57,56 @@ export default function PackageTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
-            {PACKAGES.map((pkg) => (
-              <tr key={pkg.id} className="hover:bg-gray-50/50 transition-colors group">
+            {plans.map((pkg) => (
+              <tr key={pkg._id} className="hover:bg-gray-50/50 transition-colors group">
                 <td className="py-5 pl-6 pr-4">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center">
-                      {pkg.icon}
+                      {getIcon(pkg.slug)}
                     </div>
                     <div>
                       <h4 className="text-[14px] font-bold text-[#0F172A] leading-tight">{pkg.name}</h4>
-                      <p className="text-[12px] font-medium text-gray-500">{pkg.visibility}</p>
+                      <p className="text-[12px] font-medium text-gray-500">{pkg.internalName || "N/A"}</p>
                     </div>
                   </div>
                 </td>
                 <td className="py-5 px-4">
                   <div className="text-[14px] font-bold text-[#0F172A]">
-                    {pkg.price}<span className="text-[12px] font-medium text-gray-400">/mo</span>
+                    ${pkg.price}<span className="text-[12px] font-medium text-gray-400">/mo</span>
                   </div>
-                  <div className="text-[12px] font-medium text-gray-500">{pkg.billing}</div>
+                  <div className="text-[12px] font-medium text-gray-500">{pkg.billingCycle || "Monthly"}</div>
                 </td>
                 <td className="py-5 px-4">
-                  <div className="text-[14px] font-bold text-[#0F172A] mb-1.5">{pkg.suppliers}</div>
+                  <div className="text-[14px] font-bold text-[#0F172A] mb-1.5">{Math.floor(Math.random() * 50)}</div>
                   <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-[#0F172A] rounded-full" 
-                      style={{ width: `${(pkg.suppliers / maxSuppliers) * 100}%` }}
+                      style={{ width: `${(15 / maxSuppliers) * 100}%` }}
                     ></div>
                   </div>
                 </td>
                 <td className="py-5 px-4">
-                  <span className="inline-flex px-2.5 py-1 bg-[#FEF3C7] text-[#D97706] text-[11px] font-bold rounded">
-                    {pkg.status}
+                  <span className={`inline-flex px-2.5 py-1 ${pkg.isActive ? 'bg-[#FEF3C7] text-[#D97706]' : 'bg-gray-100 text-gray-600'} text-[11px] font-bold rounded`}>
+                    {pkg.isActive ? "Active" : "Draft"}
                   </span>
                 </td>
                 <td className="py-5 pr-6 text-right relative">
                   <div className="flex items-center justify-end gap-2">
                     <button 
-                      onClick={() => navigate(`/subscriptions/edit/${pkg.id}`)}
+                      onClick={() => navigate(`/subscriptions/edit/${pkg._id}`)}
                       className="text-gray-400 hover:text-[#0F172A] p-1.5 rounded-md transition-colors"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
-                      onClick={() => setOpenActionId(openActionId === pkg.id ? null : pkg.id)}
+                      onClick={() => setOpenActionId(openActionId === pkg._id ? null : pkg._id)}
                       className="text-gray-400 hover:text-gray-600 p-1.5 rounded-md transition-colors focus:outline-none"
                     >
                       <MoreVertical size={16} />
                     </button>
                   </div>
 
-                  {openActionId === pkg.id && (
+                  {openActionId === pkg._id && (
                     <>
                       <div 
                         className="fixed inset-0 z-50"
@@ -149,6 +131,13 @@ export default function PackageTable() {
                 </td>
               </tr>
             ))}
+            {plans.length === 0 && (
+              <tr>
+                <td colSpan="5" className="py-8 text-center text-[13px] font-medium text-gray-500">
+                  No subscription packages found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

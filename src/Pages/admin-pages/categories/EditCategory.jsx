@@ -1,8 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { updateCategory, getCategories, reset } from "../../../redux/features/categories/categorySlice";
-import categoryService from "../../../redux/features/categories/categoryService";
+import { 
+  useGetCategoriesQuery, 
+  useGetCategoryQuery, 
+  useUpdateCategoryMutation,
+  useDeleteCategoryMutation,
+  useGetUploadUrlMutation 
+} from "../../../redux/features/categories/categoryApi";
+import axios from "axios";
 import { 
   Info, 
   Image as ImageIcon, 
@@ -13,15 +18,15 @@ import {
 export default function EditCategory() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   
-  const { categories, isLoading, isError, isSuccess, message } = useSelector(
-    (state) => state.category
-  );
+  const { data: categories = [] } = useGetCategoriesQuery();
+  const { data: categoryResponse, isLoading: isLoadingCategory } = useGetCategoryQuery(id);
+  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
+  const [deleteCategory] = useDeleteCategoryMutation();
+  const [getUploadUrl] = useGetUploadUrlMutation();
   
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const [initialName, setInitialName] = useState("");
 
   const [bannerFile, setBannerFile] = useState(null);
@@ -39,52 +44,23 @@ export default function EditCategory() {
     status: "Active"
   });
 
-  // Fetch data based on ID
+  // Populate data when query returns
   useEffect(() => {
-    if (id) {
-      setLocalLoading(true);
-      categoryService.getCategory(id)
-        .then(res => {
-          if (res.success) {
-            const cat = res.data;
-            setInitialName(cat.name);
-            setFormData({
-              name: cat.name || "",
-              slug: cat.slug || "",
-              description: cat.description || "",
-              displayOrder: cat.displayOrder?.toString() || "1",
-              parentCategory: cat.parentCategory || "None (Main Category)",
-              status: cat.status || "Active"
-            });
-            if (cat.banner && cat.banner !== 'no-banner.jpg') setBannerPreview(cat.banner);
-            if (cat.icon && cat.icon !== 'no-icon.png') setIconPreview(cat.icon);
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          setLocalError("Failed to load category data.");
-        })
-        .finally(() => setLocalLoading(false));
+    if (categoryResponse?.data) {
+      const cat = categoryResponse.data;
+      setInitialName(cat.name);
+      setFormData({
+        name: cat.name || "",
+        slug: cat.slug || "",
+        description: cat.description || "",
+        displayOrder: cat.displayOrder?.toString() || "1",
+        parentCategory: cat.parentCategory || "None (Main Category)",
+        status: cat.status || "Active"
+      });
+      if (cat.banner && cat.banner !== 'no-banner.jpg') setBannerPreview(cat.banner);
+      if (cat.icon && cat.icon !== 'no-icon.png') setIconPreview(cat.icon);
     }
-  }, [id]);
-
-  useEffect(() => {
-    if (categories.length === 0) {
-      dispatch(getCategories());
-    }
-  }, [categories.length, dispatch]);
-
-  useEffect(() => {
-    if (isError && submitted) {
-      setLocalError(message);
-      dispatch(reset());
-      setSubmitted(false);
-    }
-    if (isSuccess && submitted) {
-      dispatch(reset());
-      navigate("/categories");
-    }
-  }, [isError, isSuccess, message, navigate, dispatch, submitted]);
+  }, [categoryResponse]);
 
   // Auto-generate slug when name changes (only if name changed from initial)
   useEffect(() => {
@@ -121,6 +97,26 @@ export default function EditCategory() {
     }
   };
 
+  const uploadFileToS3 = async (uploadUrl, file) => {
+    return axios.put(uploadUrl, file, {
+      headers: {
+        'Content-Type': file.type
+      }
+    });
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      try {
+        await deleteCategory(id).unwrap();
+        navigate("/categories");
+      } catch (err) {
+        console.error(err);
+        setLocalError("Failed to delete category.");
+      }
+    }
+  };
+
   const handleSubmit = async () => {
     setLocalLoading(true);
     setLocalError("");
@@ -133,9 +129,9 @@ export default function EditCategory() {
       // Upload Icon if changed
       if (iconFile) {
         uploadTasks.push((async () => {
-          const iconPresignData = await categoryService.getUploadUrl(iconFile.type);
+          const iconPresignData = await getUploadUrl(iconFile.type).unwrap();
           if (iconPresignData.success) {
-            await categoryService.uploadFileToS3(iconPresignData.data.uploadUrl, iconFile);
+            await uploadFileToS3(iconPresignData.data.uploadUrl, iconFile);
             iconUrl = iconPresignData.data.fileUrl;
           }
         })());
@@ -144,9 +140,9 @@ export default function EditCategory() {
       // Upload Banner if changed
       if (bannerFile) {
         uploadTasks.push((async () => {
-          const bannerPresignData = await categoryService.getUploadUrl(bannerFile.type);
+          const bannerPresignData = await getUploadUrl(bannerFile.type).unwrap();
           if (bannerPresignData.success) {
-            await categoryService.uploadFileToS3(bannerPresignData.data.uploadUrl, bannerFile);
+            await uploadFileToS3(bannerPresignData.data.uploadUrl, bannerFile);
             bannerUrl = bannerPresignData.data.fileUrl;
           }
         })());
@@ -169,11 +165,11 @@ export default function EditCategory() {
          delete categoryData.banner;
       }
 
-      setSubmitted(true);
-      dispatch(updateCategory({ id, categoryData }));
+      await updateCategory({ id, categoryData }).unwrap();
+      navigate("/categories");
     } catch (error) {
       console.error(error);
-      setLocalError("Error updating category. Please try again.");
+      setLocalError(error?.data?.message || "Error updating category. Please try again.");
     } finally {
       setLocalLoading(false);
     }
@@ -200,12 +196,7 @@ export default function EditCategory() {
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
             <button 
-              onClick={() => {
-                if (window.confirm("Are you sure you want to delete this category?")) {
-                  // Dispatch delete action here if needed, or navigate away
-                  navigate("/categories");
-                }
-              }}
+              onClick={handleDelete}
               className="flex-1 sm:flex-none px-6 py-2.5 bg-white border border-red-200 rounded-md text-[13px] font-bold text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm"
             >
               Delete
@@ -218,10 +209,10 @@ export default function EditCategory() {
             </Link>
             <button 
               onClick={handleSubmit}
-              disabled={isLoading || localLoading}
+              disabled={isUpdating || localLoading || isLoadingCategory}
               className="flex-1 sm:flex-none flex items-center justify-center px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm disabled:opacity-50"
             >
-              {isLoading || localLoading ? "Saving..." : "Save Changes"}
+              {isUpdating || localLoading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>

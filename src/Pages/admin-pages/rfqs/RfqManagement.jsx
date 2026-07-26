@@ -1,19 +1,16 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { getRfqs, createRfq } from "../../../redux/features/rfqs/rfqsSlice";
+import React, { useState, useMemo } from "react";
 import { Download, Plus } from "lucide-react";
+import { useGetRfqsQuery, useCreateRfqMutation } from "../../../redux/features/rfqs/rfqsApi";
 import RfqMetrics from "../../../Components/admin-components/rfqs/RfqMetrics";
 import RfqFilters from "../../../Components/admin-components/rfqs/RfqFilters";
 import RfqTable from "../../../Components/admin-components/rfqs/RfqTable";
 import ManualEntryModal from "../../../Components/admin-components/rfqs/ManualEntryModal";
 
 export default function RfqManagement() {
-  const dispatch = useDispatch();
-  const { rfqs, isLoading } = useSelector((state) => state.rfqs);
-
-  useEffect(() => {
-    dispatch(getRfqs());
-  }, [dispatch]);
+  const { data: rfqsResponse, isLoading } = useGetRfqsQuery();
+  const [createRfq] = useCreateRfqMutation();
+  
+  const rfqs = rfqsResponse?.data || [];
 
   const rfqsList = useMemo(() => {
     return rfqs.map(rfq => ({
@@ -52,17 +49,21 @@ export default function RfqManagement() {
     setCurrentPage(1);
   };
 
-  const handleCreateEntry = (entryData) => {
-    // Dispatch the actual creation to Redux and MongoDB
-    dispatch(createRfq({
-      supplierId: entryData.supplierId, // We must have added this to the modal
-      buyerName: entryData.buyerName,
-      buyerEmail: entryData.buyerEmail,
-      subject: entryData.subject,
-      details: entryData.details,
-      quantity: entryData.quantity || 1
-    }));
-    setIsModalOpen(false);
+  const handleCreateEntry = async (entryData) => {
+    try {
+      await createRfq({
+        supplierId: entryData.supplierId, // We must have added this to the modal
+        buyerName: entryData.buyerName,
+        buyerEmail: entryData.buyerEmail,
+        subject: entryData.subject,
+        details: entryData.details,
+        quantity: entryData.quantity || 1
+      }).unwrap();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create manual entry");
+    }
   };
 
   const handleOpenCreate = () => {

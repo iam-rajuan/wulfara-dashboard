@@ -1,8 +1,12 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useCreatePlanMutation } from "../../../redux/features/subscriptions/subscriptionsApi";
 import { Monitor, Smartphone, Check } from "lucide-react";
 
 export default function CreateSubscription() {
+  const [createPlan] = useCreatePlanMutation();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     internalName: "",
     displayName: "Premium Supplier",
@@ -23,6 +27,37 @@ export default function CreateSubscription() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handlePublish = async () => {
+    if (!formData.internalName || !formData.displayName || !formData.basePrice) {
+      alert("Please fill in required fields (Internal Name, Display Name, Base Price)");
+      return;
+    }
+
+    const payload = {
+      internalName: formData.internalName,
+      name: formData.displayName,
+      slug: formData.slug,
+      description: formData.description,
+      badgeText: formData.badgeText,
+      accentColor: formData.accentColor,
+      price: Number(formData.basePrice),
+      billingCycle: formData.billingCycle,
+      taxCategory: formData.taxCategory,
+      allowCoupons: formData.allowCoupons,
+      autoRenewal: formData.autoRenewal,
+      features: ["Top tier directory placement", "Unlimited RFQ access", "Verified Supplier Badge"], // Mock features for now
+      isActive: true
+    };
+
+    try {
+      await createPlan(payload).unwrap();
+      navigate('/subscriptions');
+    } catch (error) {
+      console.error("Failed to create package", error);
+      alert(error);
+    }
   };
 
   return (
@@ -46,7 +81,10 @@ export default function CreateSubscription() {
             <button className="px-5 py-2.5 text-[13px] font-bold text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors shadow-sm">
               Save as Draft
             </button>
-            <button className="px-5 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm">
+            <button 
+              onClick={handlePublish}
+              className="px-5 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
+            >
               Publish Package
             </button>
           </div>
