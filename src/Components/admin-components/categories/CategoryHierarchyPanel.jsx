@@ -28,13 +28,24 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
     }));
   };
 
-  // Find the active category details
-  const activeCategory = categories.find(c => c.id === activeCategoryId) || categories[0];
+  // Recursive find for active category
+  const findCategory = (nodes, id) => {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children && node.children.length > 0) {
+        const found = findCategory(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  
+  const activeCategory = (activeCategoryId ? findCategory(categories, activeCategoryId) : categories[0]) || categories[0];
 
   const handleThumbnailUpload = (e) => {
     const file = e.target.files[0];
     if (file && onUpdateCategory) {
-      onUpdateCategory(activeCategory.id, { thumbnail: URL.createObjectURL(file) });
+      onUpdateCategory(activeCategory.id, { banner: URL.createObjectURL(file) });
     }
   };
 
@@ -42,9 +53,7 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
     const file = e.target.files[0];
     if (file && onUpdateCategory) {
       const url = URL.createObjectURL(file);
-      onUpdateCategory(activeCategory.id, { 
-        icon: <img src={url} alt="icon" className="w-full h-full object-contain p-0.5" /> 
-      });
+      onUpdateCategory(activeCategory.id, { icon: url });
     }
   };
 
@@ -72,8 +81,12 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
           </div>
           
           {/* Node Icon */}
-          <div className={`${isActive ? "text-[#D4AF37]" : "text-gray-400"}`}>
-            {node.icon}
+          <div className={`${isActive ? "text-[#D4AF37]" : "text-gray-400"} w-5 h-5 flex items-center justify-center`}>
+            {typeof node.icon === 'string' && node.icon !== 'no-icon.png' ? (
+              <img src={node.icon} alt="icon" className="w-full h-full object-contain" />
+            ) : (
+              <Folder size={16} />
+            )}
           </div>
 
           {/* Node Label */}
@@ -131,7 +144,7 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
               Delete
             </button>
             <Link 
-              to="/categories/create"
+              to={`/categories/create?parent=${activeCategory?.id}`}
               className="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm text-center"
             >
               Add Subcategory
@@ -156,12 +169,12 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
                 <div>
                   <h4 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Category Thumbnail</h4>
                   <label className="block w-full aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 cursor-pointer relative group">
-                    <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="hidden" />
-                    {activeCategory.thumbnail ? (
+                    <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="hidden" disabled />
+                    {activeCategory.banner && activeCategory.banner !== 'no-banner.jpg' ? (
                       <>
-                        <img src={activeCategory.thumbnail} alt={activeCategory.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
+                        <img src={activeCategory.banner} alt={activeCategory.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-white text-[11px] font-bold">Change Thumbnail</span>
+                          <span className="text-white text-[11px] font-bold">Edit via Edit Button</span>
                         </div>
                       </>
                     ) : (
@@ -174,15 +187,18 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
                 </div>
 
                 <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-100 bg-gray-50/50">
-                  <div className="w-12 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center text-[#D4AF37] overflow-hidden">
-                    {activeCategory.icon}
+                  <div className="w-12 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center text-[#D4AF37] overflow-hidden p-1">
+                    {activeCategory.icon && activeCategory.icon !== 'no-icon.png' ? (
+                      <img src={activeCategory.icon} alt="icon" className="w-full h-full object-contain" />
+                    ) : (
+                      <ImageIcon size={20} />
+                    )}
                   </div>
                   <div>
                     <h4 className="text-[12px] font-bold text-[#0F172A]">Category Icon</h4>
-                    <label className="block text-[11px] font-bold text-[#D97706] hover:underline mt-0.5 cursor-pointer">
-                      Change Icon
-                      <input type="file" accept="image/svg+xml,image/png" onChange={handleIconUpload} className="hidden" />
-                    </label>
+                    <span className="block text-[11px] font-bold text-gray-400 mt-0.5">
+                      Edit via Edit Button
+                    </span>
                   </div>
                 </div>
               </div>

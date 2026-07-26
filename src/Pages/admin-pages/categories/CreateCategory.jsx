@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { createCategory, reset } from "../../../redux/features/categories/categorySlice";
+import { createCategory, getCategories, reset } from "../../../redux/features/categories/categorySlice";
 import categoryService from "../../../redux/features/categories/categoryService";
 import { 
   Info, 
@@ -13,12 +13,15 @@ import {
 export default function CreateCategory() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
+  const parentParam = searchParams.get("parent");
   
-  const { isLoading, isError, isSuccess, message } = useSelector(
+  const { categories, isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.category
   );
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   const [bannerFile, setBannerFile] = useState(null);
   const [iconFile, setIconFile] = useState(null);
@@ -29,7 +32,7 @@ export default function CreateCategory() {
     slug: "",
     description: "",
     displayOrder: "1",
-    parentCategory: "None (Main Category)",
+    parentCategory: parentParam || "None (Main Category)",
     status: "Active"
   });
 
@@ -48,15 +51,22 @@ export default function CreateCategory() {
   }, [formData.name]);
 
   useEffect(() => {
-    if (isError) {
+    if (categories.length === 0) {
+      dispatch(getCategories());
+    }
+  }, [categories.length, dispatch]);
+
+  useEffect(() => {
+    if (isError && submitted) {
       setLocalError(message);
       dispatch(reset());
+      setSubmitted(false);
     }
-    if (isSuccess) {
+    if (isSuccess && submitted) {
       dispatch(reset());
       navigate("/categories");
     }
-  }, [isError, isSuccess, message, navigate, dispatch]);
+  }, [isError, isSuccess, message, navigate, dispatch, submitted]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -114,11 +124,12 @@ export default function CreateCategory() {
 
       const categoryData = {
         ...formData,
-        parentCategory: formData.parentCategory === "None (Main Category)" ? null : undefined,
+        parentCategory: formData.parentCategory === "None (Main Category)" ? null : formData.parentCategory,
         icon: iconUrl,
         banner: bannerUrl
       };
 
+      setSubmitted(true);
       dispatch(createCategory(categoryData));
     } catch (error) {
       console.error(error);
@@ -252,9 +263,10 @@ export default function CreateCategory() {
                   onChange={handleChange}
                   className="w-full appearance-none px-4 py-2.5 bg-white border border-gray-300 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]"
                 >
-                  <option>None (Main Category)</option>
-                  <option>Raw Material</option>
-                  <option>Component/Parts</option>
+                  <option value="None (Main Category)">None (Main Category)</option>
+                  {categories.map(cat => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
 

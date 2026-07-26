@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { updateCategory, getCategories, reset } from "../../../redux/features/categories/categorySlice";
+import categoryService from "../../../redux/features/categories/categoryService";
 import { 
   Info, 
   Image as ImageIcon, 
@@ -10,6 +13,19 @@ import {
 export default function EditCategory() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
+  const { categories, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.category
+  );
+  
+  const [localLoading, setLocalLoading] = useState(false);
+  const [localError, setLocalError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [initialName, setInitialName] = useState("");
+
+  const [bannerFile, setBannerFile] = useState(null);
+  const [iconFile, setIconFile] = useState(null);
 
   const [bannerPreview, setBannerPreview] = useState("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2104&auto=format&fit=crop");
   const [iconPreview, setIconPreview] = useState(null);
@@ -23,24 +39,56 @@ export default function EditCategory() {
     status: "Active"
   });
 
-  // Simulate fetching data based on ID
+  // Fetch data based on ID
   useEffect(() => {
-    // In a real app, fetch from API. We just mock it here.
     if (id) {
-      setFormData({
-        name: "Raw Material",
-        slug: "raw-material-suppliers",
-        description: "Suppliers providing basic materials such as unrefined metals, chemicals, plastics, and minerals used in the manufacturing of finished components. This category represents the core of the industrial supply chain.",
-        displayOrder: "1",
-        parentCategory: "Root",
-        status: "Active"
-      });
+      setLocalLoading(true);
+      categoryService.getCategory(id)
+        .then(res => {
+          if (res.success) {
+            const cat = res.data;
+            setInitialName(cat.name);
+            setFormData({
+              name: cat.name || "",
+              slug: cat.slug || "",
+              description: cat.description || "",
+              displayOrder: cat.displayOrder?.toString() || "1",
+              parentCategory: cat.parentCategory || "None (Main Category)",
+              status: cat.status || "Active"
+            });
+            if (cat.banner && cat.banner !== 'no-banner.jpg') setBannerPreview(cat.banner);
+            if (cat.icon && cat.icon !== 'no-icon.png') setIconPreview(cat.icon);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          setLocalError("Failed to load category data.");
+        })
+        .finally(() => setLocalLoading(false));
     }
   }, [id]);
 
-  // Auto-generate slug when name changes
   useEffect(() => {
-    if (formData.name && formData.name !== "Raw Material") {
+    if (categories.length === 0) {
+      dispatch(getCategories());
+    }
+  }, [categories.length, dispatch]);
+
+  useEffect(() => {
+    if (isError && submitted) {
+      setLocalError(message);
+      dispatch(reset());
+      setSubmitted(false);
+    }
+    if (isSuccess && submitted) {
+      dispatch(reset());
+      navigate("/categories");
+    }
+  }, [isError, isSuccess, message, navigate, dispatch, submitted]);
+
+  // Auto-generate slug when name changes (only if name changed from initial)
+  useEffect(() => {
+    if (formData.name && formData.name !== initialName) {
       const generatedSlug = formData.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
@@ -50,7 +98,7 @@ export default function EditCategory() {
     } else if (!formData.name) {
       setFormData(prev => ({ ...prev, slug: "" }));
     }
-  }, [formData.name]);
+  }, [formData.name, initialName]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,6 +108,7 @@ export default function EditCategory() {
   const handleBannerUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setBannerFile(file);
       setBannerPreview(URL.createObjectURL(file));
     }
   };
@@ -67,7 +116,66 @@ export default function EditCategory() {
   const handleIconUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setIconFile(file);
       setIconPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async () => {
+    setLocalLoading(true);
+    setLocalError("");
+    try {
+      let iconUrl = iconPreview; // Keep existing or default
+      let bannerUrl = bannerPreview;
+
+      const uploadTasks = [];
+
+      // Upload Icon if changed
+      if (iconFile) {
+        uploadTasks.push((async () => {
+          const iconPresignData = await categoryService.getUploadUrl(iconFile.type);
+          if (iconPresignData.success) {
+            await categoryService.uploadFileToS3(iconPresignData.data.uploadUrl, iconFile);
+            iconUrl = iconPresignData.data.fileUrl;
+          }
+        })());
+      }
+
+      // Upload Banner if changed
+      if (bannerFile) {
+        uploadTasks.push((async () => {
+          const bannerPresignData = await categoryService.getUploadUrl(bannerFile.type);
+          if (bannerPresignData.success) {
+            await categoryService.uploadFileToS3(bannerPresignData.data.uploadUrl, bannerFile);
+            bannerUrl = bannerPresignData.data.fileUrl;
+          }
+        })());
+      }
+
+      await Promise.all(uploadTasks);
+
+      const categoryData = {
+        ...formData,
+        parentCategory: formData.parentCategory === "None (Main Category)" ? null : formData.parentCategory,
+        icon: iconUrl,
+        banner: bannerUrl
+      };
+
+      // Strip blob URLs if they weren't uploaded (fallback to defaults if needed, but we keep existing URLs mostly)
+      if (typeof categoryData.icon === 'string' && categoryData.icon.startsWith('blob:')) {
+         delete categoryData.icon; // Don't send blob urls
+      }
+      if (typeof categoryData.banner === 'string' && categoryData.banner.startsWith('blob:')) {
+         delete categoryData.banner;
+      }
+
+      setSubmitted(true);
+      dispatch(updateCategory({ id, categoryData }));
+    } catch (error) {
+      console.error(error);
+      setLocalError("Error updating category. Please try again.");
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -83,257 +191,202 @@ export default function EditCategory() {
         <span className="text-[#D4AF37]">Edit Category</span>
       </div>
 
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-[#0F172A] tracking-tight mb-2">
-          Edit Category
-        </h1>
-        <p className="text-[14px] font-medium text-gray-500">
-          Modify the details and settings of this supplier category.
-        </p>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8">
-        
-        {/* Left Column (Form) */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          
-          <div className="flex items-center gap-2 mb-8 border-b border-gray-100 pb-4">
-            <Info size={20} className="text-[#D4AF37]" />
-            <h2 className="text-[18px] font-extrabold text-[#0F172A]">Category Information</h2>
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+        {/* Top Actions */}
+        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-[20px] font-extrabold text-[#0F172A] mb-1">Edit Category Details</h2>
+            <p className="text-[12px] font-medium text-gray-500">Editing: {initialName || "Category"}</p>
           </div>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            <button 
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete this category?")) {
+                  // Dispatch delete action here if needed, or navigate away
+                  navigate("/categories");
+                }
+              }}
+              className="flex-1 sm:flex-none px-6 py-2.5 bg-white border border-red-200 rounded-md text-[13px] font-bold text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm"
+            >
+              Delete
+            </button>
+            <Link 
+              to={`/categories/create?parent=${id}`}
+              className="flex-1 sm:flex-none px-6 py-2.5 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm text-center"
+            >
+              Add Subcategory
+            </Link>
+            <button 
+              onClick={handleSubmit}
+              disabled={isLoading || localLoading}
+              className="flex-1 sm:flex-none flex items-center justify-center px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm disabled:opacity-50"
+            >
+              {isLoading || localLoading ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
 
-          <div className="space-y-6">
+        {localError && (
+          <div className="m-6 mb-0 p-4 bg-red-50 border border-red-200 text-red-600 rounded-md text-[13px] font-medium">
+            {localError}
+          </div>
+        )}
+
+        {/* Details Content */}
+        <div className="p-6 md:p-8 space-y-8 flex-1">
+          
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Category Name */}
+            {/* Left Column (Images) */}
+            <div className="md:col-span-4 lg:col-span-3 space-y-6">
               <div>
-                <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Category Name</label>
-                <input 
-                  type="text" 
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="e.g. Raw Material Suppliers"
-                  className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] placeholder-gray-400"
-                />
+                <h4 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Category Thumbnail</h4>
+                <label className="block w-full aspect-video bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer relative group transition-colors hover:bg-gray-100">
+                  <input type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
+                  {bannerPreview && bannerPreview !== 'no-banner.jpg' ? (
+                    <>
+                      <img src={bannerPreview} alt="Banner Preview" className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-white text-[11px] font-bold">Change Thumbnail</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors">
+                      <ImageIcon size={24} className="mb-2" />
+                      <span className="text-[11px] font-bold">Upload</span>
+                    </div>
+                  )}
+                </label>
               </div>
 
-              {/* Slug */}
-              <div>
-                <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Slug</label>
-                <div className="flex rounded-md shadow-sm">
-                  <span className="inline-flex items-center px-4 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-[13px] font-medium">
-                    wulfara.com/c/
-                  </span>
+              <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+                <div className="w-12 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center text-[#D4AF37] overflow-hidden p-1">
+                  {iconPreview && iconPreview !== 'no-icon.png' ? (
+                    <img src={iconPreview} alt="Icon Preview" className="w-full h-full object-contain" />
+                  ) : (
+                    <ImageIcon size={20} />
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-[12px] font-bold text-[#0F172A]">Category Icon</h4>
+                  <label className="block text-[11px] font-bold text-[#D97706] hover:underline mt-0.5 cursor-pointer">
+                    Change Icon
+                    <input type="file" accept="image/svg+xml,image/png" onChange={handleIconUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column (Form Data) */}
+            <div className="md:col-span-8 lg:col-span-9">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                {/* Slug */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Slug</label>
                   <input 
                     type="text" 
                     name="slug"
                     value={formData.slug}
                     onChange={handleChange}
-                    className="flex-1 min-w-0 block w-full px-4 py-2.5 rounded-none rounded-r-md bg-white border border-gray-300 text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]"
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[13px] font-mono text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]"
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Description</label>
-              <textarea 
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Provide a brief summary of the products or services offered in this category..."
-                rows={4}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] placeholder-gray-400 resize-none"
-              ></textarea>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Icon Upload */}
-              <div>
-                <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Icon</label>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400 overflow-hidden">
-                    {iconPreview ? (
-                      <img src={iconPreview} alt="Icon Preview" className="w-full h-full object-contain p-2" />
-                    ) : (
-                      <ImageIcon size={20} />
-                    )}
+                {/* Status */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Status</label>
+                  <div className="flex bg-gray-50 p-1 rounded-md border border-gray-200">
+                    {["Active", "Hidden", "Draft"].map(status => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, status }))}
+                        className={`flex-1 py-1.5 text-[12px] font-bold rounded flex items-center justify-center gap-1.5 ${
+                          formData.status === status 
+                            ? (status === 'Active' ? "bg-[#F0FDF4] text-[#16A34A] shadow-sm border border-[#DCFCE7]" : "bg-white text-[#D97706] shadow-sm border border-gray-200") 
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        {formData.status === status && status === 'Active' && <div className="w-1.5 h-1.5 rounded-full bg-[#16A34A]"></div>}
+                        {status}
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <label className="text-[13px] font-bold text-[#D4AF37] hover:underline cursor-pointer">
-                      Change SVG or PNG
-                      <input type="file" accept="image/svg+xml,image/png" onChange={handleIconUpload} className="hidden" />
-                    </label>
-                    <p className="text-[11px] font-medium text-gray-400 mt-1">Max size 500kb</p>
+                </div>
+                {/* Display Order */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Display Order</label>
+                  <input 
+                    type="number" 
+                    name="displayOrder"
+                    value={formData.displayOrder}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]"
+                  />
+                </div>
+                {/* Total Suppliers (Readonly) */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Total Suppliers</label>
+                  <div className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-[13px] font-bold text-gray-400 cursor-not-allowed">
+                    0
                   </div>
                 </div>
               </div>
 
-              {/* Display Order */}
+              {/* Description */}
               <div>
-                <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Display Order</label>
-                <input 
-                  type="number" 
-                  name="displayOrder"
-                  value={formData.displayOrder}
+                <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Description</label>
+                <textarea 
+                  name="description"
+                  value={formData.description}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]"
-                />
+                  rows={4}
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-[13px] text-gray-600 leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] resize-none"
+                ></textarea>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Parent Category */}
-              <div>
-                <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Parent Category</label>
+              <div className="mt-6">
+                <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Parent Category</label>
                 <select 
                   name="parentCategory"
                   value={formData.parentCategory}
                   onChange={handleChange}
-                  className="w-full appearance-none px-4 py-2.5 bg-white border border-gray-300 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]"
+                  className="w-full sm:w-1/2 appearance-none px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]"
                 >
-                  <option>None (Main Category)</option>
-                  <option>Root</option>
-                  <option>Raw Material</option>
-                  <option>Component/Parts</option>
+                  <option value="None (Main Category)">None (Main Category)</option>
+                  {categories.filter(c => c._id !== id).map(cat => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
 
-              {/* Status */}
-              <div>
-                <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Status</label>
-                <div className="flex bg-gray-100 p-1 rounded-md">
-                  {["Active", "Hidden", "Draft"].map(status => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, status }))}
-                      className={`flex-1 py-1.5 text-[12px] font-bold rounded ${
-                        formData.status === status 
-                          ? "bg-white text-[#D97706] shadow-sm" 
-                          : "text-gray-500 hover:text-gray-700"
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Banner Image */}
-            <div>
-              <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Banner Image</label>
-              <label className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50/50 transition-colors cursor-pointer relative overflow-hidden group block">
-                <input type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
-                <img src={bannerPreview} alt="Banner Preview" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-10 transition-opacity" />
-                <div className="relative z-10 flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-white shadow text-[#D97706] flex items-center justify-center mb-4">
-                    <CloudUpload size={20} />
-                  </div>
-                  <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">Click to replace image</h4>
-                  <p className="text-[12px] font-medium text-gray-500">SVG, PNG, JPG or WEBP (max. 1920x1080px)</p>
-                </div>
-              </label>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Right Column (Preview & Admin Summary) */}
-        <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 space-y-6">
-          
-          {/* Public Preview */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50/50">
-              <Eye size={14} className="text-gray-400" />
-              <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">Public Preview</span>
-            </div>
-            
-            <div className="p-4 bg-gray-50">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="h-32 bg-slate-800 relative">
-                  <img src={bannerPreview} alt="Banner Preview" className="w-full h-full object-cover opacity-50" />
-                </div>
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-[16px] font-extrabold text-[#0F172A] leading-tight">
-                      {formData.name || "Category Name"}
-                    </h3>
-                    <div className="flex flex-col items-center bg-gray-50 border border-gray-100 rounded-lg px-2 py-1">
-                      <span className="text-[10px] font-bold text-[#D4AF37]">148</span>
-                      <span className="text-[8px] font-bold text-gray-400 uppercase">Suppliers</span>
-                    </div>
-                  </div>
-                  <p className="text-[12px] font-medium text-gray-500 line-clamp-2 mb-6">
-                    {formData.description || "High-performance industrial materials ranging from..."}
-                  </p>
-                  <button className="w-full py-2 bg-[#D4AF37] text-[#0F172A] rounded-md text-[13px] font-bold hover:bg-[#C2982B] transition-colors flex items-center justify-center gap-1.5">
-                    View Suppliers <span>&rarr;</span>
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Admin Summary */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-3 mb-4">
-              Admin Summary
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium text-gray-500">Status</span>
-                <span className={`text-[13px] font-bold flex items-center gap-1.5 ${
-                  formData.status === 'Active' ? 'text-[#10B981]' : 
-                  formData.status === 'Hidden' ? 'text-gray-400' : 'text-[#D97706]'
-                }`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${
-                    formData.status === 'Active' ? 'bg-[#10B981]' : 
-                    formData.status === 'Hidden' ? 'bg-gray-400' : 'bg-[#D97706]'
-                  }`}></div>
-                  {formData.status === 'Active' ? 'Live' : formData.status}
-                </span>
+          {/* Bottom Metrics Bar */}
+          <div className="pt-6 border-t border-gray-100">
+            <div className="bg-[#F8F9FB] rounded-xl border border-gray-100 p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+              <div className="flex items-center gap-10">
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Growth (YoY)</p>
+                  <p className="text-[16px] font-extrabold text-[#10B981]">+0%</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Average Rating</p>
+                  <div className="flex items-center gap-1 text-[16px] font-extrabold text-[#0F172A]">
+                    0.0 <span className="text-[#F59E0B] -mt-0.5">★</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium text-gray-500">Public Path</span>
-                <span className="px-2 py-1 bg-gray-50 border border-gray-100 text-gray-600 rounded text-[11px] font-mono max-w-[150px] truncate">
-                  /c/{formData.slug || "category"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium text-gray-500">Search Index</span>
-                <span className={`text-[12px] font-bold ${formData.status === 'Active' ? 'text-[#D97706]' : 'text-gray-400'}`}>
-                  {formData.status === 'Active' ? 'Prioritized' : 'Excluded'}
-                </span>
-              </div>
+              
+              <button className="flex items-center gap-1.5 text-[13px] font-bold text-[#D97706] hover:text-[#B45309] transition-colors">
+                View All Suppliers &rarr;
+              </button>
             </div>
           </div>
 
         </div>
-
       </div>
-
-      {/* Bottom Sticky Actions */}
-      <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-white border-t border-gray-200 p-4 flex items-center justify-center sm:justify-end gap-4 z-40 px-6 lg:px-8">
-        <button 
-          onClick={() => navigate("/categories")}
-          className="px-6 py-2.5 text-[13px] font-bold text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          Cancel
-        </button>
-        <button 
-          onClick={() => navigate("/categories")}
-          className="px-8 py-2.5 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
-        >
-          Update Category
-        </button>
-      </div>
-
     </div>
   );
 }
