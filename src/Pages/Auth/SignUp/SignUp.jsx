@@ -1,11 +1,72 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser, reset } from '../../../redux/features/auth/authSlice';
 import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake } from 'lucide-react';
 import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../svglogos/SvgIcons";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    companyName: '',
+    phone: '',
+    agreedToTerms: false
+  });
+
+  const { name, email, password, confirmPassword, companyName, phone, agreedToTerms } = formData;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [localError, setLocalError] = useState('');
+
+  const { user, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    if (isError) {
+      setLocalError(message);
+    }
+    if (isSuccess || user) {
+      navigate("/dashboard");
+    }
+    dispatch(reset());
+  }, [user, isError, isSuccess, message, navigate, dispatch]);
+
+  const onChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    setLocalError('');
+    if (password !== confirmPassword) {
+      setLocalError('Passwords do not match');
+      return;
+    }
+    if (!agreedToTerms) {
+      setLocalError('You must agree to the Terms and Supplier Listing Policy');
+      return;
+    }
+    const userData = {
+      name,
+      email,
+      password,
+      companyName,
+      phone,
+      role: 'supplier'
+    };
+    dispatch(registerUser(userData));
+  };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen font-sans">
@@ -18,12 +79,16 @@ const SignUp = () => {
           </p>
 
           <div className="bg-white p-6 md:p-8 rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100">
-            <form className="space-y-5">
+            <form onSubmit={onSubmit} className="space-y-5">
 
               <div>
                 <label className="block text-[13px] font-bold text-gray-900 mb-2">Full Name</label>
                 <input
                   type="text"
+                  name="name"
+                  value={name}
+                  onChange={onChange}
+                  required
                   placeholder="Enter your full name"
                   className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                 />
@@ -33,6 +98,10 @@ const SignUp = () => {
                 <label className="block text-[13px] font-bold text-gray-900 mb-2">Business Email</label>
                 <input
                   type="email"
+                  name="email"
+                  value={email}
+                  onChange={onChange}
+                  required
                   placeholder="name@company.com"
                   className="w-full px-4 py-2.5 bg-[#FAFBFC] border border-gray-200 rounded-md text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                 />
@@ -48,6 +117,10 @@ const SignUp = () => {
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={password}
+                      onChange={onChange}
+                      required
                       placeholder="Create password"
                       className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 pr-10 transition-colors"
                     />
@@ -65,6 +138,10 @@ const SignUp = () => {
                   <div className="relative">
                     <input
                       type={showConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={confirmPassword}
+                      onChange={onChange}
+                      required
                       placeholder="Confirm password"
                       className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 pr-10 transition-colors"
                     />
@@ -84,6 +161,10 @@ const SignUp = () => {
                   <label className="block text-[13px] font-bold text-gray-900 mb-2">Company Name</label>
                   <input
                     type="text"
+                    name="companyName"
+                    value={companyName}
+                    onChange={onChange}
+                    required
                     placeholder="Legal company name"
                     className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
@@ -92,6 +173,9 @@ const SignUp = () => {
                   <label className="block text-[13px] font-bold text-gray-900 mb-2">Phone Number</label>
                   <input
                     type="text"
+                    name="phone"
+                    value={phone}
+                    onChange={onChange}
                     placeholder="+1 (555) 000-0000"
                     className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
@@ -103,6 +187,9 @@ const SignUp = () => {
                   <div className="flex items-center h-5 mt-0.5">
                     <input
                       type="checkbox"
+                      name="agreedToTerms"
+                      checked={agreedToTerms}
+                      onChange={onChange}
                       className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500"
                     />
                   </div>
@@ -112,16 +199,17 @@ const SignUp = () => {
                 </label>
               </div>
 
+              {localError && <div className="text-red-500 text-sm font-medium text-center">{localError}</div>}
+
               <div className="pt-4">
-                <Link to="/verify-email" className="block w-full">
                   <button
-                    type="button"
-                    className="w-full flex items-center justify-center gap-2 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold py-3.5 px-4 rounded-md transition-colors"
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold py-3.5 px-4 rounded-md transition-colors disabled:opacity-70"
                   >
-                    Create Supplier Account
-                    <ArrowRight className="w-4 h-4 font-bold" />
+                    {isLoading ? 'Creating Account...' : 'Create Supplier Account'}
+                    {!isLoading && <ArrowRight className="w-4 h-4 font-bold" />}
                   </button>
-                </Link>
               </div>
 
               <div className="text-center pt-2">

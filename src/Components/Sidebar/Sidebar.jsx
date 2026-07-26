@@ -1,5 +1,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUser, reset } from "../../redux/features/auth/authSlice";
 import brandlogo from "../../assets/image/logo.png";
 import {
   Package,
@@ -29,12 +31,14 @@ import {
 const Sidebar = ({ closeDrawer }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const role = user.role || "supplier";
+  const { user } = useSelector((state) => state.auth);
+  const role = user?.role || "supplier";
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    dispatch(logoutUser());
+    dispatch(reset());
     navigate("/sign-in");
   };
 

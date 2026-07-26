@@ -1,14 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser, reset } from "../../../redux/features/auth/authSlice";
 import { Mail, Lock, Eye, EyeOff, Info, ArrowRight, Globe } from "lucide-react";
 import brandlogo from "../../../assets/image/logo.png";
 const SignIn = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [localError, setLocalError] = useState("");
+
+  const { user, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    if (isError) {
+      setLocalError(message);
+    }
+    if (isSuccess || user) {
+      navigate("/dashboard");
+    }
+    dispatch(reset());
+  }, [user, isError, isSuccess, message, navigate, dispatch]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -16,21 +32,9 @@ const SignIn = () => {
 
   const onFinish = (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    // Simulating login
-    setTimeout(() => {
-      setLoading(false);
-      if (email === "supplier@gmail.com" && password === "123456") {
-        localStorage.setItem("user", JSON.stringify({ email, role: "supplier" }));
-        navigate("/dashboard");
-      } else if (email === "admin@gmail.com" && password === "123456") {
-        localStorage.setItem("user", JSON.stringify({ email, role: "admin" }));
-        navigate("/dashboard");
-      } else {
-        setError("Invalid email or password");
-      }
-    }, 1000);
+    setLocalError("");
+    const userData = { email, password };
+    dispatch(loginUser(userData));
   };
 
   return (
@@ -51,9 +55,7 @@ const SignIn = () => {
             <p className="text-[14px] text-gray-500 mb-1">Access the WULFARA management dashboard</p>
 
           </div>
-
           <form onSubmit={onFinish} className="space-y-5">
-
             {/* Email Field */}
             <div>
               <label className="block text-[13px] font-bold text-gray-700 mb-1.5">
@@ -73,7 +75,6 @@ const SignIn = () => {
                 />
               </div>
             </div>
-
             {/* Password Field */}
             <div>
               <div className="flex justify-between items-center mb-1.5">
@@ -109,7 +110,6 @@ const SignIn = () => {
                 </button>
               </div>
             </div>
-
             {/* Remember Device */}
             <div className="flex items-center pt-2">
               <input
@@ -122,17 +122,17 @@ const SignIn = () => {
               </label>
             </div>
 
-            {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
+            {localError && <div className="text-red-500 text-sm font-medium">{localError}</div>}
 
             {/* Submit Button */}
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isLoading}
                 className="w-full flex justify-center items-center gap-2 bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14.5px] py-3 px-4 rounded-md transition-colors shadow-sm disabled:opacity-70"
               >
-                {loading ? 'Logging in...' : 'Login to Terminal'}
-                {!loading && <ArrowRight className="w-4 h-4 font-bold" />}
+                {isLoading ? 'Logging in...' : 'Login to Terminal'}
+                {!isLoading && <ArrowRight className="w-4 h-4 font-bold" />}
               </button>
 
               <p className="text-[14px] text-gray-500 text-center mt-6">
