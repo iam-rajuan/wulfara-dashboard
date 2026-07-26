@@ -1,82 +1,35 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Download, Plus, ChevronDown, Search, Filter } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { getUsers, updateUser, deleteUser } from "../../../redux/features/users/usersSlice";
 import SupplierTable from "../../../Components/admin-components/supplier/SupplierTable";
 import SupplierFormModal from "../../../Components/admin-components/supplier/SupplierFormModal";
 import SupplierDetailsModal from "../../../Components/admin-components/supplier/SupplierDetailsModal";
 import { Pagination } from "../../../Components/admin-components/buyer/BuyerTable"; // Reuse pagination
 
-// Mock data generator
-const generateSuppliers = () => {
-  const suppliers = [
-    {
-      id: 1,
-      icon: "Tool", // PenTool icon represents machinery/equipment
-      name: "James Miller",
-      company: "Apex Machinery Ltd.",
-      email: "james@apexmachinery.com",
-      plan: "Premium",
-      verification: "Verified",
-      listingStatus: "Approved (45)",
-      subscription: "Active"
-    },
-    {
-      id: 2,
-      icon: "Box",
-      name: "Linda Brooks",
-      company: "Global Logistics Supplies",
-      email: "linda.b@globallogistics.com",
-      plan: "Pro",
-      verification: "Pending",
-      listingStatus: "Pending Review (12)",
-      subscription: "Active"
-    },
-    {
-      id: 3,
-      icon: "Box",
-      name: "Linda Brooks",
-      company: "Global Logistics Supplies",
-      email: "linda.b@globallogistics.com",
-      plan: "Pro",
-      verification: "Pending",
-      listingStatus: "Pending Review (12)",
-      subscription: "Active"
-    },
-    {
-      id: 4,
-      icon: "Truck",
-      name: "Ahmed Khan",
-      company: "Khan Fleet Services",
-      email: "ahmed@khanfleet.com",
-      plan: "Basic",
-      verification: "Suspended",
-      listingStatus: "Hidden (0)",
-      subscription: "Past Due"
-    },
-    {
-      id: 5,
-      icon: "Tool", // PenTool icon
-      name: "Emily Rogers",
-      company: "Rogers Equipment Co.",
-      email: "erogers@rogerseq.net",
-      plan: "Pro",
-      verification: "Verified",
-      listingStatus: "Approved (8)",
-      subscription: "Paused"
-    }
-  ];
-
-  // Multiply list to demonstrate larger pagination
-  let largeList = [];
-  for (let i = 0; i < 26; i++) {
-    largeList = [...largeList, ...suppliers.map(s => ({ ...s, id: s.id + i * 100 }))];
-  }
-  return largeList.slice(0, 128); // Exactly 128 items as per design
-};
-
-const MOCK_SUPPLIERS = generateSuppliers();
-
 export default function SupplierManagement() {
-  const [suppliers, setSuppliers] = useState(MOCK_SUPPLIERS);
+  const dispatch = useDispatch();
+  const { users, isLoading } = useSelector((state) => state.users);
+
+  useEffect(() => {
+    dispatch(getUsers());
+  }, [dispatch]);
+
+  // Filter only suppliers
+  const suppliers = useMemo(() => {
+    return users.filter(user => user.role === 'supplier').map(user => ({
+      id: user._id,
+      icon: "Box", // Default icon
+      name: user.name,
+      company: user.name + " Co.", // Placeholder until company profile is implemented
+      email: user.email,
+      plan: "Basic", // Placeholder
+      verification: user.isVerified ? "Verified" : (user.status === 'Suspended' ? "Suspended" : "Pending"),
+      listingStatus: user.status === 'Suspended' ? "Hidden (0)" : "Pending Review (0)",
+      subscription: user.status === 'Suspended' ? "Past Due" : "Active"
+    }));
+  }, [users]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -92,19 +45,23 @@ export default function SupplierManagement() {
 
   const handleSaveSupplier = (savedSupplier) => {
     if (editingSupplier) {
-      setSuppliers(suppliers.map((s) => (s.id === savedSupplier.id ? savedSupplier : s)));
-    } else {
-      setSuppliers([savedSupplier, ...suppliers]);
+      dispatch(updateUser({ 
+        id: savedSupplier.id, 
+        userData: { name: savedSupplier.name, email: savedSupplier.email } 
+      }));
     }
     setEditingSupplier(null);
+    setIsModalOpen(false);
   };
 
   const handleDeleteSupplier = (id) => {
-    setSuppliers(suppliers.filter((s) => s.id !== id));
+    if (window.confirm("Are you sure you want to delete this supplier?")) {
+      dispatch(deleteUser(id));
+    }
   };
 
   const handleApproveSupplier = (supplier) => {
-    setSuppliers(suppliers.map(s => s.id === supplier.id ? { ...s, verification: "Verified", listingStatus: "Approved (0)" } : s));
+    dispatch(updateUser({ id: supplier.id, userData: { isVerified: true, status: 'Active' } }));
   };
 
   const openAddModal = () => {
@@ -162,11 +119,17 @@ export default function SupplierManagement() {
     if (!bulkAction || selectedIds.length === 0) return;
     
     if (bulkAction === "verify") {
-      setSuppliers(suppliers.map(s => selectedIds.includes(s.id) ? { ...s, verification: "Verified" } : s));
+      selectedIds.forEach(id => {
+        dispatch(updateUser({ id, userData: { isVerified: true } }));
+      });
     } else if (bulkAction === "suspend") {
-      setSuppliers(suppliers.map(s => selectedIds.includes(s.id) ? { ...s, verification: "Suspended" } : s));
+      selectedIds.forEach(id => {
+        dispatch(updateUser({ id, userData: { status: 'Suspended' } }));
+      });
     } else if (bulkAction === "delete") {
-      setSuppliers(suppliers.filter(s => !selectedIds.includes(s.id)));
+      selectedIds.forEach(id => {
+        dispatch(deleteUser(id));
+      });
     }
     
     setSelectedIds([]);
@@ -297,7 +260,7 @@ export default function SupplierManagement() {
               <select 
                 value={bulkAction}
                 onChange={(e) => setBulkAction(e.target.value)}
-                disabled={!hasSelection}
+                disabled={!hasSelection || isLoading}
                 className="appearance-none flex items-center justify-between gap-2 pl-3 pr-8 py-2 bg-white rounded-md text-[12px] font-bold text-gray-700 min-w-[160px] border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed outline-none cursor-pointer"
               >
                 <option value="" disabled>Select Action...</option>
@@ -310,7 +273,7 @@ export default function SupplierManagement() {
 
             <button
               onClick={handleApplyBulkAction}
-              disabled={!hasSelection || !bulkAction}
+              disabled={!hasSelection || !bulkAction || isLoading}
               className="px-4 py-2 border border-gray-200 rounded-md text-[12px] font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               Apply
@@ -320,24 +283,30 @@ export default function SupplierManagement() {
         </div>
 
         {/* Table Area */}
-        <SupplierTable 
-          suppliers={paginatedSuppliers}
-          selectedIds={selectedIds}
-          onSelect={handleSelect}
-          onSelectAll={handleSelectAll}
-          onEdit={openEditModal}
-          onDelete={handleDeleteSupplier}
-          onApprove={handleApproveSupplier}
-          onView={openViewModal}
-        />
+        {isLoading ? (
+          <div className="p-8 text-center text-gray-500">Loading suppliers...</div>
+        ) : (
+          <SupplierTable 
+            suppliers={paginatedSuppliers}
+            selectedIds={selectedIds}
+            onSelect={handleSelect}
+            onSelectAll={handleSelectAll}
+            onEdit={openEditModal}
+            onDelete={handleDeleteSupplier}
+            onApprove={handleApproveSupplier}
+            onView={openViewModal}
+          />
+        )}
 
         {/* Pagination Area */}
-        <Pagination 
-          currentPage={currentPage}
-          totalItems={filteredSuppliers.length}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-        />
+        {!isLoading && (
+          <Pagination 
+            currentPage={currentPage}
+            totalItems={filteredSuppliers.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        )}
 
       </div>
 

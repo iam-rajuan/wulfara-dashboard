@@ -1,130 +1,35 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Download, Plus, ChevronDown } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { getUsers, updateUser, deleteUser } from "../../../redux/features/users/usersSlice";
 import BuyerTable, { Pagination } from "../../../Components/admin-components/buyer/BuyerTable";
 import BuyerFormModal from "../../../Components/admin-components/buyer/BuyerFormModal";
 
-// Mock data generator
-const generateBuyers = () => {
-  const buyers = [
-    {
-      id: 1,
-      name: "Michael Carter",
-      email: "m.carter@techflow.inc",
-      status: "Active",
-      verification: "Verified",
-      rfqs: 14,
-      favs: 8,
-      createdDate: "Oct 12,",
-      createdYear: "2023",
-      avatarColor: "bg-[#DBEAFE]", // light blue
-      initials: "MC"
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      email: "s.johnson@globex.co",
-      status: "Pending",
-      verification: "Unverified",
-      rfqs: 0,
-      favs: 2,
-      createdDate: "Nov 04,",
-      createdYear: "2023",
-      avatarColor: "bg-[#FEF3C7]", // light yellow
-      initials: "SJ"
-    },
-    {
-      id: 3,
-      name: "David Lee",
-      email: "david.lee@apexind.com",
-      status: "Active",
-      verification: "Verified",
-      rfqs: 32,
-      favs: 15,
-      createdDate: "Jan 18,",
-      createdYear: "2023",
-      avatarColor: "bg-[#DBEAFE]", // light blue
-      initials: "DL"
-    },
-    {
-      id: 4,
-      name: "David Lee",
-      email: "david.lee@apexind.com",
-      status: "Active",
-      verification: "Verified",
-      rfqs: 32,
-      favs: 15,
-      createdDate: "Jan 18,",
-      createdYear: "2023",
-      avatarColor: "bg-[#DBEAFE]", // light blue
-      initials: "DL"
-    },
-    {
-      id: 5,
-      name: "David Lee",
-      email: "david.lee@apexind.com",
-      status: "Active",
-      verification: "Verified",
-      rfqs: 32,
-      favs: 15,
-      createdDate: "Jan 18,",
-      createdYear: "2023",
-      avatarColor: "bg-[#DBEAFE]", // light blue
-      initials: "DL"
-    },
-    {
-      id: 6,
-      name: "Amina Yusuf",
-      email: "ayusuf@unknown.net",
-      status: "Suspended",
-      verification: "TOS Violation",
-      rfqs: 3,
-      favs: 0,
-      createdDate: "Oct 28,",
-      createdYear: "2023",
-      avatarColor: "bg-[#FCE7F3]", // light pink
-      initials: "AY"
-    },
-    // Adding a few more for pagination testing
-    {
-      id: 7,
-      name: "John Doe",
-      email: "john@example.com",
-      status: "Active",
-      verification: "Verified",
-      rfqs: 5,
-      favs: 1,
-      createdDate: "Dec 01,",
-      createdYear: "2023",
-      avatarColor: "bg-[#E0E7FF]",
-      initials: "JD"
-    },
-    {
-      id: 8,
-      name: "Alice Smith",
-      email: "alice@smith.com",
-      status: "Pending",
-      verification: "Unverified",
-      rfqs: 0,
-      favs: 0,
-      createdDate: "Feb 10,",
-      createdYear: "2024",
-      avatarColor: "bg-[#DCFCE7]",
-      initials: "AS"
-    }
-  ];
-
-  // Multiply list to demonstrate larger pagination (128 items as per screenshot "1 to 4 of 128")
-  let largeList = [];
-  for (let i = 0; i < 16; i++) {
-    largeList = [...largeList, ...buyers.map(b => ({ ...b, id: b.id + i * 100 }))];
-  }
-  return largeList.slice(0, 128); // Exactly 128 items
-};
-
-const MOCK_BUYERS = generateBuyers();
-
 export default function BuyerManagement() {
-  const [buyers, setBuyers] = useState(MOCK_BUYERS);
+  const dispatch = useDispatch();
+  const { users, isLoading, isError, message } = useSelector((state) => state.users);
+
+  useEffect(() => {
+    dispatch(getUsers());
+  }, [dispatch]);
+
+  // Filter only buyers
+  const buyers = useMemo(() => {
+    return users.filter(user => user.role === 'buyer').map(user => ({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      status: user.status || "Active",
+      verification: user.isVerified ? "Verified" : "Unverified",
+      rfqs: 0, // Placeholder
+      favs: 0, // Placeholder
+      createdDate: new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) + ',',
+      createdYear: new Date(user.createdAt).getFullYear().toString(),
+      avatarColor: "bg-[#DBEAFE]", // default
+      initials: user.name ? user.name.substring(0, 2).toUpperCase() : "NA"
+    }));
+  }, [users]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -134,16 +39,22 @@ export default function BuyerManagement() {
   const pageSize = 6;
 
   const handleSaveBuyer = (savedBuyer) => {
+    // For now, this just updates state locally if it's new.
+    // In reality, we should dispatch(updateUser) or a register action.
     if (editingBuyer) {
-      setBuyers(buyers.map((b) => (b.id === savedBuyer.id ? savedBuyer : b)));
-    } else {
-      setBuyers([savedBuyer, ...buyers]);
+      dispatch(updateUser({ 
+        id: savedBuyer.id, 
+        userData: { name: savedBuyer.name, email: savedBuyer.email, status: savedBuyer.status } 
+      }));
     }
     setEditingBuyer(null);
+    setIsModalOpen(false);
   };
 
   const handleDeleteBuyer = (id) => {
-    setBuyers(buyers.filter((b) => b.id !== id));
+    if (window.confirm("Are you sure you want to delete this buyer?")) {
+      dispatch(deleteUser(id));
+    }
   };
 
   const openAddModal = () => {
@@ -159,8 +70,6 @@ export default function BuyerManagement() {
   const handlePrint = () => {
     window.print();
   };
-
-
 
   const filteredBuyers = useMemo(() => {
     return buyers.filter(buyer => {
@@ -190,12 +99,16 @@ export default function BuyerManagement() {
   };
 
   const handleBulkVerify = () => {
-    setBuyers(buyers.map(b => selectedIds.includes(b.id) ? { ...b, verification: "Verified" } : b));
+    selectedIds.forEach(id => {
+      dispatch(updateUser({ id, userData: { isVerified: true } }));
+    });
     setSelectedIds([]);
   };
 
   const handleBulkSuspend = () => {
-    setBuyers(buyers.map(b => selectedIds.includes(b.id) ? { ...b, status: "Suspended" } : b));
+    selectedIds.forEach(id => {
+      dispatch(updateUser({ id, userData: { status: 'Suspended' } }));
+    });
     setSelectedIds([]);
   };
 
@@ -284,14 +197,14 @@ export default function BuyerManagement() {
             <span className="text-[12px] font-bold text-gray-500 mr-1">Bulk Actions:</span>
             <button
               onClick={handleBulkVerify}
-              disabled={!hasSelection}
+              disabled={!hasSelection || isLoading}
               className="px-4 py-2 border border-gray-200 rounded-md text-[12px] font-bold text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               Verify
             </button>
             <button
               onClick={handleBulkSuspend}
-              disabled={!hasSelection}
+              disabled={!hasSelection || isLoading}
               className="px-4 py-2 border border-gray-200 rounded-md text-[12px] font-bold text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               Suspend
@@ -301,22 +214,28 @@ export default function BuyerManagement() {
         </div>
 
         {/* Table Area */}
-        <BuyerTable 
-          buyers={paginatedBuyers}
-          selectedIds={selectedIds}
-          onSelect={handleSelect}
-          onSelectAll={handleSelectAll}
-          onEdit={openEditModal}
-          onDelete={handleDeleteBuyer}
-        />
+        {isLoading ? (
+          <div className="p-8 text-center text-gray-500">Loading buyers...</div>
+        ) : (
+          <BuyerTable 
+            buyers={paginatedBuyers}
+            selectedIds={selectedIds}
+            onSelect={handleSelect}
+            onSelectAll={handleSelectAll}
+            onEdit={openEditModal}
+            onDelete={handleDeleteBuyer}
+          />
+        )}
 
         {/* Pagination Area */}
-        <Pagination 
-          currentPage={currentPage}
-          totalItems={filteredBuyers.length}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-        />
+        {!isLoading && (
+          <Pagination 
+            currentPage={currentPage}
+            totalItems={filteredBuyers.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        )}
 
       </div>
 

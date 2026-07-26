@@ -167,6 +167,18 @@ export default function SupplierTable({ suppliers, selectedIds, onSelect, onSele
                         <Eye size={14} />
                         View
                       </button>
+                      {supplier.verification === 'Pending' && (
+                        <button
+                          onClick={() => {
+                            setOpenActionId(null);
+                            onApprove && onApprove(supplier);
+                          }}
+                          className="w-full px-4 py-2 text-[12px] font-bold text-green-700 hover:bg-green-50 flex items-center gap-2 transition-colors"
+                        >
+                          <CheckCircle size={14} />
+                          Approve
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setOpenActionId(null);
