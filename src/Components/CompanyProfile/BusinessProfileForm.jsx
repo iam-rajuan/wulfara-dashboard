@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Clock, Check, Globe, ChevronDown, Plus, X } from 'lucide-react';
 
-export default function BusinessProfileForm({ data, onChange }) {
+export default function BusinessProfileForm({ data, onChange, onLogoUpload, isUploadingLogo }) {
   const [newProduct, setNewProduct] = useState('');
   const [newCert, setNewCert] = useState('');
   const [newArea, setNewArea] = useState('');
@@ -55,11 +55,15 @@ export default function BusinessProfileForm({ data, onChange }) {
     });
   };
 
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      onChange({ ...data, logo: url });
+      if (onLogoUpload) {
+        await onLogoUpload(file);
+      } else {
+        const url = URL.createObjectURL(file);
+        onChange({ ...data, logo: url });
+      }
     }
   };
 
@@ -90,10 +94,10 @@ export default function BusinessProfileForm({ data, onChange }) {
               <p className="text-[13px] text-gray-500 mb-3 max-w-sm font-medium">
                 Upload your corporate logo. Recommended size: 500×500px (JPG, PNG).
               </p>
-              <label className="flex items-center justify-center sm:justify-start gap-2 px-4 py-2 border border-gray-300 rounded-lg text-[13px] font-bold text-gray-700 bg-white hover:bg-gray-50 transition cursor-pointer w-full sm:w-max">
+              <label className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2 border border-gray-300 rounded-lg text-[13px] font-bold text-gray-700 bg-white transition w-full sm:w-max ${isUploadingLogo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                 <Upload size={16} className="text-gray-500" />
-                {data.logo ? 'Replace Logo' : 'Upload Logo'}
-                <input type="file" accept="image/png, image/jpeg" className="hidden" onChange={handleLogoUpload} />
+                {isUploadingLogo ? 'Uploading...' : data.logo ? 'Replace Logo' : 'Upload Logo'}
+                <input type="file" accept="image/png, image/jpeg" className="hidden" disabled={isUploadingLogo} onChange={handleLogoUpload} />
               </label>
             </div>
           </div>

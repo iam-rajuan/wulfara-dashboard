@@ -1,5 +1,5 @@
 import React from 'react';
-import { 
+import {
   User, Building2, Shield, Bell, Plus, Download, Save,
   CheckCircle2, AlertCircle, Banknote
 } from 'lucide-react';
@@ -12,7 +12,7 @@ const GeneralConfiguration = () => {
       <div className="px-8 py-6 border-b border-gray-100">
         <h2 className="text-xl font-bold text-gray-900">General Configuration</h2>
       </div>
-      
+
       <div className="p-8 space-y-8">
         {/* Form Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -30,8 +30,8 @@ const GeneralConfiguration = () => {
           </div>
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Default Language</label>
-            <Select 
-              defaultValue="English (US)" 
+            <Select
+              defaultValue="English (US)"
               className="w-full h-[42px]"
               options={[{ value: 'English (US)', label: 'English (US)' }]}
             />
@@ -49,7 +49,7 @@ const GeneralConfiguration = () => {
               </div>
               <Switch defaultChecked className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" />
             </div>
-            
+
             <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-gray-50/50">
               <div>
                 <h4 className="text-[13px] font-bold text-gray-900">Allow Guest RFQ Submission</h4>
@@ -57,7 +57,7 @@ const GeneralConfiguration = () => {
               </div>
               <Switch className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" />
             </div>
-            
+
             <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-gray-50/50">
               <div>
                 <h4 className="text-[13px] font-bold text-gray-900">Open Supplier Registration</h4>
@@ -67,6 +67,7 @@ const GeneralConfiguration = () => {
             </div>
           </div>
         </div>
+
       </div>
 
       {/* Bottom Cards Row */}
@@ -79,7 +80,7 @@ const GeneralConfiguration = () => {
           <div className="text-5xl font-black text-gray-900 mb-2">5</div>
           <p className="text-[12px] text-gray-500 font-medium">1 Super Admin, 4 Staff</p>
         </div>
-        
+
         <div className="flex-[2] border border-gray-100 rounded-xl p-6">
           <h3 className="text-sm font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Recent Audit Log</h3>
           <div className="space-y-4 pt-2">
@@ -331,21 +332,20 @@ const Settings = () => {
     <div className="min-h-screen bg-[#FAFAFA] pt-12 md:pt-16 pb-20">
       <div className="max-w-[1200px] mx-auto px-6 py-8">
         <div className="flex flex-col md:flex-row gap-8">
-          
+
           {/* Sidebar */}
           <div className="w-full md:w-[240px] shrink-0">
             <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
               <h2 className="text-xl font-black text-gray-900 px-4 mb-4">Settings</h2>
               <nav className="flex flex-col space-y-1">
                 {tabs.map(tab => (
-                  <Link 
+                  <Link
                     key={tab.id}
                     to={tab.path}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all ${
-                      activeTab === tab.id 
-                        ? 'bg-[#dcb14b] text-gray-900' 
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all ${activeTab === tab.id
+                        ? 'bg-[#dcb14b] text-gray-900'
                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     {tab.icon}
                     {tab.id}

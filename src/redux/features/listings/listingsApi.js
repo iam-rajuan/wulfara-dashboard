@@ -18,6 +18,25 @@ export const listingsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Listing', id }, 'Listing'],
     }),
+    getSupplierDashboard: builder.query({
+      query: () => '/suppliers/dashboard',
+      providesTags: ['Listing'],
+    }),
+    updateListing: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/suppliers/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Listing', id }, 'Listing'],
+    }),
+    getSupplierUploadUrl: builder.mutation({
+      query: (data) => ({
+        url: '/suppliers/upload-url',
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -25,4 +44,7 @@ export const {
   useGetListingsQuery,
   useGetListingQuery,
   useReviewListingMutation,
+  useGetSupplierDashboardQuery,
+  useUpdateListingMutation,
+  useGetSupplierUploadUrlMutation,
 } = listingsApi;
