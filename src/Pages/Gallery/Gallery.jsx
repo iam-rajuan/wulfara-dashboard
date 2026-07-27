@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import GalleryHeader from '../../Components/Gallery/GalleryHeader';
 import GalleryUploader from '../../Components/Gallery/GalleryUploader';
 import GalleryTabs from '../../Components/Gallery/GalleryTabs';
@@ -6,87 +6,124 @@ import GalleryGrid from '../../Components/Gallery/GalleryGrid';
 import GalleryTips from '../../Components/Gallery/GalleryTips';
 import GalleryModal from '../../Components/Gallery/GalleryModal';
 import { toast } from 'react-toastify';
+import { useGetSupplierDashboardQuery, useUpdateListingMutation, useGetSupplierUploadUrlMutation } from '../../redux/features/listings/listingsApi';
 
 export default function Gallery() {
+  const { data: dashboardData, isLoading: isFetching, refetch } = useGetSupplierDashboardQuery();
+  const [updateListing] = useUpdateListingMutation();
+  const [getUploadUrl] = useGetSupplierUploadUrlMutation();
+
   const [activeTab, setActiveTab] = useState('All Files');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [files, setFiles] = useState([
-    {
-      id: 1,
-      title: 'Premium Steel Roll 304',
-      type: 'Product Images',
-      isPdf: false,
-      isPrimary: true,
-      size: '2.4 MB'
-    },
-    {
-      id: 2,
-      title: 'Main Production Line A',
-      type: 'Factory Images',
-      isPdf: false,
-      isPrimary: false,
-      size: '3.1 MB'
-    },
-    {
-      id: 3,
-      title: 'ISO 9001:2015 Cert',
-      type: 'Certificates',
-      isPdf: true,
-      isPrimary: false,
-      size: 'PDF • 1.2 MB'
-    }
-  ]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [files, setFiles] = useState([]);
 
-  const handleUpload = (newFiles) => {
-    console.log("Uploaded files:", newFiles);
-    const uploaded = newFiles.map((file, idx) => {
-      const isPdf = file.type.includes('pdf');
-      return {
-        id: Date.now() + idx,
-        title: file.name,
-        type: isPdf ? 'Certificates' : 'Product Images', // naive assignment
-        isPdf: isPdf,
-        isPrimary: false,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        url: isPdf ? null : URL.createObjectURL(file)
-      };
-    });
-    setFiles([...files, ...uploaded]);
+  useEffect(() => {
+    if (dashboardData?.data?.profile?.gallery) {
+      // Map the MongoDB objects (which have _id) to ensure they have an id for the frontend
+      const mappedFiles = dashboardData.data.profile.gallery.map(f => ({
+        ...f,
+        id: f._id || f.id || Date.now() + Math.random()
+      }));
+      setFiles(mappedFiles);
+    }
+  }, [dashboardData]);
+
+  const handleUpload = async (newFiles) => {
+    toast.info(`Uploading ${newFiles.length} file(s)...`);
+    setIsSaving(true);
+    try {
+      const uploaded = await Promise.all(newFiles.map(async (file, idx) => {
+        const isPdf = file.type.includes('pdf');
+        const folder = isPdf ? 'documents' : 'galleries';
+        
+        const res = await getUploadUrl({ folder, contentType: file.type }).unwrap();
+        const { uploadUrl, fileUrl } = res.data;
+        
+        await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file
+        });
+        
+        return {
+          id: Date.now() + idx,
+          title: file.name,
+          type: isPdf ? 'Certificates' : 'Product Images',
+          isPdf: isPdf,
+          isPrimary: false,
+          size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+          url: fileUrl
+        };
+      }));
+      setFiles(prev => [...prev, ...uploaded]);
+      toast.success("Files uploaded successfully. Click Save Gallery to persist.");
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to upload files.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSetPrimary = (id) => {
     setFiles(files.map(file => {
-      if (file.isPdf) return file; // Certificates cannot be primary images
-      
-      // If this file matches the ID, set it to true, else false.
+      if (file.isPdf) return file; 
       return {
         ...file,
-        isPrimary: file.id === id
+        isPrimary: file.id === id || file._id === id
       };
     }));
   };
 
-  const handleSaveModalFile = (data) => {
-    const newFile = {
-      id: Date.now(),
-      title: data.title,
-      type: data.type,
-      isPdf: data.isPdf,
-      isPrimary: false,
-      size: `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`,
-      url: data.isPdf ? null : URL.createObjectURL(data.file)
-    };
-    setFiles([...files, newFile]);
+  const handleSaveModalFile = async (data) => {
+    setIsSaving(true);
+    toast.info("Uploading file...");
+    try {
+      const isPdf = data.isPdf;
+      const folder = isPdf ? 'documents' : 'galleries';
+      
+      const res = await getUploadUrl({ folder, contentType: data.file.type }).unwrap();
+      const { uploadUrl, fileUrl } = res.data;
+      
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': data.file.type },
+        body: data.file
+      });
+      
+      const newFile = {
+        id: Date.now(),
+        title: data.title,
+        type: data.type,
+        isPdf: data.isPdf,
+        isPrimary: false,
+        size: `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`,
+        url: fileUrl
+      };
+      setFiles(prev => [...prev, newFile]);
+      toast.success("File uploaded successfully.");
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to upload file.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!dashboardData?.data?.profile?._id) return;
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await updateListing({ 
+        id: dashboardData.data.profile._id, 
+        data: { gallery: files } 
+      }).unwrap();
       toast.success(`Gallery saved successfully! You currently have ${files.length} items in your gallery.`);
-    }, 1000);
+      refetch();
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to save gallery.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePreview = () => {

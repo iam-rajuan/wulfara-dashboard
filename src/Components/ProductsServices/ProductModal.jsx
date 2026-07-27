@@ -20,14 +20,14 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, image: reader.result });
+        setFormData({ ...formData, imagePreview: reader.result, imageFile: file });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const removeImage = () => {
-    setFormData({ ...formData, image: null });
+    setFormData({ ...formData, imagePreview: null, imageFile: null, image: null });
   };
 
   useEffect(() => {
@@ -39,6 +39,8 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
         moq: product.moq || '',
         description: product.description || '',
         image: product.image || null,
+        imagePreview: product.image || null,
+        imageFile: null,
         // Map priceVis from table ("Quote Only") to modal options
         priceVis: product.priceVis === 'Visible' ? 'Publicly Visible' : 
                   product.priceVis === 'Quote Only' ? 'Quote Only (Requires RFQ)' : 
@@ -53,6 +55,8 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
         moq: '',
         description: '',
         image: null,
+        imagePreview: null,
+        imageFile: null,
         priceVis: 'Quote Only (Requires RFQ)',
         status: 'Save as Draft'
       });
@@ -214,9 +218,9 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
               ref={fileInputRef} 
               onChange={handleImageUpload} 
             />
-            {formData.image ? (
+            {formData.imagePreview ? (
               <div className="relative rounded-xl border border-gray-200 overflow-hidden w-full h-48 bg-gray-50 flex items-center justify-center">
-                <img src={formData.image} alt="Preview" className="max-w-full max-h-full object-contain" />
+                <img src={formData.imagePreview} alt="Preview" className="max-w-full max-h-full object-contain" />
                 <button 
                   onClick={removeImage}
                   className="absolute top-2 right-2 p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition"

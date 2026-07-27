@@ -4,51 +4,21 @@ import ProductsSummaryCards from '../../Components/ProductsServices/ProductsSumm
 import ProductsDataGrid from '../../Components/ProductsServices/ProductsDataGrid';
 import ProductModal from '../../Components/ProductsServices/ProductModal';
 
+import { toast } from 'react-toastify';
+import { useGetSupplierDashboardQuery, useUpdateListingMutation, useGetSupplierUploadUrlMutation } from '../../redux/features/listings/listingsApi';
+
 export default function ProductsServices() {
+  const { data: dashboardData, isLoading: isFetching, refetch } = useGetSupplierDashboardQuery();
+  const [updateListing, { isLoading: isUpdating }] = useUpdateListingMutation();
+  const [getUploadUrl] = useGetSupplierUploadUrlMutation();
+
   const [filters, setFilters] = useState({
     search: '',
     category: 'All Categories',
     status: 'All Statuses'
   });
 
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      title: "Industrial Steel Sheets (3mm)",
-      description: "High-tensile cold-rolled steel...",
-      category: "Raw Materials",
-      moq: "5 Tons",
-      priceVis: "Quote Only",
-      status: "Published"
-    },
-    {
-      id: 2,
-      title: "Seamless Steel Pipes (Sch 40)",
-      description: "Corrosion-resistant carbon steel..",
-      category: "Raw Materials",
-      moq: "1000 Meters",
-      priceVis: "Visible",
-      status: "Published"
-    },
-    {
-      id: 3,
-      title: "Precision Machined Metal Parts",
-      description: "CNC milled aluminum and titanium",
-      category: "Components",
-      moq: "50 Units",
-      priceVis: "Quote Only",
-      status: "Draft"
-    },
-    {
-      id: 4,
-      title: "Custom Laser Cutting Service",
-      description: "High-precision laser cutting for...",
-      category: "Services",
-      moq: "N/A",
-      priceVis: "Quote Only",
-      status: "Published"
-    }
-  ]);
+  const products = dashboardData?.data?.profile?.products || [];
 
   const summaryData = useMemo(() => {
     return {
@@ -63,12 +33,14 @@ export default function ProductsServices() {
   const [editingProduct, setEditingProduct] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3; // Setting to 3 so we can see pagination in action with 4 items
+  const itemsPerPage = 3;
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      const matchesSearch = p.title.toLowerCase().includes(filters.search.toLowerCase()) || 
-                            p.description.toLowerCase().includes(filters.search.toLowerCase());
+      const pTitle = p.title || p.name || '';
+      const pDesc = p.description || '';
+      const matchesSearch = pTitle.toLowerCase().includes(filters.search.toLowerCase()) || 
+                            pDesc.toLowerCase().includes(filters.search.toLowerCase());
       const matchesCategory = filters.category === 'All Categories' || p.category === filters.category;
       const matchesStatus = filters.status === 'All Statuses' || p.status === filters.status;
       
@@ -91,7 +63,7 @@ export default function ProductsServices() {
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1); 
   };
 
   const handlePageChange = (page) => {
@@ -108,42 +80,74 @@ export default function ProductsServices() {
     setIsModalOpen(true);
   };
 
-  const handleSaveProduct = (productData) => {
+  const handleSaveProduct = async (productData) => {
+    let finalImageUrl = productData.image;
+
+    // Handle new image upload to S3 if a file was selected
+    if (productData.imageFile) {
+      toast.info("Uploading product image...");
+      try {
+        const file = productData.imageFile;
+        const res = await getUploadUrl({ folder: 'galleries', contentType: file.type }).unwrap();
+        const { uploadUrl, fileUrl } = res.data;
+        
+        await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file
+        });
+        
+        finalImageUrl = fileUrl;
+      } catch (error) {
+        toast.error("Failed to upload product image, proceeding without it.");
+      }
+    }
+
     const formattedPriceVis = productData.priceVis === 'Publicly Visible' ? 'Visible' : 
                               productData.priceVis === 'Quote Only (Requires RFQ)' ? 'Quote Only' : 'Hidden';
     const formattedStatus = productData.status === 'Publish Immediately' ? 'Published' : 'Draft';
+    
+    let updatedProducts = [...products];
 
     if (editingProduct) {
-      // Edit existing product
-      const updatedProducts = products.map(p => {
-        if (p.id === editingProduct.id) {
+      updatedProducts = updatedProducts.map(p => {
+        if (p._id === editingProduct._id) {
           return {
             ...p,
             title: productData.title,
             description: productData.description,
             category: productData.category,
             moq: productData.moq,
-            image: productData.image,
+            image: finalImageUrl,
             priceVis: formattedPriceVis,
             status: formattedStatus
           };
         }
         return p;
       });
-      setProducts(updatedProducts);
     } else {
-      // Add new product
       const newProduct = {
-        id: Date.now(),
         title: productData.title,
         description: productData.description,
         category: productData.category,
         moq: productData.moq,
-        image: productData.image,
+        image: finalImageUrl,
         priceVis: formattedPriceVis,
         status: formattedStatus
       };
-      setProducts([newProduct, ...products]);
+      updatedProducts = [newProduct, ...updatedProducts];
+    }
+    
+    try {
+      await updateListing({ 
+        id: dashboardData.data.profile._id, 
+        data: { products: updatedProducts } 
+      }).unwrap();
+      
+      toast.success(editingProduct ? "Product updated successfully!" : "Product added successfully!");
+      refetch();
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to save product");
     }
   };
 
