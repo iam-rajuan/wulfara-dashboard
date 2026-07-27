@@ -81,7 +81,7 @@ export default function ProductsDataGrid({
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
             {products.length > 0 ? products.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50 transition">
+              <tr key={product._id || product.id} className="hover:bg-gray-50 transition">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-[#F8F9FB] rounded border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
