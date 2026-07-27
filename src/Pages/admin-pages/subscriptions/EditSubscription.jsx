@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useGetPlanQuery } from "../../../redux/features/subscriptions/subscriptionsApi";
+import { useParams, useNavigate } from "react-router-dom";
+import { useGetPlanQuery, useGetPlansQuery, useUpdatePlanMutation } from "../../../redux/features/subscriptions/subscriptionsApi";
+import { toast } from 'react-toastify';
 import EditPackageHeader from "../../../Components/admin-components/subscriptions/EditPackageHeader";
 import PackageInfoForm from "../../../Components/admin-components/subscriptions/PackageInfoForm";
 import PricingPeriodsForm from "../../../Components/admin-components/subscriptions/PricingPeriodsForm";
@@ -14,18 +15,25 @@ import LivePreviewCard from "../../../Components/admin-components/subscriptions/
 
 export default function EditSubscription() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Overview");
   
   const { data: planResponse, isLoading } = useGetPlanQuery(id, { skip: !id });
+  const { data: plansResponse } = useGetPlansQuery();
+  const [updatePlan] = useUpdatePlanMutation();
   
   const [formData, setFormData] = useState({
-    name: "Premium Plan",
-    slug: "premium-plan",
+    internalName: "",
+    name: "",
+    slug: "",
     status: "Published",
-    description: "The complete solution for scaling manufacturers. Includes advanced RFQ management, priority placement, and team collaboration tools.",
-    badge: "Popular",
+    description: "",
+    badge: "",
+    accentColor: "#D4AF37",
     publicVisibility: true,
-    basePrice: "4,900",
+    basePrice: "",
+    billingCycle: "",
+    taxCategory: "",
     features: [1, 2, 3, 4] // feature IDs that are checked
   });
 
@@ -33,20 +41,76 @@ export default function EditSubscription() {
     if (planResponse?.data) {
       const plan = planResponse.data;
       setFormData({
+        internalName: plan.internalName || "",
         name: plan.name || "",
         slug: plan.slug || "",
         status: plan.isActive ? "Published" : "Draft",
         description: plan.description || "",
         badge: plan.badgeText || "",
+        accentColor: plan.accentColor || "#D4AF37",
         publicVisibility: plan.isActive,
-        basePrice: plan.price || "0",
-        features: [1, 2, 3, 4] // feature IDs that are checked
+        basePrice: plan.price || "",
+        billingCycle: plan.billingCycle || "",
+        taxCategory: plan.taxCategory || "",
+        features: plan.features || [1, 2, 3, 4] 
       });
     }
   }, [planResponse]);
 
   const handleChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!formData.internalName || !formData.name || !formData.basePrice) {
+      toast.warning("Please fill in required fields (Internal Name, Display Name, Base Price)");
+      return;
+    }
+
+    const finalSlug = formData.slug.trim() || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+    if (!finalSlug) {
+      toast.warning("Unable to generate slug. Please provide a valid Display Name or Slug.");
+      return;
+    }
+
+    const existingPlans = plansResponse?.data || [];
+    const isDuplicateName = existingPlans.some(
+      plan => 
+        plan._id !== id && (
+          (plan.name && formData.name && plan.name.toLowerCase() === formData.name.toLowerCase()) || 
+          (plan.internalName && formData.internalName && plan.internalName.toLowerCase() === formData.internalName.toLowerCase())
+        )
+    );
+
+    if (isDuplicateName) {
+      toast.error("A package with this internal name or display name already exists.");
+      return;
+    }
+
+    const payload = {
+      internalName: formData.internalName,
+      name: formData.name,
+      slug: finalSlug,
+      price: Number(formData.basePrice),
+      isActive: formData.status === "Published" ? true : false,
+      features: formData.features
+    };
+
+    if (formData.description !== undefined) payload.description = formData.description;
+    if (formData.badge !== undefined) payload.badgeText = formData.badge;
+    if (formData.accentColor !== undefined) payload.accentColor = formData.accentColor;
+    if (formData.billingCycle !== undefined) payload.billingCycle = formData.billingCycle;
+    if (formData.taxCategory !== undefined) payload.taxCategory = formData.taxCategory;
+
+    try {
+      await updatePlan({ id, planData: payload }).unwrap();
+      toast.success("Package updated successfully!");
+      navigate('/subscriptions');
+    } catch (error) {
+      console.error("Failed to update package", error);
+      toast.error(error?.data?.message || "Failed to update package. Please try again.");
+    }
   };
 
   // Smooth scroll logic when a tab is clicked
@@ -63,7 +127,7 @@ export default function EditSubscription() {
     <div className="min-h-screen bg-[#F8F9FB] text-[#0F172A] font-sans pb-32">
       
       {/* Sticky Header with Tabs */}
-      <EditPackageHeader activeTab={activeTab} setActiveTab={setActiveTab} />
+      <EditPackageHeader activeTab={activeTab} setActiveTab={setActiveTab} handleSave={handleSave} />
 
       {/* Main Content Area */}
       <div className="px-6 lg:px-8 max-w-[1200px] mx-auto">

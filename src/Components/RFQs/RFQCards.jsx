@@ -1,34 +1,42 @@
 import React from 'react';
 import { Mail, CheckCircle2, Archive, Clock } from 'lucide-react';
+import { useGetSupplierRfqsQuery } from '../../redux/features/rfqs/rfqsApi';
 
 export default function RFQCards() {
+  const { data: rfqsData } = useGetSupplierRfqsQuery();
+  const rfqs = rfqsData?.data || [];
+
+  const newCount = rfqs.filter(r => r.status === 'New').length;
+  const respondedCount = rfqs.filter(r => r.status === 'Responded').length;
+  const closedCount = rfqs.filter(r => r.status === 'Closed' || r.status === 'Rejected').length;
+
   const cards = [
     {
       title: "New RFQs",
-      value: "12",
-      trend: "+3 from yesterday",
-      trendColor: "text-[#D4AF37]", // Yellowish trend
+      value: newCount.toString(),
+      trend: "Total this period",
+      trendColor: "text-gray-500", 
       icon: <Mail size={36} className="text-gray-200" strokeWidth={1.5} />
     },
     {
       title: "Responded",
-      value: "34",
-      trend: "This month",
+      value: respondedCount.toString(),
+      trend: "Total this period",
       trendColor: "text-gray-500",
       icon: <CheckCircle2 size={36} className="text-[#D4AF37] opacity-20" strokeWidth={1.5} />
     },
     {
       title: "Closed",
-      value: "18",
-      trend: "This month",
+      value: closedCount.toString(),
+      trend: "Total this period",
       trendColor: "text-gray-500",
       icon: <Archive size={36} className="text-gray-200" strokeWidth={1.5} />
     },
     {
       title: "Avg Response Time",
-      value: "2h 15m",
-      trend: "-15m improvement",
-      trendColor: "text-[#D4AF37]",
+      value: "N/A", // This could be calculated if we tracked response timestamps
+      trend: "Data gathering",
+      trendColor: "text-gray-500",
       icon: <Clock size={36} className="text-gray-200" strokeWidth={1.5} />
     }
   ];

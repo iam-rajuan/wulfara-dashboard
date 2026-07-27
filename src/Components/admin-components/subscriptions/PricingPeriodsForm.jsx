@@ -31,21 +31,32 @@ export default function PricingPeriodsForm({ data = {}, onChange }) {
 
         {/* Billing Type */}
         <div className="md:col-span-1">
-          <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Billing Type</label>
-          <select className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300">
-            <option>Listing Period</option>
-            <option>Monthly Recurring</option>
+          <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Billing Cycle</label>
+          <select 
+            name="billingCycle"
+            value={data.billingCycle || ""}
+            onChange={handleChange}
+            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300"
+          >
+            <option value="">Select Billing Cycle...</option>
+            <option value="Annual (Paid Upfront)">Annual (Paid Upfront)</option>
+            <option value="Monthly">Monthly</option>
           </select>
         </div>
 
         {/* Tax Rate */}
         <div className="md:col-span-1">
-          <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Tax Rate (%)</label>
-          <input 
-            type="text" 
-            defaultValue="0"
+          <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Tax Category</label>
+          <select 
+            name="taxCategory"
+            value={data.taxCategory || ""}
+            onChange={handleChange}
             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300"
-          />
+          >
+            <option value="">Select Tax Category...</option>
+            <option value="Standard Digital Service">Standard Digital Service</option>
+            <option value="Exempt">Exempt</option>
+          </select>
         </div>
 
         {/* Coupon Codes */}

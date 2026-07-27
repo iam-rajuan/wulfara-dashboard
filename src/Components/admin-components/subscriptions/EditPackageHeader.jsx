@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 
-export default function EditPackageHeader({ activeTab, setActiveTab }) {
+export default function EditPackageHeader({ activeTab, setActiveTab, handleSave }) {
   const { id } = useParams();
   const isCreating = !id;
   const pageTitle = isCreating ? "Create Package" : "Edit Premium Plan";
@@ -45,7 +45,7 @@ export default function EditPackageHeader({ activeTab, setActiveTab }) {
           <button className="px-5 py-2 text-[13px] font-bold text-gray-600 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
             Discard Changes
           </button>
-          <button className="px-5 py-2 bg-[#0F172A] border border-[#0F172A] rounded-md text-[13px] font-bold text-white hover:bg-gray-800 transition-colors shadow-sm">
+          <button onClick={handleSave} className="px-5 py-2 bg-[#0F172A] border border-[#0F172A] rounded-md text-[13px] font-bold text-white hover:bg-gray-800 transition-colors shadow-sm">
             Save Changes
           </button>
         </div>

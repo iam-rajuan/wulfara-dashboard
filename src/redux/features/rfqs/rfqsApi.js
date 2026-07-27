@@ -30,6 +30,18 @@ export const rfqsApi = apiSlice.injectEndpoints({
       query: (id) => `/rfqs/${id}/messages`,
       providesTags: (result, error, id) => [{ type: 'Rfq', id }],
     }),
+    getSupplierRfqs: builder.query({
+      query: () => '/rfqs/supplier',
+      providesTags: ['Rfq'],
+    }),
+    replyToRfq: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/rfqs/${id}/messages`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Rfq', id }],
+    }),
   }),
 });
 
@@ -39,4 +51,6 @@ export const {
   useCreateRfqMutation,
   useUpdateRfqStatusMutation,
   useGetRfqMessagesQuery,
+  useGetSupplierRfqsQuery,
+  useReplyToRfqMutation,
 } = rfqsApi;

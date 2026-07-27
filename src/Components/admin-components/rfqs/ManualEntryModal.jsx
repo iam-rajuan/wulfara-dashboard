@@ -15,18 +15,21 @@ export default function ManualEntryModal({ isOpen, onClose, onSubmit, mode = "cr
     quantity: 1
   });
 
+  const defaultSupplierId = listings.length > 0 ? listings[0]._id : "";
+
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        supplierId: listings.length > 0 ? listings[0]._id : "",
+      setFormData(prev => ({
+        ...prev,
+        supplierId: defaultSupplierId || prev.supplierId,
         buyerName: "Admin Tester",
         buyerEmail: "admin@test.com",
         subject: "Manual Entry RFQ",
         details: "Testing the RFQ creation flow manually from the admin panel.",
         quantity: 10
-      });
+      }));
     }
-  }, [isOpen, listings]);
+  }, [isOpen, defaultSupplierId]);
 
   if (!isOpen) return null;
 

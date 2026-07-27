@@ -1,9 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Filter, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { useGetSupplierRfqsQuery } from '../../redux/features/rfqs/rfqsApi';
 
 export default function RFQTable() {
   const navigate = useNavigate();
+  const { data: rfqsData, isLoading } = useGetSupplierRfqsQuery();
+
   const [filters, setFilters] = useState({
     search: '',
     status: 'All Statuses',
@@ -13,68 +16,45 @@ export default function RFQTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
 
-  const [rfqs] = useState([
-    {
-      id: "RFQ-1048",
-      buyerInitials: "DC",
-      buyerName: "David Carter",
-      buyerColor: "bg-[#4B6A7F]",
-      product: "Steel sheets",
-      quantity: "500 units",
-      deadline: "May 24",
-      status: "New",
-      statusColor: "bg-[#E5F0FF] text-[#0066FF] border-[#B3D4FF]",
-      dotColor: "bg-[#0066FF]"
-    },
-    {
-      id: "RFQ-1047",
-      buyerInitials: "NB",
-      buyerName: "Nova Build LLC",
-      buyerColor: "bg-[#7C8FA6]",
-      product: "Metal pipes",
-      quantity: "1,200 units",
-      deadline: "May 28",
-      status: "Responded",
-      statusColor: "bg-[#0052CC] text-white border-[#0052CC]",
-      dotColor: "bg-white"
-    },
-    {
-      id: "RFQ-1046",
-      buyerInitials: "AI",
-      buyerName: "Apex Industrial",
-      buyerColor: "bg-[#0F172A]",
-      product: "Raw materials",
-      quantity: "3 tons",
-      deadline: "June 02",
-      status: "Pending",
-      statusColor: "bg-[#E2E8F0] text-[#475569] border-[#CBD5E1]",
-      dotColor: "bg-[#94A3B8]"
-    },
-    {
-      id: "RFQ-1045",
-      buyerInitials: "AI",
-      buyerName: "Apex Industrial",
-      buyerColor: "bg-[#0F172A]",
-      product: "Raw materials",
-      quantity: "3 tons",
-      deadline: "June 02",
-      status: "Pending",
-      statusColor: "bg-[#E2E8F0] text-[#475569] border-[#CBD5E1]",
-      dotColor: "bg-[#94A3B8]"
-    },
-    {
-      id: "RFQ-1044",
-      buyerInitials: "AI",
-      buyerName: "Apex Industrial",
-      buyerColor: "bg-[#0F172A]",
-      product: "Raw materials",
-      quantity: "3 tons",
-      deadline: "June 02",
-      status: "Pending",
-      statusColor: "bg-[#E2E8F0] text-[#475569] border-[#CBD5E1]",
-      dotColor: "bg-[#94A3B8]"
-    }
-  ]);
+  const rawRfqs = rfqsData?.data || [];
+
+  const rfqs = useMemo(() => {
+    return rawRfqs.map((rfq) => {
+      const buyerName = rfq.buyerUser?.name || rfq.buyerName || 'Unknown Buyer';
+      const initials = buyerName.substring(0, 2).toUpperCase();
+      
+      let statusColor = "bg-[#E2E8F0] text-[#475569] border-[#CBD5E1]";
+      let dotColor = "bg-[#94A3B8]";
+      if (rfq.status === 'New') {
+        statusColor = "bg-[#E5F0FF] text-[#0066FF] border-[#B3D4FF]";
+        dotColor = "bg-[#0066FF]";
+      } else if (rfq.status === 'Responded') {
+        statusColor = "bg-[#0052CC] text-white border-[#0052CC]";
+        dotColor = "bg-white";
+      } else if (rfq.status === 'Closed' || rfq.status === 'Rejected') {
+        statusColor = "bg-red-50 text-red-600 border-red-200";
+        dotColor = "bg-red-500";
+      }
+
+      const dateObj = new Date(rfq.createdAt);
+      const deadline = new Date(dateObj.setDate(dateObj.getDate() + 7)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      return {
+        _id: rfq._id,
+        id: `RFQ-${rfq._id.substring(rfq._id.length - 4).toUpperCase()}`,
+        buyerInitials: initials,
+        buyerName: buyerName,
+        buyerColor: "bg-[#4B6A7F]", // you can randomize this if you want
+        product: rfq.subject || rfq.productDetails || 'Unknown Product',
+        quantity: rfq.quantity || 'N/A',
+        deadline: deadline,
+        status: rfq.status || 'Pending',
+        statusColor,
+        dotColor,
+        createdAt: rfq.createdAt
+      };
+    });
+  }, [rawRfqs]);
 
   const filteredRfqs = useMemo(() => {
     return rfqs.filter(r => {
@@ -82,6 +62,8 @@ export default function RFQTable() {
                             r.buyerName.toLowerCase().includes(filters.search.toLowerCase()) ||
                             r.product.toLowerCase().includes(filters.search.toLowerCase());
       const matchesStatus = filters.status === 'All Statuses' || r.status === filters.status;
+      
+      // Date filtering can be complex, skipping exact logic for mock parity unless needed
       
       return matchesSearch && matchesStatus;
     });
@@ -191,14 +173,14 @@ export default function RFQTable() {
                 <td className="px-6 py-4 text-right">
                   {rfq.status === 'Pending' ? (
                     <button 
-                      onClick={() => navigate(`/rfqs/${rfq.id}/reply`)}
+                      onClick={() => navigate(`/rfqs/${rfq._id}/reply`)}
                       className="px-4 py-1.5 bg-[#D4AF37] hover:bg-[#C29F31] transition rounded text-[12px] font-bold text-[#0F172A]"
                     >
                       Reply
                     </button>
                   ) : (
                     <button 
-                      onClick={() => navigate(`/rfqs/${rfq.id}`)}
+                      onClick={() => navigate(`/rfqs/${rfq._id}`)}
                       className="px-4 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 transition rounded text-[12px] font-bold text-gray-700"
                     >
                       View

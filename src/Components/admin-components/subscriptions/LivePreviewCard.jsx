@@ -3,8 +3,10 @@ import { Check } from "lucide-react";
 
 export default function LivePreviewCard({ data = {} }) {
   const price = data.basePrice || "4,900";
-  const name = data.name || "Premium Plan";
+  const name = data.name || data.displayName || "Premium Plan";
   const desc = data.description || "Scale your manufacturing empire with enterprise-grade tools.";
+  const accentColor = data.accentColor || "#D97706";
+  const badgeText = data.badge || data.badgeText || "Popular";
   
   return (
     <div id="Preview" className="h-full flex flex-col items-center justify-center bg-gray-50/50 border border-gray-100 rounded-xl p-8 scroll-mt-48">
@@ -12,9 +14,14 @@ export default function LivePreviewCard({ data = {} }) {
       
       <div className="w-full bg-[#1A2333] rounded-xl shadow-lg border border-gray-700 overflow-hidden relative text-white">
         
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#D97706] text-white text-[9px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-b-md shadow-sm">
-          Popular
-        </div>
+        {badgeText && badgeText !== "None" && (
+          <div 
+            className="absolute top-0 left-1/2 -translate-x-1/2 text-white text-[9px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-b-md shadow-sm"
+            style={{ backgroundColor: accentColor }}
+          >
+            {badgeText}
+          </div>
+        )}
 
         <div className="p-6 pt-10">
           <h3 className="text-xl font-extrabold mb-2">{name}</h3>
@@ -30,15 +37,15 @@ export default function LivePreviewCard({ data = {} }) {
 
           <div className="space-y-3 mb-8 text-left">
             <div className="flex items-center gap-2">
-              <Check size={14} className="text-[#D97706] flex-shrink-0" />
+              <Check size={14} className="flex-shrink-0" style={{ color: accentColor }} />
               <span className="text-[12px] font-bold text-gray-200">Unlimited RFQs</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check size={14} className="text-[#D97706] flex-shrink-0" />
+              <Check size={14} className="flex-shrink-0" style={{ color: accentColor }} />
               <span className="text-[12px] font-bold text-gray-200">Verified Badge</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check size={14} className="text-[#D97706] flex-shrink-0" />
+              <Check size={14} className="flex-shrink-0" style={{ color: accentColor }} />
               <span className="text-[12px] font-bold text-gray-200">15 Team Members</span>
             </div>
           </div>

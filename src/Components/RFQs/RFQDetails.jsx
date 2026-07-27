@@ -1,72 +1,75 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, Printer, X, FileText, Image as ImageIcon, File, Paperclip, Send, MapPin, CheckCircle, Clock } from 'lucide-react';
+import { useGetRfqQuery, useGetRfqMessagesQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation } from '../../redux/features/rfqs/rfqsApi';
 
 export default function RFQDetails() {
   const { id } = useParams();
   const [message, setMessage] = useState('');
-  const [rfq, setRfq] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    const currentId = id || "RFQ-1027";
-    
-    // Simulate dynamic buyer data depending on the ID
-    const isNova = currentId === 'RFQ-1047';
-    const isApex = currentId === 'RFQ-1046' || currentId === 'RFQ-1045' || currentId === 'RFQ-1044';
-    
-    setRfq({
-      id: currentId,
-      status: currentId === 'RFQ-1048' ? "NEW" : (isNova ? "RESPONDED" : "PENDING"),
-      category: isNova ? "Metal pipes" : (isApex ? "Raw materials" : "Steel sheets"),
-      quantity: isNova ? "1,200 units" : (isApex ? "3 tons" : "500 units"),
-      deadline: isNova ? "May 28, 2026" : (isApex ? "June 02, 2026" : "May 24, 2026"),
-      location: "New York Port, USA",
-      notes: `Looking for industrial-grade ${isNova ? 'metal pipes' : 'materials'} for warehouse construction. Need detailed specs on tensile strength and corrosion resistance coatings. Prefer suppliers with ISO 9001 certification.`,
-      attachments: [
-        { name: "specification.pdf", size: "2.4 MB", type: "pdf" },
-        { name: "layout-diagram.png", size: "4.1 MB", type: "image" },
-        { name: "requirements.docx", size: "1.1 MB", type: "doc" }
-      ],
-      buyer: {
-        name: isNova ? "Nova Build Team" : (isApex ? "Apex Industrial" : "David Carter"),
-        title: "Procurement Director",
-        company: isNova ? "Nova Build LLC" : (isApex ? "Apex Industrial Corp" : "Carter Industrial Group"),
-        location: "New York, USA",
-        isVerified: true
-      },
-      activity: [
-        { date: "Today, 09:42 AM", title: "RFQ Created", desc: "Request submitted by buyer" }
-      ]
-    });
-  }, [id]);
+  const { data: rfqResponse, isLoading: isRfqLoading } = useGetRfqQuery(id);
+  const { data: messagesResponse } = useGetRfqMessagesQuery(id);
+  const [replyToRfq, { isLoading: isReplying }] = useReplyToRfqMutation();
+  const [updateStatus] = useUpdateRfqStatusMutation();
 
-  const handleReplySubmit = () => {
+  const rawRfq = rfqResponse?.data;
+  const messages = messagesResponse?.data || [];
+
+  const rfq = rawRfq ? {
+    id: `RFQ-${rawRfq._id.substring(rawRfq._id.length - 4).toUpperCase()}`,
+    rawId: rawRfq._id,
+    status: rawRfq.status === 'pending' ? 'PENDING' : rawRfq.status === 'responded' ? 'RESPONDED' : rawRfq.status === 'closed' ? 'CLOSED' : rawRfq.status.toUpperCase(),
+    category: "Not specified", 
+    quantity: `${rawRfq.quantity} units`,
+    deadline: "N/A", 
+    location: "N/A",
+    notes: rawRfq.details || '',
+    attachments: rawRfq.attachments?.map(url => ({ name: url.split('/').pop(), url, type: 'file' })) || [],
+    buyer: {
+      name: rawRfq.buyerUser?.name || rawRfq.buyerName,
+      title: "Buyer",
+      company: "Company", 
+      location: "Location",
+      isVerified: !!rawRfq.buyerUser
+    },
+    activity: [
+      { date: new Date(rawRfq.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }), title: "RFQ Created", desc: "Request submitted by buyer" },
+      ...messages.map(msg => {
+        const isSupplier = msg.sender?._id === rawRfq.supplier || msg.sender?._id === rawRfq.supplier?._id || msg.sender?.role === 'supplier';
+        return {
+          date: new Date(msg.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+          title: isSupplier ? "Proposal Sent" : "Message Received",
+          desc: msg.text
+        };
+      })
+    ]
+  } : null;
+
+  const handleReplySubmit = async () => {
     if ((message.trim() || attachedFile) && rfq) {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      const attachmentText = attachedFile ? ` (Attached: ${attachedFile.name})` : '';
-      const replyDesc = message.trim() 
-        ? `You sent a quote: "${message}"${attachmentText}`
-        : `You sent a quote with an attachment${attachmentText}`;
-
-      setRfq(prev => ({
-        ...prev,
-        status: "RESPONDED",
-        activity: [
-          ...prev.activity,
-          { 
-            date: `Today, ${timeString}`, 
-            title: "Proposal Sent", 
-            desc: replyDesc 
+      try {
+        // We'll skip S3 file upload logic for now since this is just a quick reply
+        // In a real scenario, you'd upload attachedFile to S3 and get the URL
+        await replyToRfq({
+          id: rfq.rawId,
+          data: {
+            text: message,
+            attachments: [] // Add S3 URLs here if implemented
           }
-        ]
-      }));
-      
-      setMessage('');
-      setAttachedFile(null);
+        }).unwrap();
+        
+        if (rfq.status !== 'RESPONDED') {
+          await updateStatus({ id: rfq.rawId, status: 'responded' }).unwrap();
+        }
+        
+        setMessage('');
+        setAttachedFile(null);
+        alert("Reply sent successfully!");
+      } catch (error) {
+        alert("Failed to send reply");
+      }
     }
   };
 
@@ -76,23 +79,16 @@ export default function RFQDetails() {
     }
   };
 
-  const handleDecline = () => {
+  const handleDecline = async () => {
     if (rfq) {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      setRfq(prev => ({
-        ...prev,
-        status: "DECLINED",
-        activity: [
-          ...prev.activity,
-          { 
-            date: `Today, ${timeString}`, 
-            title: "RFQ Declined", 
-            desc: "You declined this request." 
-          }
-        ]
-      }));
+      if (window.confirm("Are you sure you want to decline this RFQ?")) {
+        try {
+          await updateStatus({ id: rfq.rawId, status: 'closed' }).unwrap();
+          alert("RFQ declined.");
+        } catch (error) {
+          alert("Failed to decline RFQ");
+        }
+      }
     }
   };
 

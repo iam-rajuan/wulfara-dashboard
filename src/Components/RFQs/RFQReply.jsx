@@ -1,11 +1,18 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, FileText, Clock, CloudUpload, Send, CheckCircle2, Circle, X } from 'lucide-react';
+import { useGetRfqQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation } from '../../redux/features/rfqs/rfqsApi';
 
 export default function RFQReply() {
   const { id } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  
+  const { data: rfqResponse } = useGetRfqQuery(id);
+  const [replyToRfq] = useReplyToRfqMutation();
+  const [updateStatus] = useUpdateRfqStatusMutation();
+  
+  const rawRfq = rfqResponse?.data;
   
   const [formData, setFormData] = useState({
     price: '',
@@ -17,20 +24,14 @@ export default function RFQReply() {
   
   const [attachedFile, setAttachedFile] = useState(null);
 
-  // Dynamically generate mock data based on the ID
-  const rfq = useMemo(() => {
-    const currentId = id || "RFQ-1027";
-    const isNova = currentId === 'RFQ-1047';
-    const isApex = currentId === 'RFQ-1046' || currentId === 'RFQ-1045' || currentId === 'RFQ-1044';
-    
-    return {
-      id: currentId,
-      product: isNova ? "Metal pipes" : (isApex ? "Raw materials" : "Steel Sheets (Grade A)"),
-      quantity: isNova ? "1,200 units" : (isApex ? "3 tons" : "2,000 units"),
-      targetDate: isNova ? "May 28, 2026" : (isApex ? "June 02, 2026" : "Oct 15, 2024"),
-      buyerName: isNova ? "Nova Build Team" : (isApex ? "Apex Industrial" : "Michael Carter"),
-    };
-  }, [id]);
+  const rfq = rawRfq ? {
+    id: `RFQ-${rawRfq._id.substring(rawRfq._id.length - 4).toUpperCase()}`,
+    rawId: rawRfq._id,
+    product: rawRfq.subject || rawRfq.productDetails || 'Unknown',
+    quantity: `${rawRfq.quantity} units`,
+    targetDate: 'N/A', // Assuming targetDate isn't directly on RFQ yet
+    buyerName: rawRfq.buyerUser?.name || rawRfq.buyerName || 'Unknown Buyer'
+  } : null;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -46,13 +47,38 @@ export default function RFQReply() {
     }
   };
 
-  const handleSendReply = () => {
+  const handleSendReply = async () => {
     if (!formData.price.trim() || !formData.timeline.trim() || !formData.message.trim()) {
       alert("Please fill in all required fields (Price, Timeline, and Message).");
       return;
     }
-    alert(`Quote Response sent successfully for ${rfq.id}!`);
-    navigate(`/rfqs/${rfq.id}`);
+    
+    if (rfq) {
+      try {
+        const textMessage = `[QUOTE DETAILS]
+Price: $${formData.price} ${formData.isNegotiable ? '(Negotiable)' : '(Fixed)'}
+Timeline: ${formData.timeline}
+Shipping Notes: ${formData.shippingNotes || 'None'}
+
+[MESSAGE]
+${formData.message}`;
+
+        await replyToRfq({
+          id: rfq.rawId,
+          data: {
+            text: textMessage,
+            attachments: [] // Skip attachments for now, or implement S3 upload
+          }
+        }).unwrap();
+        
+        await updateStatus({ id: rfq.rawId, status: 'responded' }).unwrap();
+        
+        alert(`Quote Response sent successfully for ${rfq.id}!`);
+        navigate(`/rfqs/${rfq.rawId}`);
+      } catch (error) {
+        alert("Failed to send quote response");
+      }
+    }
   };
 
   const handleSaveDraft = () => {

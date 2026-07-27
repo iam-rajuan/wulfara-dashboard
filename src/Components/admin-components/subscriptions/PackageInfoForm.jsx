@@ -15,16 +15,30 @@ export default function PackageInfoForm({ data = {}, onChange }) {
 
       <div className="space-y-5">
         
-        {/* Package Name */}
-        <div>
-          <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Package Name</label>
-          <input 
-            type="text" 
-            name="name"
-            value={data.name || ""}
-            onChange={handleChange}
-            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Internal Name */}
+          <div>
+            <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Internal Name</label>
+            <input 
+              type="text" 
+              name="internalName"
+              value={data.internalName || ""}
+              onChange={handleChange}
+              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300"
+            />
+          </div>
+
+          {/* Package Name */}
+          <div>
+            <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Display Name</label>
+            <input 
+              type="text" 
+              name="name"
+              value={data.name || ""}
+              onChange={handleChange}
+              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -66,14 +80,40 @@ export default function PackageInfoForm({ data = {}, onChange }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
           {/* Badge Selection */}
           <div>
-            <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Badge Selection</label>
-            <select className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300">
-              <option>Popular</option>
-              <option>Best Value</option>
-              <option>None</option>
-            </select>
+            <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Badge Text</label>
+            <input 
+              type="text" 
+              name="badge"
+              placeholder="e.g. Popular"
+              value={data.badge || ""}
+              onChange={handleChange}
+              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300"
+            />
           </div>
 
+          {/* Accent Color */}
+          <div>
+            <label className="block text-[12px] font-bold text-[#0F172A] mb-1.5">Accent Color</label>
+            <div className="flex items-center gap-2">
+              <input 
+                type="color"
+                name="accentColor"
+                value={data.accentColor || '#D4AF37'}
+                onChange={handleChange}
+                className="w-9 h-9 rounded border border-gray-300 flex-shrink-0 cursor-pointer p-0.5"
+              />
+              <input 
+                type="text" 
+                name="accentColor"
+                value={data.accentColor || '#D4AF37'}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-gray-300"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
           {/* Public Visibility Toggle */}
           <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
             <span className="text-[12px] font-bold text-[#0F172A]">Public Visibility</span>
