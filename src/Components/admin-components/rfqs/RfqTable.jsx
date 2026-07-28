@@ -77,13 +77,6 @@ export default function RfqTable({ rfqs, currentPage, setCurrentPage, totalPages
                     >
                       <Eye size={16} />
                     </Link>
-                    <button 
-                      onClick={() => onEdit && onEdit(rfq)}
-                      className="text-gray-400 hover:text-[#D4AF37] transition-colors"
-                      title="Edit RFQ"
-                    >
-                      <Pencil size={14} />
-                    </button>
                   </div>
                 </td>
               </tr>

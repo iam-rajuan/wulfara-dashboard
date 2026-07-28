@@ -1,18 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Globe, Eye, CheckCircle2, AlertTriangle, UploadCloud, 
   Filter, Download, Search, LayoutGrid, ShoppingCart, Truck, HelpCircle
 } from 'lucide-react';
 import { Input, Select, Switch, Upload, Table, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useGetSeoByPathQuery, useUpdateSeoSettingsMutation } from '../../../redux/features/seo/seoApi';
 
 const { TextArea } = Input;
 
 const SeoSettings = () => {
   const navigate = useNavigate();
+  
+  // Use 'global' as the path for site-wide settings
+  const { data: globalSeoResponse, isLoading } = useGetSeoByPathQuery('global');
+  const [updateSeoSettings, { isLoading: isUpdating }] = useUpdateSeoSettingsMutation();
+
   const [siteTitle, setSiteTitle] = useState('WULFARA | B2B Supplier Marketplace Directory');
   const [metaDesc, setMetaDesc] = useState('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
+  const [keywords, setKeywords] = useState(['B2B', 'logistics', 'supplier marketplace', 'wholesale directory']);
   const [ogImage, setOgImage] = useState(null);
+
+  useEffect(() => {
+    if (globalSeoResponse?.data) {
+      const data = globalSeoResponse.data;
+      setSiteTitle(data.title || '');
+      setMetaDesc(data.description || '');
+      if (data.keywords && data.keywords.length > 0) {
+        setKeywords(data.keywords);
+      }
+      // Note: ogImage would be a URL here if handled via S3, we skip for now
+    }
+  }, [globalSeoResponse]);
 
   const initialPageData = [
     { key: '1', entity: { icon: <LayoutGrid size={16} />, name: 'Marketplace Homepage' }, path: '/', metaConfig: 'WULFARA | Global B2B Supplier Marketplace', status: 'OPTIMIZED', indexed: true, updated: '2h ago' },
@@ -34,29 +53,45 @@ const SeoSettings = () => {
   const [pageData, setPageData] = useState(initialPageData);
 
   const handleImageUpload = (info) => {
-    if (info.file.originFileObj) {
-      setOgImage(info.file.originFileObj);
+    if (info.fileList && info.fileList.length > 0) {
+      const file = info.fileList[0].originFileObj;
+      if (file) {
+        setOgImage(file);
+      }
+    } else {
+      setOgImage(null);
     }
   };
 
-  const handlePublish = () => {
-    message.success('SEO Settings published successfully!');
-    setTimeout(() => {
-      const newSeoData = {
+  const handlePublish = async () => {
+    try {
+      await updateSeoSettings({
+        path: 'global',
         title: siteTitle,
-        image: ogImage ? URL.createObjectURL(ogImage) : 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=200&auto=format&fit=crop', // Default tech placeholder
-        placement: 'Global SEO',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: '2029-12-31',
-        status: 'Active',
-      };
-      navigate('/seo', { state: { newSeoRecord: newSeoData } });
-    }, 700);
+        description: metaDesc,
+        keywords: keywords,
+        ogImage: '' // Placeholder for actual image upload logic
+      }).unwrap();
+      message.success('Global SEO Settings published successfully!');
+    } catch (err) {
+      console.error(err);
+      message.error(err?.data?.message || 'Failed to update SEO settings');
+    }
   };
 
   const handleDiscard = () => {
-    setSiteTitle('WULFARA | B2B Supplier Marketplace Directory');
-    setMetaDesc('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
+    if (globalSeoResponse?.data) {
+      const data = globalSeoResponse.data;
+      setSiteTitle(data.title || '');
+      setMetaDesc(data.description || '');
+      if (data.keywords && data.keywords.length > 0) {
+        setKeywords(data.keywords);
+      }
+    } else {
+      setSiteTitle('WULFARA | B2B Supplier Marketplace Directory');
+      setMetaDesc('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
+      setKeywords(['B2B', 'logistics', 'supplier marketplace', 'wholesale directory']);
+    }
     setOgImage(null);
     message.info('Changes discarded.');
   };
@@ -181,7 +216,8 @@ const SeoSettings = () => {
                   mode="tags"
                   style={{ width: '100%' }}
                   placeholder="Add keyword..."
-                  defaultValue={['B2B', 'logistics', 'supplier marketplace', 'wholesale directory']}
+                  value={keywords}
+                  onChange={(val) => setKeywords(val)}
                   className="seo-keywords-select"
                 />
               </div>
@@ -191,6 +227,7 @@ const SeoSettings = () => {
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Open Graph Image (1200x630)</label>
                   <Upload.Dragger 
                     onChange={handleImageUpload}
+                    beforeUpload={() => false}
                     className="bg-[#5c6e7a] rounded-xl overflow-hidden border-0 relative h-[140px]" 
                     showUploadList={false}
                     accept="image/*"

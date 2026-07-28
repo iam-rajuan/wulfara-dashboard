@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Download, Plus } from "lucide-react";
+import { toast } from "react-toastify";
 import { useGetRfqsQuery, useCreateRfqMutation } from "../../../redux/features/rfqs/rfqsApi";
 import RfqMetrics from "../../../Components/admin-components/rfqs/RfqMetrics";
 import RfqFilters from "../../../Components/admin-components/rfqs/RfqFilters";
@@ -52,7 +53,7 @@ export default function RfqManagement() {
   const handleCreateEntry = async (entryData) => {
     try {
       await createRfq({
-        supplierId: entryData.supplierId, // We must have added this to the modal
+        supplierId: entryData.supplierId, 
         buyerName: entryData.buyerName,
         buyerEmail: entryData.buyerEmail,
         subject: entryData.subject,
@@ -60,9 +61,10 @@ export default function RfqManagement() {
         quantity: entryData.quantity || 1
       }).unwrap();
       setIsModalOpen(false);
+      toast.success("Manual RFQ entry created successfully!");
     } catch (err) {
       console.error(err);
-      alert("Failed to create manual entry");
+      toast.error(err?.data?.message || err.message || "Failed to create manual entry");
     }
   };
 

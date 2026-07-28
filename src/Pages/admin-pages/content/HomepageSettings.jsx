@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Rocket, Link as LinkIcon, FileText, HelpCircle, UploadCloud, Trash2, Plus, Save, Eye, Monitor, Smartphone, Search, LayoutGrid } from 'lucide-react';
 import { Modal } from 'antd';
+import { useGetPagesQuery, useCreatePageMutation, useUpdatePageMutation } from '../../../redux/features/cms/cmsApi';
 
 const HomepageSettings = () => {
   // State for Hero Section
@@ -25,30 +26,9 @@ const HomepageSettings = () => {
     detailedContent: 'Founded in 2042, Wulfara provides the digital scaffolding for neo-industrial enterprises. Our proprietary Matrix technology allows for instantaneous verification of compliance, capacity, and logistical reliability across the orbital and terrestrial supply chains.'
   });
 
-  // State for FAQs
-  const [faqs, setFaqs] = useState([
-    { id: 1, question: 'How secure is the Wulfara Matrix?', answer: 'We use quantum-resistant encryption across all distributed ledger nodes.' },
-    { id: 2, question: 'What industries do you support?', answer: 'Aerospace, Deep-sea extraction, and Advanced Robotics.' }
-  ]);
-
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const [previewMode, setPreviewMode] = useState('desktop'); // 'desktop' or 'mobile'
-  const [expandedFaqId, setExpandedFaqId] = useState(null);
-
-  // FAQ Handlers
-  const handleAddFaq = () => {
-    const newFaq = { id: Date.now(), question: '', answer: '' };
-    setFaqs([...faqs, newFaq]);
-  };
-
-  const handleRemoveFaq = (idToRemove) => {
-    setFaqs(faqs.filter(faq => faq.id !== idToRemove));
-  };
-
-  const handleFaqChange = (id, field, value) => {
-    setFaqs(faqs.map(faq => faq.id === id ? { ...faq, [field]: value } : faq));
-  };
 
   // General Handlers
   const handleHeroChange = (e) => {
@@ -70,15 +50,51 @@ const HomepageSettings = () => {
     }
   };
 
-  const handleSave = () => {
+  const { data: pagesResponse } = useGetPagesQuery();
+  const [createPage] = useCreatePageMutation();
+  const [updatePage] = useUpdatePageMutation();
+
+  const homepageData = pagesResponse?.data?.find(p => p.slug === 'homepage');
+
+  React.useEffect(() => {
+    if (homepageData && homepageData.htmlContent) {
+      try {
+        const parsed = JSON.parse(homepageData.htmlContent);
+        if (parsed.heroSettings) setHeroSettings(parsed.heroSettings);
+        if (parsed.buttonSettings) setButtonSettings(parsed.buttonSettings);
+        if (parsed.missionSettings) setMissionSettings(parsed.missionSettings);
+      } catch (e) {
+        console.error("Failed to parse homepage content", e);
+      }
+    }
+  }, [homepageData]);
+
+  const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      const allData = { heroSettings, buttonSettings, missionSettings, faqs };
-      console.log('Saved Data:', allData);
-      alert('Settings saved successfully! Check console for data.');
+    const allData = { heroSettings, buttonSettings, missionSettings };
+    
+    try {
+      if (homepageData) {
+        await updatePage({
+          id: homepageData._id,
+          title: 'Homepage',
+          slug: 'homepage',
+          htmlContent: JSON.stringify(allData)
+        }).unwrap();
+      } else {
+        await createPage({
+          title: 'Homepage',
+          slug: 'homepage',
+          htmlContent: JSON.stringify(allData)
+        }).unwrap();
+      }
+      alert('Settings saved successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save settings.');
+    } finally {
       setIsSaving(false);
-    }, 800);
+    }
   };
 
   return (
@@ -254,67 +270,7 @@ const HomepageSettings = () => {
           </div>
         </div>
 
-        {/* Frequently Asked Questions */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-                <HelpCircle size={18} />
-              </div>
-              Frequently Asked Questions
-            </h3>
-            <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full">{faqs.length} Active Items</span>
-          </div>
-
-          <div className="space-y-6">
-            {faqs.map((faq, index) => (
-              <div key={faq.id} className="border border-gray-200 rounded-lg p-4 bg-[#fcfcfc] shadow-sm">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Entry #{index + 1}</span>
-                  <button
-                    onClick={() => handleRemoveFaq(faq.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded"
-                    title="Remove FAQ"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Question</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-medium text-gray-900"
-                      value={faq.question}
-                      onChange={(e) => handleFaqChange(faq.id, 'question', e.target.value)}
-                      placeholder="e.g. How secure is the platform?"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Answer</label>
-                    <textarea
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all h-20 text-gray-600"
-                      value={faq.answer}
-                      onChange={(e) => handleFaqChange(faq.id, 'answer', e.target.value)}
-                      placeholder="e.g. We use industry-standard encryption..."
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <button
-              onClick={handleAddFaq}
-              className="w-full py-4 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center gap-2 text-gray-500 font-medium hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm"
-            >
-              <Plus size={18} />
-              Add New FAQ Entry
-            </button>
-          </div>
         </div>
-
-      </div>
 
       {/* Live Preview Modal */}
       <Modal
@@ -407,38 +363,6 @@ const HomepageSettings = () => {
                   <span className="relative z-10 text-white font-medium">Hero Image Area</span>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Support & Information (FAQ) */}
-          <div className={`bg-[#fcfcfc] border-t border-gray-100 ${previewMode === 'mobile' ? 'py-10' : 'py-20'}`}>
-            <div className="max-w-4xl mx-auto px-8">
-              <h2 className={`font-black text-[#111827] mb-8 ${previewMode === 'mobile' ? 'text-xl' : 'text-2xl'}`}>
-                Support & Information
-              </h2>
-              
-              <div className="space-y-4">
-                {faqs.map((faq) => (
-                  <div 
-                    key={faq.id} 
-                    className={`bg-white border ${expandedFaqId === faq.id ? 'border-blue-300 shadow-sm' : 'border-gray-200'} rounded-lg p-6 cursor-pointer hover:border-gray-300 transition-all`}
-                    onClick={() => setExpandedFaqId(expandedFaqId === faq.id ? null : faq.id)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className={`font-semibold text-sm ${expandedFaqId === faq.id ? 'text-blue-700' : 'text-gray-800'}`}>{faq.question}</span>
-                      <Plus 
-                        className={`${expandedFaqId === faq.id ? 'text-blue-500 rotate-45' : 'text-gray-400'} transition-transform duration-300`} 
-                        size={20} 
-                      />
-                    </div>
-                    {expandedFaqId === faq.id && (
-                      <div className="mt-4 pt-4 border-t border-gray-100 text-gray-600 text-sm leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
-                        {faq.answer}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 

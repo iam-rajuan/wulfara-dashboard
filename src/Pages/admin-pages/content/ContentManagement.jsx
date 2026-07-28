@@ -18,46 +18,137 @@ import {
 import StatCard from '../../../Components/admin-components/content/StatCard';
 import SectionCard from '../../../Components/admin-components/content/SectionCard';
 import { Link } from 'react-router-dom';
-import { Modal, Form, Input, Upload, message } from 'antd';
+import { Modal, Form, Input, message, Button, Collapse } from 'antd';
+import { useGetPagesQuery, useCreatePageMutation, useUpdatePageMutation } from '../../../redux/features/cms/cmsApi';
 
 const ContentManagement = () => {
-  // State for Banners
-  const [banners, setBanners] = useState([
-    { id: 1, title: 'Summer Sale', status: 'Active' },
-    { id: 2, title: 'New Arrivals', status: 'Active' },
-    { id: 3, title: 'Holiday Special', status: 'Active' },
-    { id: 4, title: 'Flash Deal', status: 'Active' }
-  ]);
+  const { data: pagesResponse } = useGetPagesQuery();
+  const [createPage] = useCreatePageMutation();
+  const [updatePage] = useUpdatePageMutation();
+
+  const faqPage = pagesResponse?.data?.find(p => p.slug === 'faq');
+  const policyPage = pagesResponse?.data?.find(p => p.slug === 'policies');
+  const helpCenterPage = pagesResponse?.data?.find(p => p.slug === 'help-center');
   
-  const [isBannerModalVisible, setIsBannerModalVisible] = useState(false);
+  const [isFaqModalVisible, setIsFaqModalVisible] = useState(false);
+  const [isPolicyModalVisible, setIsPolicyModalVisible] = useState(false);
+  const [isHelpCenterModalVisible, setIsHelpCenterModalVisible] = useState(false);
+  
   const [form] = Form.useForm();
+  const [faqForm] = Form.useForm();
+  const [policyForm] = Form.useForm();
+  const [helpCenterForm] = Form.useForm();
 
-  const showBannerModal = () => {
-    setIsBannerModalVisible(true);
+  const showFaqModal = () => {
+    if (faqPage && faqPage.htmlContent) {
+      try {
+        const parsed = JSON.parse(faqPage.htmlContent);
+        faqForm.setFieldsValue({ faqs: parsed });
+      } catch (e) {
+        faqForm.setFieldsValue({ faqs: [] });
+      }
+    } else {
+      faqForm.setFieldsValue({ faqs: [] });
+    }
+    setIsFaqModalVisible(true);
   };
 
-  const handleBannerCancel = () => {
-    setIsBannerModalVisible(false);
-    form.resetFields();
-  };
-
-  const handleBannerOk = () => {
-    form.validateFields().then((values) => {
-      const newBanner = {
-        id: Date.now(),
-        title: values.title,
-        status: 'Active'
+  const handleFaqOk = async () => {
+    try {
+      const values = await faqForm.validateFields();
+      const payload = {
+        title: 'FAQ',
+        slug: 'faq',
+        htmlContent: JSON.stringify(values.faqs || [])
       };
-      setBanners([...banners, newBanner]);
-      message.success('Banner added successfully!');
-      setIsBannerModalVisible(false);
-      form.resetFields();
-    }).catch((info) => {
-      console.log('Validate Failed:', info);
-    });
+      
+      if (faqPage) {
+        await updatePage({ id: faqPage._id, ...payload }).unwrap();
+      } else {
+        await createPage(payload).unwrap();
+      }
+      message.success('FAQs updated successfully!');
+      setIsFaqModalVisible(false);
+    } catch (err) {
+      console.error(err);
+      if (err.errorFields) return; // Validation error
+      message.error('Failed to update FAQs');
+    }
   };
 
-  const activeBannersCount = banners.filter(b => b.status === 'Active').length;
+  const showPolicyModal = () => {
+    if (policyPage && policyPage.htmlContent) {
+      try {
+        const parsed = JSON.parse(policyPage.htmlContent);
+        policyForm.setFieldsValue(parsed);
+      } catch (e) {
+        policyForm.resetFields();
+      }
+    } else {
+      policyForm.resetFields();
+    }
+    setIsPolicyModalVisible(true);
+  };
+
+  const handlePolicyOk = async () => {
+    try {
+      const values = await policyForm.validateFields();
+      const payload = {
+        title: 'Policies',
+        slug: 'policies',
+        htmlContent: JSON.stringify(values)
+      };
+      
+      if (policyPage) {
+        await updatePage({ id: policyPage._id, ...payload }).unwrap();
+      } else {
+        await createPage(payload).unwrap();
+      }
+      message.success('Policies updated successfully!');
+      setIsPolicyModalVisible(false);
+    } catch (err) {
+      console.error(err);
+      if (err.errorFields) return;
+      message.error('Failed to update Policies');
+    }
+  };
+
+  const showHelpCenterModal = () => {
+    if (helpCenterPage && helpCenterPage.htmlContent) {
+      try {
+        const parsed = JSON.parse(helpCenterPage.htmlContent);
+        helpCenterForm.setFieldsValue({ articles: parsed });
+      } catch (e) {
+        helpCenterForm.setFieldsValue({ articles: [] });
+      }
+    } else {
+      helpCenterForm.setFieldsValue({ articles: [] });
+    }
+    setIsHelpCenterModalVisible(true);
+  };
+
+  const handleHelpCenterOk = async () => {
+    try {
+      const values = await helpCenterForm.validateFields();
+      const payload = {
+        title: 'Help Center',
+        slug: 'help-center',
+        htmlContent: JSON.stringify(values.articles || [])
+      };
+      
+      if (helpCenterPage) {
+        await updatePage({ id: helpCenterPage._id, ...payload }).unwrap();
+      } else {
+        await createPage(payload).unwrap();
+      }
+      message.success('Help Center Articles updated successfully!');
+      setIsHelpCenterModalVisible(false);
+    } catch (err) {
+      console.error(err);
+      if (err.errorFields) return; // Validation error
+      message.error('Failed to update Help Center Articles');
+    }
+  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto bg-[#FAFAFA] min-h-screen mt-16">
@@ -65,38 +156,18 @@ const ContentManagement = () => {
       <div className="flex justify-between items-start mb-8">
         <div>
           <h1 className="text-3xl font-bold text-[#1a1f36] mb-2">Content Management</h1>
-          <p className="text-[#697386]">Manage homepage content, banners, FAQs, policies, static pages, and SEO settings.</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            <Edit3 size={16} />
-            Update FAQ
-          </button>
-          <button 
-            onClick={showBannerModal}
-            className="flex items-center gap-2 px-4 py-2 bg-[#d9a05b] text-white rounded-lg text-sm font-medium hover:bg-[#c89250] transition-colors"
-          >
-            <Plus size={16} />
-            Add Banner
-          </button>
+          <p className="text-[#697386]">Manage homepage content, FAQs, policies, and static pages.</p>
         </div>
       </div>
 
       {/* Top Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <StatCard
           title="Published Pages"
           value="12"
           icon={<FileText size={24} />}
           badgeColor="bg-yellow-50"
           badgeTextColor="text-yellow-600"
-        />
-        <StatCard
-          title="Active Banners"
-          value={activeBannersCount}
-          icon={<ImageIcon size={24} />}
-          badgeColor="bg-green-50"
-          badgeTextColor="text-green-600"
         />
         <StatCard
           title="Draft Updates"
@@ -129,20 +200,12 @@ const ContentManagement = () => {
             editLink="/content/homepage"
           />
           <SectionCard
-            title="Banner Management"
-            description="Promotional carousels and top-bar announcements for marketing campaigns."
-            badgeText={`${activeBannersCount} Active`}
-            badgeType="info"
-            icon={<ImageIcon size={20} />}
-            editLink="#"
-          />
-          <SectionCard
             title="FAQ"
             description="Common questions and answers structured for easy user consumption and help desk deflection."
             badgeText="Published"
             badgeType="success"
             icon={<HelpCircle size={20} />}
-            editLink="#"
+            onEdit={showFaqModal}
           />
           <SectionCard
             title="Help Center Articles"
@@ -150,7 +213,7 @@ const ContentManagement = () => {
             badgeText="Drafts Available"
             badgeType="warning"
             icon={<Book size={20} />}
-            editLink="#"
+            onEdit={showHelpCenterModal}
           />
           <SectionCard
             title="Policies"
@@ -158,7 +221,7 @@ const ContentManagement = () => {
             badgeText="Published"
             badgeType="success"
             icon={<Gavel size={20} />}
-            editLink="#"
+            onEdit={showPolicyModal}
           />
         </div>
 
@@ -239,33 +302,160 @@ const ContentManagement = () => {
         </div>
       </div>
 
-      {/* Add Banner Modal */}
+      {/* FAQ Modal */}
       <Modal 
-        title="Add New Banner" 
-        open={isBannerModalVisible} 
-        onOk={handleBannerOk} 
-        onCancel={handleBannerCancel}
-        okText="Add Banner"
+        title="Manage Frequently Asked Questions" 
+        open={isFaqModalVisible} 
+        onOk={handleFaqOk} 
+        onCancel={() => setIsFaqModalVisible(false)}
+        okText="Publish FAQs"
         okButtonProps={{ style: { backgroundColor: '#d9a05b', borderColor: '#d9a05b' } }}
+        width={800}
       >
-        <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item 
-            name="title" 
-            label="Banner Title"
-            rules={[{ required: true, message: 'Please input the banner title!' }]}
-          >
-            <Input placeholder="e.g., Summer Mega Sale" />
-          </Form.Item>
-          
-          <Form.Item label="Banner Image">
-            <Upload.Dragger name="files" action="/upload.do" maxCount={1}>
-              <p className="ant-upload-drag-icon flex justify-center text-gray-400">
-                <UploadCloud size={32} />
-              </p>
-              <p className="ant-upload-text">Click or drag image to this area to upload</p>
-              <p className="ant-upload-hint">Support for a single image upload. Strict strictly prohibit from uploading company data or other band files</p>
-            </Upload.Dragger>
-          </Form.Item>
+        <Form form={faqForm} layout="vertical" className="mt-4 max-h-[60vh] overflow-y-auto px-2">
+          <Form.List name="faqs">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <div key={key} className="border border-gray-200 p-4 rounded-lg mb-4 bg-gray-50 relative">
+                    <Button 
+                      type="text" 
+                      danger 
+                      onClick={() => remove(name)} 
+                      className="absolute top-2 right-2"
+                    >
+                      Delete
+                    </Button>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'question']}
+                      label="Question"
+                      rules={[{ required: true, message: 'Missing question' }]}
+                    >
+                      <Input placeholder="e.g. How secure is the platform?" />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'answer']}
+                      label="Answer"
+                      rules={[{ required: true, message: 'Missing answer' }]}
+                    >
+                      <Input.TextArea rows={3} placeholder="e.g. We use industry standard encryption..." />
+                    </Form.Item>
+                  </div>
+                ))}
+                <Form.Item>
+                  <Button type="dashed" onClick={() => add()} block icon={<Plus size={16} className="inline mr-2" />}>
+                    Add FAQ Entry
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
+        </Form>
+      </Modal>
+
+      {/* Help Center Modal */}
+      <Modal 
+        title="Manage Help Center Articles" 
+        open={isHelpCenterModalVisible} 
+        onOk={handleHelpCenterOk} 
+        onCancel={() => setIsHelpCenterModalVisible(false)}
+        okText="Publish Articles"
+        okButtonProps={{ style: { backgroundColor: '#d9a05b', borderColor: '#d9a05b' } }}
+        width={800}
+      >
+        <Form form={helpCenterForm} layout="vertical" className="mt-4 max-h-[60vh] overflow-y-auto px-2">
+          <Form.List name="articles">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <div key={key} className="border border-gray-200 p-4 rounded-lg mb-4 bg-gray-50 relative">
+                    <Button 
+                      type="text" 
+                      danger 
+                      onClick={() => remove(name)} 
+                      className="absolute top-2 right-2"
+                    >
+                      Delete
+                    </Button>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'title']}
+                      label="Article Title"
+                      rules={[{ required: true, message: 'Missing title' }]}
+                    >
+                      <Input placeholder="e.g. How do I reset my password?" />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'content']}
+                      label="Article Content"
+                      rules={[{ required: true, message: 'Missing content' }]}
+                    >
+                      <Input.TextArea rows={4} placeholder="HTML or text content..." />
+                    </Form.Item>
+                  </div>
+                ))}
+                <Form.Item>
+                  <Button type="dashed" onClick={() => add()} block icon={<Plus size={16} className="inline mr-2" />}>
+                    Add Help Center Article
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
+        </Form>
+      </Modal>
+
+      {/* Policies Modal */}
+      <Modal 
+        title="Manage Legal Policies" 
+        open={isPolicyModalVisible} 
+        onOk={handlePolicyOk} 
+        onCancel={() => setIsPolicyModalVisible(false)}
+        okText="Publish Policies"
+        okButtonProps={{ style: { backgroundColor: '#d9a05b', borderColor: '#d9a05b' } }}
+        width={900}
+      >
+        <Form form={policyForm} layout="vertical" className="mt-4 max-h-[65vh] overflow-y-auto px-2">
+          <Collapse accordion defaultActiveKey={['terms-of-service']}>
+            <Collapse.Panel header={<span className="font-semibold text-gray-700">Terms of Service</span>} key="terms-of-service">
+              <Form.Item name="termsOfService" rules={[{ required: true }]}>
+                <Input.TextArea rows={6} placeholder="Enter HTML or text..." />
+              </Form.Item>
+            </Collapse.Panel>
+
+            <Collapse.Panel header={<span className="font-semibold text-gray-700">Privacy Policy</span>} key="privacy-policy">
+              <Form.Item name="privacyPolicy" rules={[{ required: true }]}>
+                <Input.TextArea rows={6} placeholder="Enter HTML or text..." />
+              </Form.Item>
+            </Collapse.Panel>
+
+            <Collapse.Panel header={<span className="font-semibold text-gray-700">Supplier Listing Policy</span>} key="supplier-listing-policy">
+              <Form.Item name="supplierListingPolicy" rules={[{ required: true }]}>
+                <Input.TextArea rows={6} placeholder="Enter HTML or text..." />
+              </Form.Item>
+            </Collapse.Panel>
+
+            <Collapse.Panel header={<span className="font-semibold text-gray-700">RFQ Policy</span>} key="rfq-policy">
+              <Form.Item name="rfqPolicy" rules={[{ required: true }]}>
+                <Input.TextArea rows={6} placeholder="Enter HTML or text..." />
+              </Form.Item>
+            </Collapse.Panel>
+
+            <Collapse.Panel header={<span className="font-semibold text-gray-700">Payment & Subscription Policy</span>} key="payment-subscription-policy">
+              <Form.Item name="paymentSubscriptionPolicy" rules={[{ required: true }]}>
+                <Input.TextArea rows={6} placeholder="Enter HTML or text..." />
+              </Form.Item>
+            </Collapse.Panel>
+
+            <Collapse.Panel header={<span className="font-semibold text-gray-700">Cancellation Policy</span>} key="cancellation-policy">
+              <Form.Item name="cancellationPolicy" rules={[{ required: true }]}>
+                <Input.TextArea rows={6} placeholder="Enter HTML or text..." />
+              </Form.Item>
+            </Collapse.Panel>
+          </Collapse>
         </Form>
       </Modal>
     </div>

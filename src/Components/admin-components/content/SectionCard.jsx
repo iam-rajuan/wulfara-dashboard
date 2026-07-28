@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Edit } from 'lucide-react';
 
-const SectionCard = ({ title, description, badgeText, badgeType = "success", icon, editLink }) => {
+const SectionCard = ({ title, description, badgeText, badgeType = "success", icon, editLink, onEdit }) => {
   const badgeStyles = {
     success: "bg-green-100 text-green-700",
     warning: "bg-orange-100 text-orange-700",
@@ -28,13 +28,23 @@ const SectionCard = ({ title, description, badgeText, badgeType = "success", ico
         </p>
       </div>
 
-      <Link 
-        to={editLink} 
-        className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-      >
-        <Edit size={16} />
-        Edit
-      </Link>
+      {onEdit ? (
+        <button 
+          onClick={onEdit} 
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <Edit size={16} />
+          Edit
+        </button>
+      ) : (
+        <Link 
+          to={editLink} 
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <Edit size={16} />
+          Edit
+        </Link>
+      )}
     </div>
   );
 };
