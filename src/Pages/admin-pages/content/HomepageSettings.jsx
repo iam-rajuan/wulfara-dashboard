@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Rocket, Link as LinkIcon, FileText, HelpCircle, UploadCloud, Trash2, Plus, Save, Eye, Monitor, Smartphone, Search, LayoutGrid } from 'lucide-react';
+import { Rocket, Link as LinkIcon, FileText, HelpCircle, UploadCloud, Trash2, Plus, Save, Eye, Monitor, Smartphone, Search, LayoutGrid, Compass, CheckCircle2, SlidersHorizontal, List } from 'lucide-react';
 import { Modal } from 'antd';
+import { toast } from 'react-toastify';
 import { useGetPagesQuery, useCreatePageMutation, useUpdatePageMutation } from '../../../redux/features/cms/cmsApi';
 
 const HomepageSettings = () => {
@@ -14,11 +15,11 @@ const HomepageSettings = () => {
   const fileInputRef = React.useRef(null);
 
   // State for Button Configuration
-  const [buttonSettings, setButtonSettings] = useState({
-    primaryCTA: 'Browse Suppliers',
-    secondaryCTA: 'List Your Company',
-    accountLogin: 'Login'
-  });
+  const [dynamicButtons, setDynamicButtons] = useState([
+    { id: 1, label: 'Browse Suppliers', route: '#features', style: 'primary' },
+    { id: 2, label: 'List Your Company', route: '#list-company', style: 'secondary' },
+    { id: 3, label: 'Login', route: '#login', style: 'outline' }
+  ]);
 
   // State for Mission Statement
   const [missionSettings, setMissionSettings] = useState({
@@ -35,8 +36,21 @@ const HomepageSettings = () => {
     setHeroSettings({ ...heroSettings, [e.target.name]: e.target.value });
   };
 
-  const handleButtonChange = (e) => {
-    setButtonSettings({ ...buttonSettings, [e.target.name]: e.target.value });
+  const handleButtonChange = (id, field, value) => {
+    setDynamicButtons(dynamicButtons.map(btn => btn.id === id ? { ...btn, [field]: value } : btn));
+  };
+
+  const handleAddButton = () => {
+    if (dynamicButtons.length >= 5) {
+      toast.error('Maximum 5 buttons allowed');
+      return;
+    }
+    const newId = dynamicButtons.length ? Math.max(...dynamicButtons.map(b => b.id)) + 1 : 1;
+    setDynamicButtons([...dynamicButtons, { id: newId, label: 'New Button', route: '#', style: 'primary' }]);
+  };
+
+  const handleRemoveButton = (id) => {
+    setDynamicButtons(dynamicButtons.filter(btn => btn.id !== id));
   };
 
   const handleMissionChange = (e) => {
@@ -66,7 +80,16 @@ const HomepageSettings = () => {
       try {
         const parsed = JSON.parse(homepageData.htmlContent);
         if (parsed.heroSettings) setHeroSettings(parsed.heroSettings);
-        if (parsed.buttonSettings) setButtonSettings(parsed.buttonSettings);
+        if (parsed.dynamicButtons) {
+          setDynamicButtons(parsed.dynamicButtons);
+        } else if (parsed.buttonSettings) {
+          // Backward compatibility
+          setDynamicButtons([
+            { id: 1, label: parsed.buttonSettings.primaryCTA || 'Browse Suppliers', route: '#features', style: 'primary' },
+            { id: 2, label: parsed.buttonSettings.secondaryCTA || 'List Your Company', route: '#list-company', style: 'secondary' },
+            { id: 3, label: parsed.buttonSettings.accountLogin || 'Login', route: '#login', style: 'outline' }
+          ]);
+        }
         if (parsed.missionSettings) setMissionSettings(parsed.missionSettings);
       } catch (e) {
         console.error("Failed to parse homepage content", e);
@@ -76,7 +99,7 @@ const HomepageSettings = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const allData = { heroSettings, buttonSettings, missionSettings };
+    const allData = { heroSettings, dynamicButtons, missionSettings };
     
     try {
       if (homepageData) {
@@ -93,10 +116,10 @@ const HomepageSettings = () => {
           htmlContent: JSON.stringify(allData)
         }).unwrap();
       }
-      alert('Settings saved successfully!');
+      toast.success('Settings saved successfully!');
     } catch (err) {
       console.error(err);
-      alert('Failed to save settings.');
+      toast.error('Failed to save settings.');
     } finally {
       setIsSaving(false);
     }
@@ -200,46 +223,72 @@ const HomepageSettings = () => {
           </div>
         </div>
 
-        {/* Button Configuration */}
+        {/* Dynamic Button Configuration */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-6">
-            <div className="p-1.5 bg-green-50 text-green-600 rounded-lg">
-              <LinkIcon size={18} />
-            </div>
-            Button Configuration
-          </h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <div className="p-1.5 bg-green-50 text-green-600 rounded-lg">
+                <LinkIcon size={18} />
+              </div>
+              Action Buttons
+            </h3>
+            <button
+              onClick={handleAddButton}
+              className="flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800"
+            >
+              <Plus size={16} /> Add Button
+            </button>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Primary CTA</label>
-              <input
-                type="text"
-                name="primaryCTA"
-                value={buttonSettings.primaryCTA}
-                onChange={handleButtonChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Secondary CTA</label>
-              <input
-                type="text"
-                name="secondaryCTA"
-                value={buttonSettings.secondaryCTA}
-                onChange={handleButtonChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Account Login</label>
-              <input
-                type="text"
-                name="accountLogin"
-                value={buttonSettings.accountLogin}
-                onChange={handleButtonChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
+          <div className="space-y-4">
+            {dynamicButtons.map((btn, index) => (
+              <div key={btn.id} className="flex flex-col md:flex-row items-center gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="w-full md:w-1/3">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Label</label>
+                  <input
+                    type="text"
+                    value={btn.label}
+                    onChange={(e) => handleButtonChange(btn.id, 'label', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                  />
+                </div>
+                <div className="w-full md:w-1/3">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Route / Link</label>
+                  <input
+                    type="text"
+                    value={btn.route}
+                    onChange={(e) => handleButtonChange(btn.id, 'route', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                  />
+                </div>
+                <div className="w-full md:w-1/4">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Style</label>
+                  <select
+                    value={btn.style}
+                    onChange={(e) => handleButtonChange(btn.id, 'style', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm bg-white"
+                  >
+                    <option value="primary">Primary (Yellow/Solid)</option>
+                    <option value="secondary">Secondary (Yellow/Outline)</option>
+                    <option value="outline">Outline (White/Outline)</option>
+                  </select>
+                </div>
+                <div className="w-full md:w-auto mt-4 md:mt-5 flex justify-end">
+                  <button
+                    onClick={() => handleRemoveButton(btn.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Remove Button"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {dynamicButtons.length === 0 && (
+              <div className="text-center py-6 text-gray-500 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                No buttons configured. Click "Add Button" to create one.
+              </div>
+            )}
           </div>
         </div>
 
@@ -324,52 +373,126 @@ const HomepageSettings = () => {
               <div className="flex gap-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest items-center">
                 <span className="cursor-pointer hover:text-gray-900">Capabilities</span>
                 <span className="cursor-pointer hover:text-gray-900">Network</span>
-                <span className="cursor-pointer text-blue-700">{buttonSettings.accountLogin}</span>
+                <span className="cursor-pointer text-blue-700">{dynamicButtons.find(b => b.style === 'outline')?.label || 'Login'}</span>
               </div>
             )}
           </div>
 
-          {/* Hero Section */}
-          <div className={`px-8 flex flex-col items-center text-center max-w-4xl mx-auto ${previewMode === 'mobile' ? 'py-10' : 'py-20'}`}>
-            <h1 className={`font-black text-[#111827] mb-6 leading-[1.1] max-w-3xl ${previewMode === 'mobile' ? 'text-3xl' : 'text-5xl'}`}>
-              {heroSettings.mainHeading}
-            </h1>
-            <p className={`text-gray-500 mb-10 max-w-2xl ${previewMode === 'mobile' ? 'text-sm' : 'text-lg'}`}>
-              {heroSettings.introParagraph}
-            </p>
-
-            <div className="w-full max-w-xl relative mb-10">
-              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 text-gray-400`} size={previewMode === 'mobile' ? 16 : 20} />
-              <input 
-                type="text" 
-                placeholder={heroSettings.searchFieldText} 
-                className={`w-full pl-12 pr-4 border border-gray-200 rounded-lg bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:bg-white hover:shadow-md ${previewMode === 'mobile' ? 'py-3 text-xs' : 'py-4 text-sm'}`}
-              />
-            </div>
-
-            <div className={`flex gap-4 mb-16 ${previewMode === 'mobile' ? 'flex-col w-full' : ''}`}>
-              <button className={`bg-[#1a365d] text-white rounded-lg font-semibold hover:bg-[#112440] transition-colors ${previewMode === 'mobile' ? 'w-full py-3 text-xs' : 'px-8 py-3.5 text-sm'}`}>
-                {buttonSettings.primaryCTA}
-              </button>
-              <button className={`bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors ${previewMode === 'mobile' ? 'w-full py-3 text-xs' : 'px-8 py-3.5 text-sm'}`}>
-                {buttonSettings.secondaryCTA}
-              </button>
-            </div>
-
-            {/* Hero Image */}
-            <div className={`w-full bg-[#0d1627] rounded-xl overflow-hidden shadow-2xl relative ${previewMode === 'mobile' ? 'h-[200px]' : 'h-[350px]'}`}>
-              {heroImage ? (
-                <img src={URL.createObjectURL(heroImage)} alt="Hero" className="w-full h-full object-cover" />
+          {/* Hero Section (Matching Frontend, Responsive via previewMode) */}
+          <section className={`relative flex items-center bg-[#1b2b3a] text-white overflow-hidden ${previewMode === 'mobile' ? 'min-h-[500px] py-16' : 'min-h-[699px] lg:h-[699px] py-16 lg:py-0'}`}>
+            {/* Background Image with Dark Overlay */}
+            <div className="absolute inset-0 z-0">
+              {heroSettings.bgImage ? (
+                <img src={heroSettings.bgImage} alt="Hero Background" className="w-full h-full object-cover opacity-25" />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center opacity-30">
-                  {/* Placeholder for the complex industrial image */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1120] to-transparent"></div>
-                  <div className="w-full h-full bg-[#1e293b] opacity-50 absolute"></div>
-                  <span className="relative z-10 text-white font-medium">Hero Image Area</span>
-                </div>
+                <div className="w-full h-full bg-[#1e293b] opacity-25"></div>
               )}
+              {/* Navy/slate dark overlay tint */}
+              <div className="absolute inset-0 bg-gradient-to-b from-[#1b2b3a]/95 via-[#1b2b3a]/85 to-[#1b2b3a]/95"></div>
             </div>
-          </div>
+
+            <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+              {/* Main Title */}
+              <h1
+                style={{ fontFamily: "'Inter', sans-serif" }}
+                className={`font-extrabold tracking-[-1.8px] text-white mb-6 leading-tight text-center mx-auto ${
+                  previewMode === 'mobile' 
+                    ? 'text-4xl px-2' 
+                    : 'text-4xl sm:text-6xl md:text-[72px] md:leading-[72px] max-w-4xl'
+                }`}
+              >
+                {heroSettings.mainHeading || 'Find Suppliers for the Future of Manufacturing'}
+              </h1>
+
+              {/* Subtitle */}
+              <p className={`text-slate-300 mx-auto mb-10 leading-relaxed font-light ${
+                previewMode === 'mobile'
+                  ? 'text-sm max-w-sm px-4'
+                  : 'text-sm sm:text-base md:text-lg max-w-2xl'
+              }`}>
+                {heroSettings.introParagraph || 'Access the global network of certified tier-one industrial partners...'}
+              </p>
+
+              {/* Search Bar Container */}
+              <div className={`flex items-center bg-white rounded shadow-2xl border border-slate-200/80 mb-8 mx-4 sm:mx-0 ${
+                previewMode === 'mobile'
+                  ? 'w-full max-w-[340px] p-1.5'
+                  : 'w-full max-w-4xl p-1.5 sm:p-2'
+              }`}>
+                <div className="relative flex-grow flex items-center min-w-0">
+                  <Search className={`text-slate-400 flex-shrink-0 ${previewMode === 'mobile' ? 'h-4 w-4 ml-2 mr-2' : 'h-4 w-4 sm:h-5 sm:w-5 ml-2 sm:ml-3 mr-2 sm:mr-3'}`} />
+                  <input
+                    type="text"
+                    readOnly
+                    placeholder={heroSettings.searchFieldText || 'Search industrial capabilities...'}
+                    className={`w-full bg-transparent pr-2 text-slate-800 placeholder-slate-400 outline-none min-w-0 ${
+                      previewMode === 'mobile' ? 'py-2 text-xs' : 'py-2 sm:py-3 text-xs sm:text-sm'
+                    }`}
+                  />
+                  <SlidersHorizontal className={`text-slate-400 flex-shrink-0 ${previewMode === 'mobile' ? 'h-4 w-4 mx-2' : 'h-4 w-4 sm:h-5 sm:w-5 mx-2 sm:mx-3'}`} />
+                </div>
+                <button
+                  className={`rounded bg-[#dca12f] hover:bg-[#c99126] text-slate-950 font-bold shadow-md transition-all flex-shrink-0 ${
+                    previewMode === 'mobile' ? 'px-4 py-2.5 text-xs' : 'px-4 sm:px-8 py-2.5 sm:py-3.5 text-xs sm:text-sm'
+                  }`}
+                >
+                  Search
+                </button>
+              </div>
+
+              {/* Quick Link White Cards */}
+              <div className={`flex justify-center mx-auto mb-12 ${
+                previewMode === 'mobile' ? 'flex-wrap max-w-[340px] gap-2 px-2' : 'flex-wrap max-w-5xl gap-3 w-full'
+              }`}>
+                {['Free Search', 'Request Quotes', 'Global Suppliers', 'Matchmaking'].map((link, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-center rounded bg-white font-semibold text-slate-700 shadow-sm border border-slate-200/80 ${
+                      previewMode === 'mobile' ? 'px-2.5 py-1.5 text-[10px] gap-1.5' : 'px-4 py-2.5 text-xs sm:text-[13px] gap-2'
+                    }`}
+                  >
+                    <CheckCircle2 className={`${previewMode === 'mobile' ? 'h-3 w-3' : 'h-4 w-4'} text-[#dca12f] flex-shrink-0`} />
+                    <span>{link}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Buttons Row */}
+              <div className={`flex items-center justify-center ${
+                previewMode === 'mobile' ? 'flex-col w-full px-4 gap-3' : 'flex-col sm:flex-row w-full sm:w-auto gap-4'
+              }`}>
+                {dynamicButtons.map((btn) => {
+                  if (btn.style === 'primary') {
+                    return (
+                      <div key={btn.id} className={`flex items-center justify-center gap-2 rounded bg-[#dca12f] hover:bg-[#c99126] text-slate-950 font-bold shadow-md transition-all ${
+                        previewMode === 'mobile' ? 'w-full py-3 text-xs' : 'w-full sm:w-auto px-8 py-3.5 text-sm'
+                      }`}>
+                        <Compass className={`${previewMode === 'mobile' ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-slate-950`} />
+                        <span>{btn.label}</span>
+                      </div>
+                    );
+                  }
+                  if (btn.style === 'secondary') {
+                    return (
+                      <div key={btn.id} className={`flex items-center justify-center gap-2 rounded border border-[#dca12f] bg-transparent text-[#dca12f] font-bold transition-all ${
+                        previewMode === 'mobile' ? 'w-full py-3 text-xs' : 'w-full sm:w-auto px-8 py-3.5 text-sm'
+                      }`}>
+                        <List className={`${previewMode === 'mobile' ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-[#dca12f]`} />
+                        <span>{btn.label}</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={btn.id} className={`flex items-center justify-center rounded border border-slate-600 bg-transparent text-white font-bold transition-all ${
+                      previewMode === 'mobile' ? 'w-full py-3 text-xs' : 'w-full sm:w-auto px-10 py-3.5 text-sm'
+                    }`}>
+                      {btn.label}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
 
         </div>
       </Modal>
