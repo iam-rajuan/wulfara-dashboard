@@ -120,6 +120,47 @@ export default function BusinessProfileForm({ data, onChange, onLogoUpload, isUp
           </div>
         </div>
 
+        {/* General Details: Address, Type, Response Time */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Physical Address</label>
+            <input 
+              type="text" 
+              value={data.address || ''} 
+              onChange={(e) => onChange({ ...data, address: e.target.value })}
+              placeholder="e.g. 123 Industrial Way, NY" 
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-[13px] bg-[#F9FAFB] focus:bg-white focus:outline-none focus:border-gray-300 transition" 
+            />
+          </div>
+          <div>
+            <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Supplier Type</label>
+            <div className="relative flex items-center">
+              <select 
+                value={data.supplierType || 'Manufacturer'}
+                onChange={(e) => onChange({ ...data, supplierType: e.target.value })}
+                className="w-full appearance-none border border-gray-200 rounded-lg pl-3 pr-8 py-2.5 text-[13px] bg-[#F9FAFB] focus:bg-white focus:outline-none focus:border-gray-300 transition cursor-pointer"
+              >
+                <option value="Manufacturer">Manufacturer</option>
+                <option value="Distributor">Distributor</option>
+                <option value="Wholesaler">Wholesaler</option>
+                <option value="Broker">Broker</option>
+                <option value="Service Provider">Service Provider</option>
+              </select>
+              <ChevronDown size={14} className="text-gray-500 absolute right-3 pointer-events-none" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Avg. Response Time</label>
+            <input 
+              type="text" 
+              value={data.avgResponseTime || ''} 
+              onChange={(e) => onChange({ ...data, avgResponseTime: e.target.value })}
+              placeholder="e.g. ~2 Hours" 
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-[13px] bg-[#F9FAFB] focus:bg-white focus:outline-none focus:border-gray-300 transition" 
+            />
+          </div>
+        </div>
+
         {/* Products & MOQ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>

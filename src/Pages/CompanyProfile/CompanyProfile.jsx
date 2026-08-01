@@ -24,7 +24,10 @@ export default function CompanyProfile() {
     },
     certifications: [],
     serviceAreas: [],
-    shippingOptions: { fob: true, cif: true, exw: false }
+    shippingOptions: { fob: true, cif: true, exw: false },
+    address: "",
+    supplierType: "Manufacturer",
+    avgResponseTime: "~2 Hours"
   });
 
   const [previewData, setPreviewData] = useState({
@@ -46,6 +49,9 @@ export default function CompanyProfile() {
         coreProducts: p.products ? p.products.map(prod => prod.name) : [],
         certifications: p.certifications || [],
         serviceAreas: p.serviceAreas || [],
+        address: p.location?.formattedAddress || p.address || "",
+        supplierType: p.supplierType || "Manufacturer",
+        avgResponseTime: p.avgResponseTime || "~2 Hours"
         // We can map other fields if they exist in schema, falling back to defaults
       }));
       setPreviewData({
@@ -77,7 +83,10 @@ export default function CompanyProfile() {
         logo: profileData.logo || 'no-logo.jpg',
         products: profileData.coreProducts.map(name => ({ name })),
         certifications: profileData.certifications,
-        serviceAreas: profileData.serviceAreas
+        serviceAreas: profileData.serviceAreas,
+        address: profileData.address,
+        supplierType: profileData.supplierType,
+        avgResponseTime: profileData.avgResponseTime
       };
 
       await updateListing({ 
