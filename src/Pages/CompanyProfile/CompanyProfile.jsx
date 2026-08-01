@@ -46,13 +46,18 @@ export default function CompanyProfile() {
         companyName: p.companyName || "",
         description: p.description || "",
         logo: p.logo && p.logo !== 'no-logo.jpg' ? p.logo : null,
-        coreProducts: p.products ? p.products.map(prod => prod.name) : [],
+        coreProducts: p.coreProducts || [],
         certifications: p.certifications || [],
         serviceAreas: p.serviceAreas || [],
         address: p.location?.formattedAddress || p.address || "",
         supplierType: p.supplierType || "Manufacturer",
-        avgResponseTime: p.avgResponseTime || "~2 Hours"
-        // We can map other fields if they exist in schema, falling back to defaults
+        avgResponseTime: p.avgResponseTime || "~2 Hours",
+        moq: p.moq || { value: "", unit: "Units" },
+        businessHours: p.businessHours || {
+          weekdays: { start: "08:00", end: "18:00" },
+          weekends: "Closed"
+        },
+        shippingOptions: p.shippingOptions || { fob: true, cif: true, exw: false }
       }));
       setPreviewData({
         name: p.companyName || "Company Name",
@@ -81,12 +86,15 @@ export default function CompanyProfile() {
         companyName: profileData.companyName,
         description: profileData.description,
         logo: profileData.logo || 'no-logo.jpg',
-        products: profileData.coreProducts.map(name => ({ name })),
+        coreProducts: profileData.coreProducts,
         certifications: profileData.certifications,
         serviceAreas: profileData.serviceAreas,
         address: profileData.address,
         supplierType: profileData.supplierType,
-        avgResponseTime: profileData.avgResponseTime
+        avgResponseTime: profileData.avgResponseTime,
+        moq: profileData.moq,
+        businessHours: profileData.businessHours,
+        shippingOptions: profileData.shippingOptions
       };
 
       await updateListing({ 

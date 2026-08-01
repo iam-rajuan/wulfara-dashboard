@@ -6,6 +6,7 @@ import VerifyEmail from "../Pages/Auth/VerifyEmail/VerifyEmail";
 import ChooseIndustry from "../Pages/Auth/ChooseIndustry/ChooseIndustry";
 import CompanyInfo from "../Pages/Auth/CompanyInfo/CompanyInfo";
 import Subscription from "../Pages/Auth/Subscription/Subscription";
+import SupplierBilling from "../Pages/SupplierBilling/SupplierBilling";
 import Cart from "../Pages/Auth/Cart/Cart";
 import ListingPeriod from "../Pages/Auth/ListingPeriod/ListingPeriod";
 import Listed from "../Pages/Auth/Listed/Listed";
@@ -177,6 +178,7 @@ export const router = createBrowserRouter([
           { path: "/rfqs/:id", element: <RFQDetails /> },
           { path: "/rfqs/:id/reply", element: <RFQReply /> },
           { path: "/messages", element: <Messages /> },
+          { path: "/billing", element: <SupplierBilling /> },
         ],
       },
     ],

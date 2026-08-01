@@ -1,9 +1,25 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Check, Info, CheckCircle2 } from 'lucide-react';
+import { useCreateCheckoutSessionMutation } from '../../../redux/features/subscriptions/subscriptionsApi';
+import { toast } from 'react-toastify';
 
 const ListingPeriod = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('16 Months');
+  const location = useLocation();
+  const { planId, billingCycle } = location.state || { planId: 'premium', billingCycle: 'monthly' };
+  const [createCheckoutSession, { isLoading }] = useCreateCheckoutSessionMutation();
+
+  const handleCheckout = async () => {
+    try {
+      const res = await createCheckoutSession({ planId, billingCycle: selectedPeriod }).unwrap();
+      if (res.paymentUrl) {
+        window.location.href = res.paymentUrl;
+      }
+    } catch (error) {
+      toast.error(error?.data?.message || 'Failed to initialize checkout');
+    }
+  };
 
   const periods = [
     {
@@ -196,11 +212,12 @@ const ListingPeriod = () => {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <Link to="/listed" className="block w-full">
-                <button className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm">
-                  Continue
-                </button>
-              </Link>
+              <button 
+                onClick={handleCheckout} 
+                disabled={isLoading}
+                className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm disabled:opacity-70">
+                {isLoading ? 'Processing...' : 'Continue'}
+              </button>
               <Link to="/subscription" className="block">
                 <button className="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-800 font-medium text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm">
                   Back to Plans

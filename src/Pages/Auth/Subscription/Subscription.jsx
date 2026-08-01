@@ -146,7 +146,7 @@ const Subscription = () => {
             </div>
 
             {selectedPlan === 'basic' ? (
-              <Link to="/cart" className="mt-auto">
+              <Link to="/cart" state={{ planId: selectedPlan, billingCycle }} className="mt-auto">
                 <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
                   Continue with Basic
                 </button>
@@ -214,7 +214,7 @@ const Subscription = () => {
             </div>
 
             {selectedPlan === 'premium' ? (
-              <Link to="/cart" className="mt-auto">
+              <Link to="/cart" state={{ planId: selectedPlan, billingCycle }} className="mt-auto">
                 <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
                   Continue with Premium
                 </button>
@@ -273,7 +273,7 @@ const Subscription = () => {
             </div>
 
             {selectedPlan === 'pro' ? (
-              <Link to="/cart" className="mt-auto">
+              <Link to="/cart" state={{ planId: selectedPlan, billingCycle }} className="mt-auto">
                 <button className="w-full py-3 px-4 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold text-[13px] rounded-md transition-colors shadow-sm">
                   Continue with Pro
                 </button>

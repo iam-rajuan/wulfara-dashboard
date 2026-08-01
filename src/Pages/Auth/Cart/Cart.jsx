@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Check, Award, Info, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const Cart = () => {
+  const location = useLocation();
+  const { planId, billingCycle } = location.state || { planId: 'premium', billingCycle: 'monthly' };
+
   const [addons, setAddons] = useState({
     heroPlacement: false,
     payPerLead: false
   });
 
-  const basePrice = 38.99;
+  const prices = {
+    basic: { base: 49, hero: 10 },
+    pro: { base: 129, hero: 12 },
+    premium: { base: 299, hero: 15 }
+  };
+  
+  const basePrice = prices[planId]?.base || 38.99;
   const tax = 5.00;
-  const heroPrice = 15.00;
+  const heroPrice = prices[planId]?.hero || 15.00;
 
   const total = basePrice + tax + (addons.heroPlacement ? heroPrice : 0);
 
@@ -209,7 +218,7 @@ const Cart = () => {
               <div className="text-right text-[11px] text-gray-500">Billed monthly thereafter.</div>
             </div>
 
-            <Link to="/listing-period">
+            <Link to="/listing-period" state={{ planId, billingCycle }}>
               <button className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm flex items-center justify-center gap-2 mb-4">
                 Continue to Payment
                 <ArrowRight className="w-4 h-4 font-bold" />

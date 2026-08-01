@@ -1,0 +1,145 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { CreditCard, Download, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
+import { useGetSupplierDashboardQuery } from '../../redux/features/listings/listingsApi';
+import { useGetInvoicesQuery } from '../../redux/features/subscriptions/subscriptionsApi';
+
+export default function SupplierBilling() {
+  const { data: dashboardData, isLoading: isLoadingProfile } = useGetSupplierDashboardQuery();
+  const { data: invoicesData, isLoading: isLoadingInvoices } = useGetInvoicesQuery();
+
+  const profile = dashboardData?.data?.profile;
+  const currentPlan = profile?.subscriptionPlan || 'free';
+  const invoices = invoicesData?.data || [];
+
+  return (
+    <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-16">
+      
+      <div className="max-w-[1000px] mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Billing & Subscription</h1>
+          <p className="text-[13px] text-gray-500">Manage your subscription plan, payment methods, and billing history.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Current Plan Card */}
+          <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Current Plan</h3>
+                <div className="text-3xl font-extrabold text-gray-900 capitalize flex items-center gap-3">
+                  {currentPlan}
+                  {currentPlan !== 'free' && (
+                    <span className="bg-[#D1A635]/10 text-[#D1A635] text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                      <CheckCircle2 size={12} /> Active
+                    </span>
+                  )}
+                </div>
+              </div>
+              <Link to="/subscription">
+                <button className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-[13px] font-bold py-2 px-4 rounded-md transition-colors shadow-sm">
+                  Upgrade Plan
+                </button>
+              </Link>
+            </div>
+            
+            <p className="text-[13px] text-gray-600 mb-6">
+              You are currently on the {currentPlan} plan. Upgrade to Premium for priority search placement, unlimited RFQ responses, and a dedicated account manager.
+            </p>
+
+            <div className="flex items-center gap-6 pt-6 border-t border-gray-100">
+              <div>
+                <div className="text-[11px] font-bold text-gray-400 mb-1">Billing Cycle</div>
+                <div className="text-[13px] font-bold text-gray-900">Monthly</div>
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-gray-400 mb-1">Next Payment Date</div>
+                <div className="text-[13px] font-bold text-gray-900 flex items-center gap-1.5">
+                  <Calendar size={14} className="text-gray-400" /> 
+                  Oct 15, 2026
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Method Card */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
+            <div>
+              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Payment Method</h3>
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100 mb-4">
+                <div className="w-10 h-6 bg-gray-200 rounded flex items-center justify-center shrink-0">
+                  <CreditCard size={14} className="text-gray-500" />
+                </div>
+                <div>
+                  <div className="text-[13px] font-bold text-gray-900">•••• •••• •••• 4242</div>
+                  <div className="text-[11px] text-gray-500">Expires 12/28</div>
+                </div>
+              </div>
+            </div>
+            <button className="w-full text-center text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline">
+              Update Payment Method
+            </button>
+          </div>
+        </div>
+
+        {/* Invoice History */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-[#FCFDFE]">
+            <h2 className="text-[15px] font-bold text-gray-900">Payment History</h2>
+            <button className="text-[12px] font-bold text-gray-500 hover:text-gray-700 flex items-center gap-1.5">
+              <Download size={14} /> Download All
+            </button>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50">
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Plan</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Invoice</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {isLoadingInvoices ? (
+                  <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-500 text-[13px]">Loading payment history...</td></tr>
+                ) : invoices.length === 0 ? (
+                  <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-500 text-[13px]">No payment history available.</td></tr>
+                ) : (
+                  invoices.map((invoice) => (
+                    <tr key={invoice._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-[13px] font-medium text-gray-900">
+                        {new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </td>
+                      <td className="px-6 py-4 text-[13px] font-bold text-gray-900">
+                        ${invoice.amount?.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-[13px] text-gray-600 capitalize">
+                        {invoice.planName || 'Premium'} Plan
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold capitalize ${
+                          invoice.status === 'paid' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {invoice.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <a href={invoice.invoiceUrl || '#'} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-[#D1A635] hover:bg-[#D1A635]/10 rounded-lg transition-colors">
+                          <ExternalLink size={16} />
+                        </a>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

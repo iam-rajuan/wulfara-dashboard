@@ -26,6 +26,17 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Subscription', id }, 'Subscription'],
     }),
+    createCheckoutSession: builder.mutation({
+      query: (data) => ({
+        url: '/subscriptions/checkout-session',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    getInvoices: builder.query({
+      query: () => '/subscriptions/invoices',
+      providesTags: ['Invoice'],
+    }),
   }),
 });
 
@@ -34,4 +45,6 @@ export const {
   useGetPlanQuery,
   useCreatePlanMutation,
   useUpdatePlanMutation,
+  useCreateCheckoutSessionMutation,
+  useGetInvoicesQuery,
 } = subscriptionsApi;

@@ -56,8 +56,16 @@ export default function Gallery() {
           url: fileUrl
         };
       }));
-      setFiles(prev => [...prev, ...uploaded]);
-      toast.success("Files uploaded successfully. Click Save Gallery to persist.");
+      const newFilesArray = [...files, ...uploaded];
+      setFiles(newFilesArray);
+      
+      if (dashboardData?.data?.profile?._id) {
+        await updateListing({ 
+          id: dashboardData.data.profile._id, 
+          data: { gallery: newFilesArray } 
+        }).unwrap();
+      }
+      toast.success("Files uploaded and saved successfully.");
     } catch (error) {
       toast.error(error?.data?.message || "Failed to upload files.");
     } finally {
@@ -65,14 +73,27 @@ export default function Gallery() {
     }
   };
 
-  const handleSetPrimary = (id) => {
-    setFiles(files.map(file => {
+  const handleSetPrimary = async (id) => {
+    const newFilesArray = files.map(file => {
       if (file.isPdf) return file; 
       return {
         ...file,
         isPrimary: file.id === id || file._id === id
       };
-    }));
+    });
+    setFiles(newFilesArray);
+    
+    if (dashboardData?.data?.profile?._id) {
+      try {
+        await updateListing({ 
+          id: dashboardData.data.profile._id, 
+          data: { gallery: newFilesArray } 
+        }).unwrap();
+        toast.success("Primary image updated successfully.");
+      } catch (error) {
+        toast.error("Failed to update primary image.");
+      }
+    }
   };
 
   const handleSaveModalFile = async (data) => {
@@ -100,8 +121,16 @@ export default function Gallery() {
         size: `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`,
         url: fileUrl
       };
-      setFiles(prev => [...prev, newFile]);
-      toast.success("File uploaded successfully.");
+      const newFilesArray = [...files, newFile];
+      setFiles(newFilesArray);
+      
+      if (dashboardData?.data?.profile?._id) {
+        await updateListing({ 
+          id: dashboardData.data.profile._id, 
+          data: { gallery: newFilesArray } 
+        }).unwrap();
+      }
+      toast.success("File uploaded and saved successfully.");
     } catch (error) {
       toast.error(error?.data?.message || "Failed to upload file.");
     } finally {
