@@ -1,5 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { toast } from 'react-toastify';
+import { 
+  useGetListingQuery, 
+  useReviewListingMutation 
+} from "../../../redux/features/listings/listingsApi";
 import { 
   ChevronRight, 
   MessageCircle, 
@@ -16,7 +21,12 @@ import {
 } from "lucide-react";
 
 export default function SupplierVerificationDetail() {
-  const { id } = useParams(); // Could use this to fetch data
+  const { id } = useParams();
+  const { data: response, isLoading } = useGetListingQuery(id);
+  const supplier = response?.data;
+  
+  const [reviewListing, { isLoading: isReviewing }] = useReviewListingMutation();
+
   const [activeTab, setActiveTab] = useState("Company Documents");
   
   // Checklist State
@@ -33,7 +43,35 @@ export default function SupplierVerificationDetail() {
   });
 
   // Verification Status State
-  const [verificationStatus, setVerificationStatus] = useState("Pending Verification");
+  const [verificationStatus, setVerificationStatus] = useState("Pending");
+
+  useEffect(() => {
+    if (supplier?.listingStatus) {
+      setVerificationStatus(supplier.listingStatus);
+    } else if (supplier && supplier.isApproved) {
+      setVerificationStatus("Approved");
+    } else if (supplier && supplier.isApproved === false && !supplier.listingStatus) {
+      setVerificationStatus("Pending");
+    }
+  }, [supplier]);
+
+  const handleStatusUpdate = async (status) => {
+    try {
+      await reviewListing({ id, listingStatus: status }).unwrap();
+      setVerificationStatus(status);
+      toast.success(`Supplier status updated to ${status}`);
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to update status");
+    }
+  };
+
+  if (isLoading) {
+    return <div className="min-h-screen p-6 mt-16 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans pt-24 flex justify-center items-center">Loading supplier data...</div>;
+  }
+
+  if (!supplier) {
+    return <div className="min-h-screen p-6 mt-16 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans pt-24 flex justify-center items-center">Supplier not found.</div>;
+  }
 
   const toggleChecklist = (key) => {
     setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
@@ -56,7 +94,7 @@ export default function SupplierVerificationDetail() {
         <ChevronRight size={14} />
         <span>Verification</span>
         <ChevronRight size={14} />
-        <span className="text-[#0F172A] font-bold">Steel Company B</span>
+        <span className="text-[#0F172A] font-bold">{supplier.companyName}</span>
       </div>
 
       {/* Header */}
@@ -78,7 +116,7 @@ export default function SupplierVerificationDetail() {
           {/* Supplier Info Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative">
             <div className="absolute top-6 right-6">
-              {verificationStatus === "Pending Verification" && (
+              {verificationStatus === "Pending" && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A] text-[11px] font-bold rounded-full">
                   <Clock size={12} />
                   Pending Verification
@@ -109,10 +147,10 @@ export default function SupplierVerificationDetail() {
                 <Factory size={28} className="text-[#475569]" />
               </div>
               <div className="pt-1">
-                <h2 className="text-[22px] font-extrabold text-[#0F172A] mb-1">Steel Company B</h2>
+                <h2 className="text-[22px] font-extrabold text-[#0F172A] mb-1">{supplier.companyName}</h2>
                 <div className="flex items-center text-gray-500 text-[13px] font-medium gap-1">
                   <MapPin size={14} />
-                  New Jersey, USA
+                  {supplier.contactInfo?.address || "Location not provided"}
                 </div>
               </div>
             </div>
@@ -124,14 +162,16 @@ export default function SupplierVerificationDetail() {
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Owner / Primary Contact</p>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-[#DBEAFE] text-[#1E40AF] flex items-center justify-center text-[10px] font-bold">
-                    MG
+                    {supplier.user?.name ? supplier.user.name.charAt(0).toUpperCase() : "U"}
                   </div>
-                  <span className="text-[14px] font-bold text-[#0F172A]">Michael Girmaye</span>
+                  <span className="text-[14px] font-bold text-[#0F172A]">{supplier.user?.name || supplier.contactEmail || "Unknown"}</span>
                 </div>
               </div>
               <div>
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Submission Date</p>
-                <p className="text-[14px] font-semibold text-[#0F172A]">Oct 24, 2023</p>
+                <p className="text-[14px] font-semibold text-[#0F172A]">
+                  {supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString() : "N/A"}
+                </p>
               </div>
             </div>
           </div>
@@ -306,30 +346,33 @@ export default function SupplierVerificationDetail() {
             <h3 className="text-[13px] font-bold text-[#0F172A] tracking-wider mb-4">ADMIN DECISION</h3>
             
             <p className="text-[13px] font-medium text-gray-500 mb-6 leading-relaxed">
-              Finalize verification status for Steel Company B.<br/>
+              Finalize verification status for {supplier.companyName}.<br/>
               This action will notify the user.
             </p>
 
             <div className="space-y-3">
               <button 
-                onClick={() => setVerificationStatus("Approved")}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
+                onClick={() => handleStatusUpdate("Approved")}
+                disabled={isReviewing}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm disabled:opacity-50"
               >
                 <CheckCircle size={16} className="fill-[#0F172A] text-[#D4AF37]" strokeWidth={1} />
                 Approve Supplier
               </button>
               
               <button 
-                onClick={() => setVerificationStatus("Rejected")}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-[#EF4444] rounded-md text-[13px] font-bold text-[#EF4444] hover:bg-red-50 transition-colors shadow-sm"
+                onClick={() => handleStatusUpdate("Rejected")}
+                disabled={isReviewing}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-[#EF4444] rounded-md text-[13px] font-bold text-[#EF4444] hover:bg-red-50 transition-colors shadow-sm disabled:opacity-50"
               >
                 <Ban size={16} />
                 Reject Application
               </button>
               
               <button 
-                onClick={() => setVerificationStatus("Suspended")}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-[#475569] hover:bg-gray-50 transition-colors shadow-sm"
+                onClick={() => handleStatusUpdate("Suspended")}
+                disabled={isReviewing}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-[#475569] hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
               >
                 <PauseCircle size={16} />
                 Suspend / Request Info

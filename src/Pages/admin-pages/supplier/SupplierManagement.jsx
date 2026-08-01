@@ -1,37 +1,33 @@
 import React, { useState, useMemo } from "react";
 import { Download, Plus, ChevronDown, Search, Filter } from "lucide-react";
 import { 
-  useGetUsersQuery, 
-  useCreateUserMutation, 
-  useUpdateUserMutation, 
-  useDeleteUserMutation 
-} from "../../../redux/features/users/usersApi";
+  useGetListingsQuery, 
+  useUpdateListingMutation 
+} from "../../../redux/features/listings/listingsApi";
 import SupplierTable from "../../../Components/admin-components/supplier/SupplierTable";
 import SupplierFormModal from "../../../Components/admin-components/supplier/SupplierFormModal";
 import SupplierDetailsModal from "../../../Components/admin-components/supplier/SupplierDetailsModal";
 import { Pagination } from "../../../Components/admin-components/buyer/BuyerTable"; // Reuse pagination
 
 export default function SupplierManagement() {
-  const { data: usersResponse, isLoading } = useGetUsersQuery();
-  const users = usersResponse?.data || [];
-  const [createUser] = useCreateUserMutation();
-  const [updateUser] = useUpdateUserMutation();
-  const [deleteUser] = useDeleteUserMutation();
+  const { data: listingsResponse, isLoading, error, refetch } = useGetListingsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const suppliersData = listingsResponse?.data || [];
+  const [updateListing] = useUpdateListingMutation();
 
   // Filter only suppliers
   const suppliers = useMemo(() => {
-    return users.filter(user => user.role === 'supplier').map(user => ({
-      id: user._id,
-      icon: "Box", // Default icon
-      name: user.name,
-      company: user.name + " Co.", // Placeholder until company profile is implemented
-      email: user.email,
-      plan: "Basic", // Placeholder
-      verification: user.isVerified ? "Verified" : (user.status === 'Suspended' ? "Suspended" : "Pending"),
-      listingStatus: user.status === 'Suspended' ? "Hidden (0)" : "Pending Review (0)",
-      subscription: user.status === 'Suspended' ? "Past Due" : "Active"
+    return suppliersData.map(sup => ({
+      id: sup._id,
+      icon: "Box", 
+      name: sup.user?.name || sup.contactEmail || "Unknown",
+      company: sup.companyName || "No Company Name",
+      email: sup.contactEmail || sup.user?.email || "No Email",
+      plan: sup.subscriptionPlan === "premium" ? "Premium" : "Basic",
+      verification: sup.isApproved ? "Verified" : (sup.listingStatus === 'Suspended' ? "Suspended" : "Pending"),
+      listingStatus: sup.listingStatus || "Pending",
+      subscription: "Active"
     }));
-  }, [users]);
+  }, [suppliersData]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -47,43 +43,17 @@ export default function SupplierManagement() {
   const pageSize = 4; // Design shows 4 items per page
 
   const handleSaveSupplier = async (savedSupplier) => {
-    try {
-      if (editingSupplier) {
-        await updateUser({ 
-          id: savedSupplier.id, 
-          userData: { name: savedSupplier.name, email: savedSupplier.email } 
-        }).unwrap();
-      } else {
-        await createUser({
-          name: savedSupplier.name,
-          email: savedSupplier.email,
-          password: "DefaultPassword123!", // Require strong default for now
-          role: "supplier",
-          status: "Active" // Ensure default status
-        }).unwrap();
-      }
-      setEditingSupplier(null);
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert("Error saving supplier");
-    }
+    alert("Creating/Updating supplier info from this modal is disabled. Suppliers manage their own profiles.");
+    setIsModalOpen(false);
   };
 
   const handleDeleteSupplier = async (id) => {
-    if (window.confirm("Are you sure you want to delete this supplier?")) {
-      try {
-        await deleteUser(id).unwrap();
-      } catch (err) {
-        console.error(err);
-        alert("Error deleting supplier");
-      }
-    }
+    alert("Deleting suppliers is not implemented in listingsApi yet.");
   };
 
   const handleApproveSupplier = async (supplier) => {
     try {
-      await updateUser({ id: supplier.id, userData: { isVerified: true, status: 'Active' } }).unwrap();
+      await updateListing({ id: supplier.id, data: { isApproved: true, listingStatus: 'Approved' } }).unwrap();
     } catch (err) {
       console.error(err);
       alert("Error approving supplier");
@@ -147,16 +117,14 @@ export default function SupplierManagement() {
     try {
       if (bulkAction === "verify") {
         await Promise.all(selectedIds.map(id => 
-          updateUser({ id, userData: { isVerified: true } }).unwrap()
+          updateListing({ id, data: { isApproved: true, listingStatus: 'Approved' } }).unwrap()
         ));
       } else if (bulkAction === "suspend") {
         await Promise.all(selectedIds.map(id => 
-          updateUser({ id, userData: { status: 'Suspended' } }).unwrap()
+          updateListing({ id, data: { listingStatus: 'Suspended' } }).unwrap()
         ));
       } else if (bulkAction === "delete") {
-        await Promise.all(selectedIds.map(id => 
-          deleteUser(id).unwrap()
-        ));
+        alert("Bulk delete is not implemented in listingsApi yet.");
       }
       setSelectedIds([]);
       setBulkAction("");
@@ -313,9 +281,18 @@ export default function SupplierManagement() {
         </div>
 
         {/* Table Area */}
+        {error && (
+          <div className="p-8 text-center text-red-500 font-bold border border-red-200 bg-red-50 rounded-md m-4">
+            <h3>Error loading suppliers</h3>
+            <pre className="text-left mt-4 text-xs overflow-auto">
+              {JSON.stringify(error, null, 2)}
+            </pre>
+          </div>
+        )}
+        
         {isLoading ? (
           <div className="p-8 text-center text-gray-500">Loading suppliers...</div>
-        ) : (
+        ) : !error && (
           <SupplierTable 
             suppliers={paginatedSuppliers}
             selectedIds={selectedIds}
@@ -329,7 +306,7 @@ export default function SupplierManagement() {
         )}
 
         {/* Pagination Area */}
-        {!isLoading && (
+        {!isLoading && !error && (
           <Pagination 
             currentPage={currentPage}
             totalItems={filteredSuppliers.length}
