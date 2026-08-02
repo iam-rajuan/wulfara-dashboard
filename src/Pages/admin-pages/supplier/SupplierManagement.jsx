@@ -4,6 +4,7 @@ import {
   useGetListingsQuery, 
   useUpdateListingMutation 
 } from "../../../redux/features/listings/listingsApi";
+import { useUpdateUserMutation, useDeleteUserMutation } from "../../../redux/features/users/usersApi";
 import SupplierTable from "../../../Components/admin-components/supplier/SupplierTable";
 import SupplierFormModal from "../../../Components/admin-components/supplier/SupplierFormModal";
 import SupplierDetailsModal from "../../../Components/admin-components/supplier/SupplierDetailsModal";
@@ -13,6 +14,8 @@ export default function SupplierManagement() {
   const { data: listingsResponse, isLoading, error, refetch } = useGetListingsQuery(undefined, { refetchOnMountOrArgChange: true });
   const suppliersData = listingsResponse?.data || [];
   const [updateListing] = useUpdateListingMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
   // Filter only suppliers
   const suppliers = useMemo(() => {
@@ -43,12 +46,68 @@ export default function SupplierManagement() {
   const pageSize = 4; // Design shows 4 items per page
 
   const handleSaveSupplier = async (savedSupplier) => {
-    alert("Creating/Updating supplier info from this modal is disabled. Suppliers manage their own profiles.");
-    setIsModalOpen(false);
+    try {
+      if (editingSupplier) {
+        const originalSup = suppliersData.find(s => s._id === savedSupplier.id);
+        const userId = originalSup?.user?._id || originalSup?.user;
+
+        let isApproved = savedSupplier.verification === 'Verified';
+        let listingStatus = savedSupplier.listingStatus;
+        if (listingStatus.includes("Approved")) listingStatus = "Approved";
+        if (listingStatus.includes("Pending")) listingStatus = "Pending";
+        if (listingStatus.includes("Hidden")) listingStatus = "Hidden";
+
+        // Update listing
+        await updateListing({ 
+          id: savedSupplier.id, 
+          data: { 
+            companyName: savedSupplier.company,
+            contactEmail: savedSupplier.email,
+            isApproved,
+            listingStatus
+          } 
+        }).unwrap();
+
+        // Update user account (status & verification)
+        if (userId) {
+          let userStatus = "Active";
+          if (savedSupplier.verification === "Suspended") userStatus = "Suspended";
+          
+          let isVerified = savedSupplier.verification === "Verified";
+
+          await updateUser({
+            id: userId,
+            userData: {
+              status: userStatus,
+              isVerified,
+              name: savedSupplier.name
+            }
+          }).unwrap();
+        }
+      }
+      setEditingSupplier(null);
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error saving supplier");
+    }
   };
 
   const handleDeleteSupplier = async (id) => {
-    alert("Deleting suppliers is not implemented in listingsApi yet.");
+    if (window.confirm("Are you sure you want to delete this supplier listing?")) {
+      try {
+        const originalSup = suppliersData.find(s => s._id === id);
+        const userId = originalSup?.user?._id || originalSup?.user;
+        if (userId) {
+           await deleteUser(userId).unwrap();
+        } else {
+           alert("No user account associated with this listing");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error deleting supplier");
+      }
+    }
   };
 
   const handleApproveSupplier = async (supplier) => {

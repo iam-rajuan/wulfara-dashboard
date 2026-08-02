@@ -43,10 +43,17 @@ export default function BuyerManagement() {
 
   const handleSaveBuyer = async (savedBuyer) => {
     try {
+      const isVerified = savedBuyer.verification === 'Verified';
+      
       if (editingBuyer) {
         await updateUser({ 
           id: savedBuyer.id, 
-          userData: { name: savedBuyer.name, email: savedBuyer.email, status: savedBuyer.status } 
+          userData: { 
+            name: savedBuyer.name, 
+            email: savedBuyer.email, 
+            status: savedBuyer.status,
+            isVerified
+          } 
         }).unwrap();
       } else {
         await createUser({
@@ -55,6 +62,7 @@ export default function BuyerManagement() {
           password: "DefaultPassword123!", // Require strong default for now
           role: "buyer",
           status: savedBuyer.status,
+          isVerified
         }).unwrap();
       }
       setEditingBuyer(null);
