@@ -20,9 +20,9 @@ export default function RFQDetails() {
   const rfq = rawRfq ? {
     id: `RFQ-${rawRfq._id.substring(rawRfq._id.length - 4).toUpperCase()}`,
     rawId: rawRfq._id,
-    status: rawRfq.status === 'pending' ? 'PENDING' : rawRfq.status === 'responded' ? 'RESPONDED' : rawRfq.status === 'closed' ? 'CLOSED' : rawRfq.status.toUpperCase(),
-    category: "Not specified", 
-    quantity: `${rawRfq.quantity} units`,
+    status: rawRfq.status === 'pending' ? 'NEW' : rawRfq.status === 'responded' ? 'RESPONDED' : rawRfq.status === 'closed' ? 'CLOSED' : rawRfq.status.toUpperCase(),
+    category: rawRfq.subject || "Not specified", 
+    quantity: `${rawRfq.quantity}`,
     deadline: "N/A", 
     location: "N/A",
     notes: rawRfq.details || '',
@@ -182,8 +182,8 @@ export default function RFQDetails() {
             
             <div>
               <p className="text-[11px] font-bold text-gray-500 tracking-wider mb-2">BUYER NOTES</p>
-              <div className="bg-[#F8F9FB] border border-gray-100 rounded-lg p-5">
-                <p className="text-[13px] text-gray-700 leading-relaxed font-medium">"{rfq.notes}"</p>
+              <div className="bg-[#F8F9FB] border border-gray-100 rounded-lg p-5 whitespace-pre-wrap">
+                <p className="text-[13px] text-gray-700 leading-relaxed font-medium">{rfq.notes}</p>
               </div>
             </div>
           </div>
@@ -198,13 +198,13 @@ export default function RFQDetails() {
               
               <div className="space-y-3">
                 {rfq.attachments.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cursor-pointer">
+                  <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cursor-pointer">
                     {renderAttachmentIcon(file.type)}
                     <div>
                       <h4 className="text-[13px] font-bold text-[#0F172A] mb-0.5">{file.name}</h4>
-                      <p className="text-[11px] font-bold text-gray-500">{file.size}</p>
+                      <p className="text-[11px] font-bold text-gray-500">Attachment</p>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
@@ -331,7 +331,7 @@ export default function RFQDetails() {
                 <div key={idx}>
                   <p className="text-[11px] font-bold text-gray-500 mb-1">{act.date}</p>
                   <h4 className="text-[13px] font-bold text-[#0F172A] mb-1">{act.title}</h4>
-                  <p className="text-[12px] text-gray-500 font-medium">{act.desc}</p>
+                  <p className="text-[12px] text-gray-500 font-medium whitespace-pre-wrap">{act.desc}</p>
                 </div>
               ))}
             </div>

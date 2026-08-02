@@ -6,9 +6,9 @@ export default function RFQCards() {
   const { data: rfqsData } = useGetSupplierRfqsQuery();
   const rfqs = rfqsData?.data || [];
 
-  const newCount = rfqs.filter(r => r.status === 'New').length;
-  const respondedCount = rfqs.filter(r => r.status === 'Responded').length;
-  const closedCount = rfqs.filter(r => r.status === 'Closed' || r.status === 'Rejected').length;
+  const newCount = rfqs.filter(r => r.status === 'pending').length;
+  const respondedCount = rfqs.filter(r => r.status === 'responded' || r.status === 'reviewed').length;
+  const closedCount = rfqs.filter(r => r.status === 'closed' || r.status === 'rejected').length;
 
   const cards = [
     {

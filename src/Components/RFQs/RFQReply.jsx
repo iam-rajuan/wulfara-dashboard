@@ -28,7 +28,7 @@ export default function RFQReply() {
     id: `RFQ-${rawRfq._id.substring(rawRfq._id.length - 4).toUpperCase()}`,
     rawId: rawRfq._id,
     product: rawRfq.subject || rawRfq.productDetails || 'Unknown',
-    quantity: `${rawRfq.quantity} units`,
+    quantity: `${rawRfq.quantity}`,
     targetDate: 'N/A', // Assuming targetDate isn't directly on RFQ yet
     buyerName: rawRfq.buyerUser?.name || rawRfq.buyerName || 'Unknown Buyer'
   } : null;

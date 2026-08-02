@@ -25,15 +25,20 @@ export default function RFQTable() {
       
       let statusColor = "bg-[#E2E8F0] text-[#475569] border-[#CBD5E1]";
       let dotColor = "bg-[#94A3B8]";
-      if (rfq.status === 'New') {
+      let displayStatus = 'Pending';
+
+      if (rfq.status === 'pending') {
         statusColor = "bg-[#E5F0FF] text-[#0066FF] border-[#B3D4FF]";
         dotColor = "bg-[#0066FF]";
-      } else if (rfq.status === 'Responded') {
+        displayStatus = 'New';
+      } else if (rfq.status === 'responded' || rfq.status === 'reviewed') {
         statusColor = "bg-[#0052CC] text-white border-[#0052CC]";
         dotColor = "bg-white";
-      } else if (rfq.status === 'Closed' || rfq.status === 'Rejected') {
+        displayStatus = 'Responded';
+      } else if (rfq.status === 'closed') {
         statusColor = "bg-red-50 text-red-600 border-red-200";
         dotColor = "bg-red-500";
+        displayStatus = 'Closed';
       }
 
       const dateObj = new Date(rfq.createdAt);
@@ -48,7 +53,7 @@ export default function RFQTable() {
         product: rfq.subject || rfq.productDetails || 'Unknown Product',
         quantity: rfq.quantity || 'N/A',
         deadline: deadline,
-        status: rfq.status || 'Pending',
+        status: displayStatus,
         statusColor,
         dotColor,
         createdAt: rfq.createdAt
@@ -171,7 +176,7 @@ export default function RFQTable() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  {rfq.status === 'Pending' ? (
+                  {rfq.status === 'New' ? (
                     <button 
                       onClick={() => navigate(`/rfqs/${rfq._id}/reply`)}
                       className="px-4 py-1.5 bg-[#D4AF37] hover:bg-[#C29F31] transition rounded text-[12px] font-bold text-[#0F172A]"
