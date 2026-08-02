@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useGetListingsQuery, useReviewListingMutation } from "../../../redux/features/listings/listingsApi";
+import { useGetListingsQuery, useReviewListingMutation, useFeatureListingMutation } from "../../../redux/features/listings/listingsApi";
 import { ChevronRight, Filter, Download, Search, Hourglass, CheckCircle2, XCircle, Star, TrendingUp } from "lucide-react";
 import ListingTable from "../../../Components/admin-components/listings/ListingTable";
 
 export default function ListingReview() {
   const { data: listingsResponse, isLoading } = useGetListingsQuery();
   const [reviewListing] = useReviewListingMutation();
+  const [featureListing] = useFeatureListingMutation();
   
   const listings = listingsResponse?.data || [];
 
@@ -33,7 +34,8 @@ export default function ListingReview() {
       supplier: l.user ? (l.user.name || "Unknown") : "Unknown", // user is populated if possible, otherwise we might need to rely on companyName
       plan: l.subscriptionPlan === 'premium' ? 'Pro' : 'Basic',
       status: l.listingStatus || 'Pending',
-      quality: calculateQualityScore(l)
+      quality: calculateQualityScore(l),
+      isFeatured: l.isFeatured || false
     }));
   }, [listings]);
 
@@ -60,6 +62,15 @@ export default function ListingReview() {
     }
   };
 
+  const handleFeature = async (id, isFeatured) => {
+    try {
+      await featureListing({ id, isFeatured }).unwrap();
+    } catch (err) {
+      console.error(err);
+      alert("Error updating featured status");
+    }
+  };
+
   const handleSelect = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
@@ -75,6 +86,7 @@ export default function ListingReview() {
   const pendingCount = mappedListings.filter(l => l.status === 'Pending').length;
   const approvedCount = mappedListings.filter(l => l.status === 'Approved').length;
   const rejectedCount = mappedListings.filter(l => l.status === 'Rejected').length;
+  const featuredCount = mappedListings.filter(l => l.isFeatured).length;
 
   return (
     <div className="min-h-screen p-6 mt-16 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans pt-24">
@@ -143,7 +155,7 @@ export default function ListingReview() {
             <h3 className="text-[14px] font-bold text-gray-500">Featured</h3>
             <Star size={20} className="text-[#F59E0B]" />
           </div>
-          <div className="text-4xl font-extrabold text-[#0F172A] mb-3">12</div>
+          <div className="text-4xl font-extrabold text-[#0F172A] mb-3">{featuredCount}</div>
           <div className="text-[12px] font-medium text-gray-400">
             Active promotions
           </div>
@@ -179,6 +191,7 @@ export default function ListingReview() {
           onSelectAll={handleSelectAll}
           onApprove={handleApprove}
           onReject={handleReject}
+          onFeature={handleFeature}
         />
 
       </div>

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Eye, Check, X, MoreHorizontal } from "lucide-react";
+import { Eye, Check, X, MoreHorizontal, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function ListingTable({ listings, selectedIds, onSelect, onSelectAll, onApprove, onReject }) {
+export default function ListingTable({ listings, selectedIds, onSelect, onSelectAll, onApprove, onReject, onFeature }) {
   const [openActionId, setOpenActionId] = useState(null);
   const navigate = useNavigate();
 
@@ -102,7 +102,10 @@ export default function ListingTable({ listings, selectedIds, onSelect, onSelect
                 />
               </td>
               <td className="py-4 px-4 text-[13px] font-bold text-[#0F172A]">
-                {listing.companyName}
+                <div className="flex items-center gap-2">
+                  {listing.companyName}
+                  {listing.isFeatured && <Star size={14} className="text-[#F59E0B] fill-current" />}
+                </div>
               </td>
               <td className="py-4 px-4 text-[13px] font-medium text-gray-500 leading-snug">
                 {listing.category}
@@ -171,6 +174,19 @@ export default function ListingTable({ listings, selectedIds, onSelect, onSelect
                             Reject
                           </button>
                         </>
+                      )}
+                      
+                      {listing.status === "Approved" && (
+                        <button
+                          onClick={() => {
+                            setOpenActionId(null);
+                            onFeature && onFeature(listing.id, !listing.isFeatured);
+                          }}
+                          className={`w-full px-4 py-2 text-[12px] font-bold flex items-center gap-2 transition-colors ${listing.isFeatured ? 'text-gray-600 hover:bg-gray-50' : 'text-[#D97706] hover:bg-[#FEF3C7]'}`}
+                        >
+                          <Star size={14} strokeWidth={listing.isFeatured ? 2 : 3} className={listing.isFeatured ? "" : "text-[#D97706]"} />
+                          {listing.isFeatured ? "Unfeature" : "Feature"}
+                        </button>
                       )}
                     </div>
                   </>

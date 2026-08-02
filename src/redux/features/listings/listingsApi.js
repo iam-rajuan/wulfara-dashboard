@@ -22,6 +22,14 @@ export const listingsApi = apiSlice.injectEndpoints({
       query: () => '/suppliers/dashboard',
       providesTags: ['Listing'],
     }),
+    featureListing: builder.mutation({
+      query: ({ id, isFeatured }) => ({
+        url: `/suppliers/${id}/feature`,
+        method: 'PUT',
+        body: { isFeatured },
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Listing', id }, 'Listing'],
+    }),
     updateListing: builder.mutation({
       query: ({ id, data }) => ({
         url: `/suppliers/${id}`,
@@ -45,6 +53,7 @@ export const {
   useGetListingQuery,
   useReviewListingMutation,
   useGetSupplierDashboardQuery,
+  useFeatureListingMutation,
   useUpdateListingMutation,
   useGetSupplierUploadUrlMutation,
 } = listingsApi;

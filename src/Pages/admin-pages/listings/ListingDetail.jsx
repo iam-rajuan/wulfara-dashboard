@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useGetListingQuery, useReviewListingMutation } from "../../../redux/features/listings/listingsApi";
+import { useGetListingQuery, useReviewListingMutation, useFeatureListingMutation } from "../../../redux/features/listings/listingsApi";
 import {
   ChevronRight,
   XCircle,
@@ -11,7 +11,8 @@ import {
   Factory,
   Award,
   Check,
-  X
+  X,
+  Star
 } from "lucide-react";
 
 export default function ListingDetail() {
@@ -20,6 +21,7 @@ export default function ListingDetail() {
   
   const { data: listingResponse, isLoading } = useGetListingQuery(id);
   const [reviewListing] = useReviewListingMutation();
+  const [featureListing] = useFeatureListingMutation();
   const listing = listingResponse?.data;
 
   const [checklist, setChecklist] = useState({
@@ -47,6 +49,15 @@ export default function ListingDetail() {
     } catch (err) {
       console.error(err);
       alert("Error rejecting listing");
+    }
+  };
+
+  const handleFeature = async () => {
+    try {
+      await featureListing({ id, isFeatured: !listing.isFeatured }).unwrap();
+    } catch (err) {
+      console.error(err);
+      alert("Error updating featured status");
     }
   };
 
@@ -109,7 +120,15 @@ export default function ListingDetail() {
              )}
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#0F172A] mb-2">{listing.companyName}</h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl font-extrabold text-[#0F172A]">{listing.companyName}</h1>
+              {listing.isFeatured && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#FEF3C7] text-[#D97706] rounded-md text-[11px] font-bold">
+                  <Star size={12} className="fill-current" />
+                  Featured
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3">
               {getStatusBadge()}
               <div className="flex items-center gap-1 text-[13px] font-medium text-[#2563EB]">
@@ -137,6 +156,15 @@ export default function ListingDetail() {
             >
               <CheckCircle size={16} className="text-[#0F172A]" strokeWidth={1} />
               Approve
+            </button>
+          )}
+          {status === "Approved" && (
+            <button
+              onClick={handleFeature}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 border rounded-md text-[13px] font-bold transition-colors shadow-sm ${listing.isFeatured ? 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50' : 'bg-[#FEF3C7] border-[#F59E0B] text-[#D97706] hover:bg-[#FDE68A]'}`}
+            >
+              <Star size={16} strokeWidth={listing.isFeatured ? 2 : 3} className={listing.isFeatured ? "" : "text-[#D97706]"} />
+              {listing.isFeatured ? "Unfeature Listing" : "Feature Listing"}
             </button>
           )}
         </div>
