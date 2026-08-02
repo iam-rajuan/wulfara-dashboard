@@ -1,7 +1,19 @@
 import React from "react";
 import { Package, Users, TrendingUp, Activity } from "lucide-react";
+import { useGetPlansQuery, useGetAllPaymentsQuery } from "../../../redux/features/subscriptions/subscriptionsApi";
 
 export default function PackageMetrics() {
+  const { data: plansResponse } = useGetPlansQuery();
+  const { data: paymentsResponse } = useGetAllPaymentsQuery();
+
+  const plans = plansResponse?.data || [];
+  const payments = paymentsResponse?.data || [];
+
+  const activePlansCount = plans.filter(p => p.isActive).length;
+  const paidSuppliersCount = new Set(payments.map(p => p.supplier?._id).filter(Boolean)).size;
+  
+  const totalRevenue = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const formattedRevenue = totalRevenue >= 1000 ? (totalRevenue / 1000).toFixed(1) + 'K' : totalRevenue.toString();
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       
@@ -13,7 +25,7 @@ export default function PackageMetrics() {
             <Package size={16} />
           </div>
         </div>
-        <h3 className="text-3xl font-extrabold text-[#0F172A]">3</h3>
+        <h3 className="text-3xl font-extrabold text-[#0F172A]">{activePlansCount}</h3>
       </div>
 
       {/* Paid Suppliers */}
@@ -24,7 +36,7 @@ export default function PackageMetrics() {
             <Users size={16} />
           </div>
         </div>
-        <h3 className="text-3xl font-extrabold text-[#0F172A] mb-1">248</h3>
+        <h3 className="text-3xl font-extrabold text-[#0F172A] mb-1">{paidSuppliersCount}</h3>
         <p className="text-[12px] font-bold text-[#D97706] flex items-center gap-1">
           <TrendingUp size={12} />
           +12% this month
@@ -39,7 +51,7 @@ export default function PackageMetrics() {
             <Activity size={16} />
           </div>
         </div>
-        <h3 className="text-3xl font-extrabold text-[#0F172A] mb-1">14.82K</h3>
+        <h3 className="text-3xl font-extrabold text-[#0F172A] mb-1">{formattedRevenue}</h3>
         <p className="text-[12px] font-bold text-[#D97706] flex items-center gap-1">
           <TrendingUp size={12} />
           +5.2% this month

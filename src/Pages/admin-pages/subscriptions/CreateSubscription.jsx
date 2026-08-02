@@ -64,7 +64,7 @@ export default function CreateSubscription() {
       price: Number(formData.basePrice),
       allowCoupons: formData.allowCoupons,
       autoRenewal: formData.autoRenewal,
-      features: ["Top tier directory placement", "Unlimited RFQ access", "Verified Supplier Badge"], // Mock features for now
+      features: [1, 2, 3, 4], // Features enabled by default
       isActive: true
     };
 

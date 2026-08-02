@@ -7,17 +7,24 @@ import {
   BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from 'recharts';
+import { useGetAllPaymentsQuery } from '../../../redux/features/subscriptions/subscriptionsApi';
 
 const RevenueReports = () => {
   const [timeframe, setTimeframe] = useState('Last 12 Months');
   const [isExporting, setIsExporting] = useState(false);
+  const { data: paymentsResponse, isLoading } = useGetAllPaymentsQuery();
+  const payments = paymentsResponse?.data || [];
+
+  const totalRevenue = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const formattedRevenue = totalRevenue >= 1000 ? (totalRevenue / 1000).toFixed(2) + 'K' : totalRevenue.toString();
+  const paidSuppliersCount = new Set(payments.map(p => p.supplier?._id).filter(Boolean)).size;
 
   // Stat Card Data
   const stats = [
-    { title: 'TOTAL REVENUE', value: timeframe === 'All Time' ? '385.20K' : '128.43K', icon: <Banknote size={18} />, color: 'text-gray-700', sub: null },
-    { title: 'MRR', value: '$14,890', icon: <RefreshCw size={18} />, color: 'text-gray-700', sub: null },
-    { title: 'PAYMENTS', value: timeframe === 'All Time' ? '3,842' : '1,284', icon: <CreditCard size={18} />, color: 'text-gray-700', sub: 'Total count' },
-    { title: 'PAID SUPPLIERS', value: timeframe === 'All Time' ? '892' : '376', icon: <Tag size={18} />, color: 'text-gray-700', sub: null },
+    { title: 'TOTAL REVENUE', value: `$${formattedRevenue}`, icon: <Banknote size={18} />, color: 'text-gray-700', sub: null },
+    { title: 'MRR', value: `$${(totalRevenue / 12).toFixed(2)}`, icon: <RefreshCw size={18} />, color: 'text-gray-700', sub: null },
+    { title: 'PAYMENTS', value: payments.length.toString(), icon: <CreditCard size={18} />, color: 'text-gray-700', sub: 'Total count' },
+    { title: 'PAID SUPPLIERS', value: paidSuppliersCount.toString(), icon: <Tag size={18} />, color: 'text-gray-700', sub: null },
   ];
 
   // Bar Chart Data (Revenue by Month)
@@ -58,149 +65,20 @@ const RevenueReports = () => {
     { name: 'Basic', value: 14, color: '#F59E0B' },    // Orange/Amber
   ];
 
-  // Table Data (Recent Stripe Payments)
-  const [paymentsData] = useState([
-    {
-      key: '1',
-      paymentId: 'pi_3N92k...8jL',
-      supplier: { initial: 'N', name: 'Nova Logistics', color: 'bg-[#0E1726] text-white' },
-      plan: 'PREMIUM',
-      amount: '$1,250.00',
-      method: { type: 'Visa', last4: '4242' },
-      date: 'Jun 12, 2024',
-      status: 'PAID',
+  const tableData = payments.map((p, index) => ({
+    key: p._id || index,
+    paymentId: p._id,
+    supplier: { 
+      initial: p.supplier?.companyName ? p.supplier.companyName.charAt(0).toUpperCase() : 'U', 
+      name: p.supplier?.companyName || 'Unknown Supplier', 
+      color: 'bg-[#0E1726] text-white' 
     },
-    {
-      key: '2',
-      paymentId: 'pi_3N91s...2mP',
-      supplier: { initial: 'A', name: 'Apex Materials', color: 'bg-[#D4AF37] text-white' },
-      plan: 'PRO',
-      amount: '$450.00',
-      method: { type: 'Bank Xfer', last4: '' },
-      date: 'Jun 11, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '3',
-      paymentId: 'pi_3N88f...k8D',
-      supplier: { initial: 'B', name: 'Blue Horizon Co.', color: 'bg-[#DC2626] text-white' },
-      plan: 'PREMIUM',
-      amount: '$1,250.00',
-      method: { type: 'MC', last4: '9912' },
-      date: 'Jun 10, 2024',
-      status: 'FAILED',
-    },
-    {
-      key: '4',
-      paymentId: 'pi_3N76t...9xV',
-      supplier: { initial: 'S', name: 'Solaris Systems', color: 'bg-[#F59E0B] text-white' },
-      plan: 'BASIC',
-      amount: '$120.00',
-      method: { type: 'G-Pay', last4: '' },
-      date: 'Jun 09, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '5',
-      paymentId: 'pi_3N65v...2qW',
-      supplier: { initial: 'E', name: 'Evergreen Supply', color: 'bg-green-600 text-white' },
-      plan: 'PRO',
-      amount: '$450.00',
-      method: { type: 'Amex', last4: '1002' },
-      date: 'Jun 08, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '6',
-      paymentId: 'pi_3N54u...1rX',
-      supplier: { initial: 'G', name: 'Global Metals', color: 'bg-blue-600 text-white' },
-      plan: 'PREMIUM',
-      amount: '$1,250.00',
-      method: { type: 'Visa', last4: '5566' },
-      date: 'Jun 07, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '7',
-      paymentId: 'pi_3N43t...0sY',
-      supplier: { initial: 'I', name: 'Ironworks Inc.', color: 'bg-gray-600 text-white' },
-      plan: 'BASIC',
-      amount: '$120.00',
-      method: { type: 'MC', last4: '3344' },
-      date: 'Jun 06, 2024',
-      status: 'FAILED',
-    },
-    {
-      key: '8',
-      paymentId: 'pi_3N32s...9tZ',
-      supplier: { initial: 'P', name: 'Prime Plastics', color: 'bg-purple-600 text-white' },
-      plan: 'PRO',
-      amount: '$450.00',
-      method: { type: 'Bank Xfer', last4: '' },
-      date: 'Jun 05, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '9',
-      paymentId: 'pi_3N21r...8uA',
-      supplier: { initial: 'Q', name: 'Quantum Parts', color: 'bg-indigo-600 text-white' },
-      plan: 'PREMIUM',
-      amount: '$1,250.00',
-      method: { type: 'Visa', last4: '2211' },
-      date: 'Jun 04, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '10',
-      paymentId: 'pi_3N10q...7vB',
-      supplier: { initial: 'R', name: 'Reliable Chem', color: 'bg-teal-600 text-white' },
-      plan: 'BASIC',
-      amount: '$120.00',
-      method: { type: 'G-Pay', last4: '' },
-      date: 'Jun 03, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '11',
-      paymentId: 'pi_3N09p...6wC',
-      supplier: { initial: 'S', name: 'Stellar Tech', color: 'bg-[#D4AF37] text-white' },
-      plan: 'PRO',
-      amount: '$450.00',
-      method: { type: 'MC', last4: '8877' },
-      date: 'Jun 02, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '12',
-      paymentId: 'pi_3N98o...5xD',
-      supplier: { initial: 'U', name: 'United Glass', color: 'bg-[#0E1726] text-white' },
-      plan: 'PREMIUM',
-      amount: '$1,250.00',
-      method: { type: 'Visa', last4: '9900' },
-      date: 'Jun 01, 2024',
-      status: 'PAID',
-    },
-    {
-      key: '13',
-      paymentId: 'pi_3N87n...4yE',
-      supplier: { initial: 'V', name: 'Vanguard Steel', color: 'bg-[#DC2626] text-white' },
-      plan: 'PRO',
-      amount: '$450.00',
-      method: { type: 'Amex', last4: '3322' },
-      date: 'May 31, 2024',
-      status: 'FAILED',
-    },
-    {
-      key: '14',
-      paymentId: 'pi_3N76m...3zF',
-      supplier: { initial: 'W', name: 'Western Wood', color: 'bg-[#F59E0B] text-white' },
-      plan: 'BASIC',
-      amount: '$120.00',
-      method: { type: 'Bank Xfer', last4: '' },
-      date: 'May 30, 2024',
-      status: 'PAID',
-    },
-  ]);
+    plan: p.supplier?.subscriptionPlan?.toUpperCase() || 'PREMIUM',
+    amount: `$${p.amount.toFixed(2)}`,
+    method: { type: 'Visa', last4: '****' },
+    date: new Date(p.createdAt).toLocaleDateString(),
+    status: p.status === 'paid' ? 'PAID' : 'FAILED',
+  }));
 
   const columns = [
     {
@@ -339,7 +217,7 @@ const RevenueReports = () => {
             <div className="text-red-500 bg-red-50 p-1 rounded-full"><AlertCircle size={16} /></div>
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-black text-red-600">18</span>
+            <span className="text-3xl font-black text-red-600">{payments.filter(p => p.status === 'failed').length}</span>
             <span className="text-[10px] text-gray-500 font-medium mb-1 leading-tight w-16">Past 30 days</span>
           </div>
         </div>
@@ -412,7 +290,7 @@ const RevenueReports = () => {
             
             {/* Center Label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-2">
-              <span className="text-xl font-black text-[#0E1726]">$128k</span>
+              <span className="text-xl font-black text-[#0E1726]">${formattedRevenue}</span>
               <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">REVENUE</span>
             </div>
           </div>
@@ -444,7 +322,8 @@ const RevenueReports = () => {
         <div className="px-6 pb-6 pt-2">
           <Table 
             columns={columns} 
-            dataSource={paymentsData} 
+            dataSource={tableData} 
+            loading={isLoading}
             pagination={{
               pageSize: 5,
               showSizeChanger: true,

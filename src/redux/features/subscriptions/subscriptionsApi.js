@@ -26,6 +26,13 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Subscription', id }, 'Subscription'],
     }),
+    deletePlan: builder.mutation({
+      query: (id) => ({
+        url: `/subscriptions/plans/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Subscription'],
+    }),
     createCheckoutSession: builder.mutation({
       query: (data) => ({
         url: '/subscriptions/checkout-session',
@@ -37,6 +44,10 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
       query: () => '/subscriptions/invoices',
       providesTags: ['Invoice'],
     }),
+    getAllPayments: builder.query({
+      query: () => '/subscriptions/admin/payments',
+      providesTags: ['Payment'],
+    }),
   }),
 });
 
@@ -45,6 +56,8 @@ export const {
   useGetPlanQuery,
   useCreatePlanMutation,
   useUpdatePlanMutation,
+  useDeletePlanMutation,
   useCreateCheckoutSessionMutation,
   useGetInvoicesQuery,
+  useGetAllPaymentsQuery,
 } = subscriptionsApi;

@@ -1,14 +1,27 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useGetPlansQuery } from "../../../redux/features/subscriptions/subscriptionsApi";
+import { useGetPlansQuery, useDeletePlanMutation } from "../../../redux/features/subscriptions/subscriptionsApi";
 import { ChevronDown, Edit2, MoreVertical, Filter, Award, Star, Diamond, Zap } from "lucide-react";
+import { toast } from 'react-toastify';
 
 export default function PackageTable() {
   const navigate = useNavigate();
   const { data: plansResponse, isLoading } = useGetPlansQuery();
+  const [deletePlan] = useDeletePlanMutation();
   const plans = plansResponse?.data || [];
   
   const [openActionId, setOpenActionId] = useState(null);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to archive/delete this plan?")) {
+      try {
+        await deletePlan(id).unwrap();
+        toast.success("Plan deleted successfully");
+      } catch (err) {
+        toast.error("Failed to delete plan");
+      }
+    }
+  };
 
   // Maximum value for the visual bar chart in the active suppliers column
   const maxSuppliers = 200;
@@ -120,8 +133,11 @@ export default function PackageTable() {
                           Duplicate
                         </button>
                         <button
-                          onClick={() => setOpenActionId(null)}
-                          className="w-full px-4 py-2 text-[12px] font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-start gap-2 transition-colors"
+                          onClick={() => {
+                            setOpenActionId(null);
+                            handleDelete(pkg._id);
+                          }}
+                          className="w-full px-4 py-2 text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center justify-start gap-2 transition-colors"
                         >
                           Archive
                         </button>
