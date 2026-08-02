@@ -99,7 +99,7 @@ export default function RfqManagement() {
 
       return matchesSearch && matchesStatus && matchesCategory && matchesDispute;
     });
-  }, [searchTerm, statusFilter, categoryFilter, disputeToggle]);
+  }, [rfqsList, searchTerm, statusFilter, categoryFilter, disputeToggle]);
 
   const totalPages = Math.ceil(filteredRfqs.length / itemsPerPage);
   const paginatedRfqs = filteredRfqs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);

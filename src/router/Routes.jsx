@@ -144,11 +144,11 @@ export const router = createBrowserRouter([
             element: <CreateSubscription />
           },
           {
-            path: "rfqs",
+            path: "rfq-management",
             element: <RfqManagement />
           },
           {
-            path: "rfqs/:id",
+            path: "rfq-management/:id",
             element: <RfqDetails />
           },
           { path: "/settings", element: <Settings /> },

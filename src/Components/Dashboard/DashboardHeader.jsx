@@ -1,7 +1,10 @@
 import React from 'react';
 import { Download, BadgeCheck, Clock } from 'lucide-react';
 
-export default function DashboardHeader({ onExport, exportText = "Export Report" }) {
+export default function DashboardHeader({ onExport, exportText = "Export Report", profile, stats }) {
+  const isPremium = profile?.subscriptionPlan === 'premium' || stats?.subscriptionPlan === 'premium';
+  const listingStatus = profile?.listingStatus || 'Pending';
+  const isApproved = profile?.isApproved || stats?.isApproved;
   return (
     <div className='mt-16'>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -21,32 +24,34 @@ export default function DashboardHeader({ onExport, exportText = "Export Report"
       <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-nowrap lg:items-center gap-4 lg:gap-6 text-[13px] mb-8">
         <div className="flex items-center justify-between sm:justify-start gap-3 lg:border-r border-gray-200 lg:pr-6">
           <span className="text-gray-500">Listing Status:</span>
-          <span className="flex items-center gap-1.5 bg-[#0066FF] text-white px-3 py-1 rounded-full text-xs font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-            Active
+          <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${isApproved ? 'bg-[#0066FF] text-white' : 'bg-orange-100 text-orange-700'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-white' : 'bg-orange-500'}`}></span>
+            {listingStatus}
           </span>
         </div>
         <div className="flex items-center justify-between sm:justify-start gap-3 lg:border-r border-gray-200 lg:pr-6">
           <span className="text-gray-500">Subscription:</span>
-          <span className="flex items-center gap-1.5 font-bold text-[#0F172A]">
-            <BadgeCheck size={16} className="text-[#137847]" strokeWidth={2.5} />
-            Premium Plan
+          <span className="flex items-center gap-1.5 font-bold text-[#0F172A] capitalize">
+            {isPremium ? (
+              <BadgeCheck size={16} className="text-[#137847]" strokeWidth={2.5} />
+            ) : null}
+            {isPremium ? 'Premium Plan' : 'Free Plan'}
           </span>
         </div>
         <div className="flex items-center justify-between sm:justify-start gap-4 lg:border-r border-gray-200 lg:pr-6">
           <span className="text-gray-500">Profile Completion:</span>
           <div className="flex items-center gap-3 sm:w-32 justify-end sm:justify-start">
             <div className="hidden sm:block flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: '82%' }}></div>
+              <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: stats?.profileCompletion || '0%' }}></div>
             </div>
-            <span className="font-bold text-xs text-[#0F172A]">82%</span>
+            <span className="font-bold text-xs text-[#0F172A]">{stats?.profileCompletion || '0%'}</span>
           </div>
         </div>
         <div className="flex items-center justify-between sm:justify-start gap-3">
           <span className="text-gray-500">Response Time:</span>
           <span className="flex items-center gap-1.5 font-bold text-[#0F172A]">
             <Clock size={16} className="text-gray-400" />
-            Replies in ~2 hours
+            {profile?.avgResponseTime || '~24 Hours'}
           </span>
         </div>
       </div>

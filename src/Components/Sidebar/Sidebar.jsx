@@ -61,7 +61,7 @@ const Sidebar = ({ closeDrawer }) => {
     { icon: <ListingsIcon />, label: "Listings", Link: "/listings" },
     { icon: <CategoriesIcon />, label: "Categories", Link: "/categories" },
     { icon: <SubscriptionsIcon />, label: "Subscriptions", Link: "/subscriptions" },
-    { icon: <RFQsIcon />, label: "RFQs", Link: "/rfqs" },
+    { icon: <RFQsIcon />, label: "RFQs", Link: "/rfq-management" },
     { icon: <ContentIcon />, label: "Content", Link: "/content" },
     { icon: <SEOIcon />, label: "SEO", Link: "/seo" },
     { icon: <RevenueIcon />, label: "Revenue", Link: "/revenue" },

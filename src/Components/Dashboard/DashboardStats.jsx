@@ -2,7 +2,12 @@ import React from 'react';
 import { Eye } from 'lucide-react';
 import { FileTextIcon, ActivityIcon } from '../../svglogos/SvgIcons';
 
-export default function DashboardStats() {
+export default function DashboardStats({ stats }) {
+  const total = stats?.totalRfqs || 0;
+  const pending = stats?.pendingRfqs || 0;
+  const responded = total - pending;
+  const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
@@ -30,8 +35,8 @@ export default function DashboardStats() {
         </div>
         <div>
           <p className="text-gray-500 text-sm mb-1">New RFQs</p>
-          <h3 className="text-2xl font-bold">12</h3>
-          <p className="text-gray-500 text-[13px] mt-2">Action required on 3</p>
+          <h3 className="text-2xl font-bold">{pending}</h3>
+          <p className="text-gray-500 text-[13px] mt-2">Total RFQs received: {total}</p>
         </div>
       </div>
 
@@ -43,10 +48,16 @@ export default function DashboardStats() {
         </div>
         <div>
           <p className="text-gray-500 text-sm mb-1">RFQ Response Rate</p>
-          <h3 className="text-2xl font-bold">76%</h3>
-          <p className="text-[13px] mt-2 text-red-500 flex items-center gap-1">
-            <span className="text-[10px]">⚠️</span> Below target (85%)
-          </p>
+          <h3 className="text-2xl font-bold">{responseRate}%</h3>
+          {responseRate < 80 && total > 0 ? (
+            <p className="text-[13px] mt-2 text-red-500 flex items-center gap-1">
+              <span className="text-[10px]">⚠️</span> Below target (80%)
+            </p>
+          ) : (
+            <p className="text-[13px] mt-2 text-green-600 flex items-center gap-1">
+              <span className="text-[10px]">✅</span> Excellent response rate
+            </p>
+          )}
         </div>
       </div>
     </div>

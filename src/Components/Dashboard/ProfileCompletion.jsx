@@ -2,7 +2,14 @@ import React from 'react';
 import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function ProfileCompletion() {
+export default function ProfileCompletion({ profile, stats }) {
+  const compStr = stats?.profileCompletion || '0%';
+  const compVal = parseInt(compStr.replace('%', ''), 10) || 0;
+  const hasBasicDetails = !!profile?.companyName && !!profile?.description;
+  const hasCerts = profile?.certifications?.length > 0;
+  const hasProducts = profile?.products?.length > 0;
+  const hasShipping = profile?.serviceAreas?.length > 0 || (profile?.shippingOptions && Object.values(profile.shippingOptions).some(Boolean));
+  
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col">
       <div className="mb-6">
@@ -14,32 +21,32 @@ export default function ProfileCompletion() {
         <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
             <path className="text-gray-100" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path className="text-[#D4AF37]" strokeDasharray="82, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path className="text-[#D4AF37]" strokeDasharray={`${compVal}, 100`} strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
           </svg>
-          <span className="absolute text-[13px] font-bold">82%</span>
+          <span className="absolute text-[13px] font-bold">{compStr}</span>
         </div>
         <div>
-          <p className="font-bold text-[14px]">Almost there!</p>
-          <p className="text-[13px] text-gray-500 leading-snug mt-1">Complete tasks to reach 100%</p>
+          <p className="font-bold text-[14px]">{compVal === 100 ? 'Profile Complete!' : 'Almost there!'}</p>
+          <p className="text-[13px] text-gray-500 leading-snug mt-1">{compVal === 100 ? 'Great job filling out your profile.' : 'Complete tasks to reach 100%'}</p>
         </div>
       </div>
 
       <div className="space-y-3.5 mb-8 flex-1">
         <div className="flex items-center gap-3 text-[13px]">
-          <CheckCircle2 size={18} className="text-[#D4AF37]" strokeWidth={2.5} />
-          <span className="text-gray-500">Basic Company Details</span>
+          {hasBasicDetails ? <CheckCircle2 size={18} className="text-[#D4AF37]" strokeWidth={2.5} /> : <Circle size={18} className="text-gray-300" strokeWidth={2} />}
+          <span className={hasBasicDetails ? "text-gray-500" : "font-bold text-[#0F172A]"}>Basic Company Details</span>
         </div>
         <div className="flex items-center gap-3 text-[13px]">
-          <CheckCircle2 size={18} className="text-[#D4AF37]" strokeWidth={2.5} />
-          <span className="text-gray-500">Upload Certifications</span>
+          {hasCerts ? <CheckCircle2 size={18} className="text-[#D4AF37]" strokeWidth={2.5} /> : <Circle size={18} className="text-gray-300" strokeWidth={2} />}
+          <span className={hasCerts ? "text-gray-500" : "font-bold text-[#0F172A]"}>Upload Certifications</span>
         </div>
         <div className="flex items-center gap-3 text-[13px]">
-          <Circle size={18} className="text-gray-300" strokeWidth={2} />
-          <span className="font-bold text-[#0F172A]">Add Product Catalog <span className="text-red-500">*</span></span>
+          {hasProducts ? <CheckCircle2 size={18} className="text-[#D4AF37]" strokeWidth={2.5} /> : <Circle size={18} className="text-gray-300" strokeWidth={2} />}
+          <span className={hasProducts ? "text-gray-500" : "font-bold text-[#0F172A]"}>Add Product Catalog</span>
         </div>
         <div className="flex items-center gap-3 text-[13px]">
-          <Circle size={18} className="text-gray-300" strokeWidth={2} />
-          <span className="text-gray-500">Define Shipping Zones</span>
+          {hasShipping ? <CheckCircle2 size={18} className="text-[#D4AF37]" strokeWidth={2.5} /> : <Circle size={18} className="text-gray-300" strokeWidth={2} />}
+          <span className={hasShipping ? "text-gray-500" : "font-bold text-[#0F172A]"}>Define Shipping Zones</span>
         </div>
       </div>
 
