@@ -19,7 +19,15 @@ import StatCard from '../../../Components/admin-components/content/StatCard';
 import SectionCard from '../../../Components/admin-components/content/SectionCard';
 import { Link } from 'react-router-dom';
 import { Modal, Form, Input, message, Button, Collapse } from 'antd';
-import { useGetPagesQuery, useCreatePageMutation, useUpdatePageMutation } from '../../../redux/features/cms/cmsApi';
+import { 
+  useGetPagesQuery, 
+  useCreatePageMutation, 
+  useUpdatePageMutation,
+  useGetBannersQuery,
+  useCreateBannerMutation,
+  useUpdateBannerMutation,
+  useDeleteBannerMutation
+} from '../../../redux/features/cms/cmsApi';
 
 const ContentManagement = () => {
   const { data: pagesResponse } = useGetPagesQuery();
@@ -38,6 +46,14 @@ const ContentManagement = () => {
   const [faqForm] = Form.useForm();
   const [policyForm] = Form.useForm();
   const [helpCenterForm] = Form.useForm();
+  
+  // Banners
+  const { data: bannersResponse } = useGetBannersQuery();
+  const [createBanner] = useCreateBannerMutation();
+  const [updateBanner] = useUpdateBannerMutation();
+  const [deleteBanner] = useDeleteBannerMutation();
+  const [isBannerModalVisible, setIsBannerModalVisible] = useState(false);
+  const [bannerForm] = Form.useForm();
 
   const showFaqModal = () => {
     if (faqPage && faqPage.htmlContent) {
@@ -150,6 +166,36 @@ const ContentManagement = () => {
     }
   };
 
+  const showBannerModal = () => {
+    bannerForm.resetFields();
+    setIsBannerModalVisible(true);
+  };
+
+  const handleBannerSubmit = async (values) => {
+    try {
+      await createBanner({
+        title: values.title,
+        imageUrl: values.imageUrl,
+        linkTarget: values.linkTarget,
+        isActive: values.isActive ?? true
+      }).unwrap();
+      message.success('Banner added successfully!');
+      bannerForm.resetFields();
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to add banner');
+    }
+  };
+
+  const handleDeleteBanner = async (id) => {
+    try {
+      await deleteBanner(id).unwrap();
+      message.success('Banner deleted');
+    } catch (err) {
+      message.error('Failed to delete banner');
+    }
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto bg-[#FAFAFA] min-h-screen mt-16">
       {/* Header */}
@@ -206,6 +252,14 @@ const ContentManagement = () => {
             badgeType="success"
             icon={<HelpCircle size={20} />}
             onEdit={showFaqModal}
+          />
+          <SectionCard
+            title="Banners"
+            description="Manage promotional banners and announcements shown across the platform."
+            badgeText="Active"
+            badgeType="success"
+            icon={<ImageIcon size={20} />}
+            onEdit={showBannerModal}
           />
           <SectionCard
             title="Help Center Articles"
@@ -457,6 +511,60 @@ const ContentManagement = () => {
             </Collapse.Panel>
           </Collapse>
         </Form>
+      </Modal>
+
+      {/* Banners Modal */}
+      <Modal 
+        title="Manage Banners" 
+        open={isBannerModalVisible} 
+        onCancel={() => setIsBannerModalVisible(false)}
+        footer={null}
+        width={800}
+      >
+        <div className="mt-4 max-h-[60vh] overflow-y-auto px-2">
+          {/* List existing banners */}
+          <div className="mb-8">
+            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 border-b pb-2">Active Banners</h3>
+            {bannersResponse?.data?.length === 0 ? (
+              <p className="text-gray-500 text-sm">No active banners found.</p>
+            ) : (
+              <div className="space-y-4">
+                {bannersResponse?.data?.map(banner => (
+                  <div key={banner._id} className="flex items-center gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <img src={banner.imageUrl} alt={banner.title} className="w-24 h-16 object-cover rounded shadow-sm border border-gray-200" />
+                    <div className="flex-1">
+                      <h4 className="font-bold text-sm text-gray-900">{banner.title}</h4>
+                      <p className="text-xs text-gray-500 font-mono mt-1">{banner.linkTarget || 'No link'}</p>
+                    </div>
+                    <Button type="text" danger onClick={() => handleDeleteBanner(banner._id)}>Delete</Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Add New Banner</h3>
+            <Form form={bannerForm} layout="vertical" onFinish={handleBannerSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Form.Item name="title" label="Banner Title" rules={[{ required: true, message: 'Please enter title' }]}>
+                  <Input placeholder="e.g. Summer Sale" />
+                </Form.Item>
+                <Form.Item name="linkTarget" label="Link Target (Optional)">
+                  <Input placeholder="e.g. /suppliers/featured" />
+                </Form.Item>
+              </div>
+              <Form.Item name="imageUrl" label="Image URL" rules={[{ required: true, message: 'Please enter image URL' }]}>
+                <Input placeholder="https://example.com/image.jpg" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" style={{ backgroundColor: '#d9a05b', borderColor: '#d9a05b' }}>
+                  Create Banner
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+        </div>
       </Modal>
     </div>
   );
