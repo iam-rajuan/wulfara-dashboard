@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Download, Plus } from "lucide-react";
 import { toast } from "react-toastify";
-import { useGetRfqsQuery, useCreateRfqMutation } from "../../../redux/features/rfqs/rfqsApi";
+import { useGetRfqsQuery, useCreateRfqMutation, useGetRfqStatsQuery } from "../../../redux/features/rfqs/rfqsApi";
 import RfqMetrics from "../../../Components/admin-components/rfqs/RfqMetrics";
 import RfqFilters from "../../../Components/admin-components/rfqs/RfqFilters";
 import RfqTable from "../../../Components/admin-components/rfqs/RfqTable";
@@ -9,9 +9,11 @@ import ManualEntryModal from "../../../Components/admin-components/rfqs/ManualEn
 
 export default function RfqManagement() {
   const { data: rfqsResponse, isLoading } = useGetRfqsQuery();
+  const { data: statsResponse } = useGetRfqStatsQuery();
   const [createRfq] = useCreateRfqMutation();
   
   const rfqs = rfqsResponse?.data || [];
+  const stats = statsResponse?.data || null;
 
   const rfqsList = useMemo(() => {
     return rfqs.map(rfq => ({
@@ -136,7 +138,7 @@ export default function RfqManagement() {
 
       {/* Main Content Area */}
       <div className="px-6 lg:px-8 max-w-[1400px] mx-auto">
-        <RfqMetrics />
+        <RfqMetrics data={stats} />
         <RfqFilters 
           searchTerm={searchTerm} setSearchTerm={setSearchTerm}
           statusFilter={statusFilter} setStatusFilter={setStatusFilter}

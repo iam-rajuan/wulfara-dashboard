@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useGetRfqQuery, useGetRfqMessagesQuery, useUpdateRfqStatusMutation } from "../../../redux/features/rfqs/rfqsApi";
-import { ChevronRight, FileText, Check } from "lucide-react";
+import { ChevronRight, FileText, Check, AlertTriangle } from "lucide-react";
 import DisputeMetrics from "../../../Components/admin-components/rfqs/dispute/DisputeMetrics";
 import DisputeProfiles from "../../../Components/admin-components/rfqs/dispute/DisputeProfiles";
 import DisputeScope from "../../../Components/admin-components/rfqs/dispute/DisputeScope";
@@ -110,6 +110,22 @@ export default function RfqDetails() {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
+            {rfq.status === 'disputed' && (
+               <button 
+                 onClick={() => handleUpdateStatus('resolved')}
+                 className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-green-500 border border-green-500 rounded-md text-[13px] font-extrabold text-white hover:bg-green-600 transition-colors shadow-sm">
+                 <Check size={16} />
+                 Mark Resolved
+               </button>
+            )}
+            {rfq.status !== 'closed' && rfq.status !== 'disputed' && rfq.status !== 'resolved' && (
+               <button 
+                 onClick={() => handleUpdateStatus('disputed')}
+                 className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md text-[13px] font-extrabold text-red-600 hover:bg-red-100 transition-colors shadow-sm">
+                 <AlertTriangle size={16} />
+                 Mark Disputed
+               </button>
+            )}
             {rfq.status !== 'closed' && (
                <button 
                  onClick={() => handleUpdateStatus('closed')}

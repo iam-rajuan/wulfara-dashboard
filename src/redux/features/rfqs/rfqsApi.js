@@ -6,6 +6,10 @@ export const rfqsApi = apiSlice.injectEndpoints({
       query: () => '/rfqs',
       providesTags: ['Rfq'],
     }),
+    getRfqStats: builder.query({
+      query: () => '/rfqs/stats',
+      providesTags: ['Rfq'],
+    }),
     getRfq: builder.query({
       query: (id) => `/rfqs/${id}`,
       providesTags: (result, error, id) => [{ type: 'Rfq', id }],
@@ -47,6 +51,7 @@ export const rfqsApi = apiSlice.injectEndpoints({
 
 export const {
   useGetRfqsQuery,
+  useGetRfqStatsQuery,
   useGetRfqQuery,
   useCreateRfqMutation,
   useUpdateRfqStatusMutation,
