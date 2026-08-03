@@ -8,14 +8,28 @@ const ForgatePassword = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     setLoading(true);
-    // Simulate sending reset email
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: values.email, isDashboard: true }),
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send reset email');
+      }
+      
       message.success("Reset instructions sent to your email!");
+      // We don't need to navigate to verify-code since they will receive a link.
+      // We can just keep them here or redirect to login.
+    } catch (error) {
+      message.error(error.message);
+    } finally {
       setLoading(false);
-      navigate("/verify-code");
-    }, 1000);
+    }
   };
 
   return (

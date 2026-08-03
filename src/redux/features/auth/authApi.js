@@ -19,7 +19,14 @@ export const authApi = apiSlice.injectEndpoints({
     getMe: builder.query({
       query: () => '/auth/me',
     }),
+    verifyEmail: builder.mutation({
+      query: (data) => ({
+        url: '/auth/verify-email',
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 });
 
-export const { useLoginMutation, useRegisterMutation, useGetMeQuery } = authApi;
+export const { useLoginMutation, useRegisterMutation, useGetMeQuery, useVerifyEmailMutation } = authApi;

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCredentials } from '../../../redux/features/auth/authSlice';
-import { useRegisterMutation } from '../../../redux/features/auth/authApi';
-import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake } from 'lucide-react';
+import { useRegisterMutation, useVerifyEmailMutation } from '../../../redux/features/auth/authApi';
+import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake, X } from 'lucide-react';
 import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../svglogos/SvgIcons";
 
 const SignUp = () => {
@@ -27,6 +27,9 @@ const SignUp = () => {
 
   const { user } = useSelector((state) => state.auth);
   const [register, { isLoading, isError, error }] = useRegisterMutation();
+  const [verifyEmail, { isLoading: isVerifying }] = useVerifyEmailMutation();
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
 
   useEffect(() => {
     if (isError && error) {
@@ -59,9 +62,21 @@ const SignUp = () => {
     const userData = { name, email, password, companyName, phone, role: 'supplier' };
     
     try {
-      const { token } = await register(userData).unwrap();
-      
-      // Store token so the fetch can be authenticated if needed
+      await register(userData).unwrap();
+      setShowOtpModal(true);
+    } catch (err) {
+      setLocalError(err.data?.message || 'Registration failed');
+    }
+  };
+
+  const handleVerifyEmail = async (e) => {
+    e.preventDefault();
+    if (!otpCode) {
+      setLocalError("Please enter the verification code");
+      return;
+    }
+    try {
+      const { token } = await verifyEmail({ email, verifyCode: otpCode }).unwrap();
       localStorage.setItem("token", token);
       
       const response = await fetch("http://localhost:5000/api/v1/auth/me", {
@@ -72,7 +87,7 @@ const SignUp = () => {
       dispatch(setCredentials({ user: userResponse.data, token }));
       navigate("/dashboard");
     } catch (err) {
-      setLocalError(err.data?.message || 'Registration failed');
+      setLocalError(err.data?.message || "Verification failed");
     }
   };
 
@@ -331,6 +346,65 @@ const SignUp = () => {
           </div>
         </div>
       </div>
+
+      {/* OTP Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <button 
+              onClick={() => setShowOtpModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-[#dca12f]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-[#dca12f]" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
+              <p className="text-gray-600 text-[15px]">
+                We've sent a 6-digit verification code to<br/>
+                <span className="font-semibold text-gray-900">{email}</span>
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyEmail} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2 text-center">
+                  Enter Verification Code
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => {
+                    setOtpCode(e.target.value.replace(/\D/g, ''));
+                    setLocalError('');
+                  }}
+                  className="w-full text-center text-3xl font-bold tracking-[0.5em] px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-black placeholder-gray-300 focus:outline-none focus:border-[#dca12f] focus:ring-2 focus:ring-[#dca12f]/20 transition-all"
+                  placeholder="------"
+                  autoFocus
+                />
+              </div>
+
+              {localError && (
+                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm font-medium text-center">
+                  {localError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isVerifying || otpCode.length !== 6}
+                className="w-full flex items-center justify-center bg-[#1b2b3a] hover:bg-[#111c26] text-white font-bold py-3.5 px-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isVerifying ? 'Verifying...' : 'Verify Email & Continue'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

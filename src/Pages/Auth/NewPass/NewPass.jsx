@@ -1,7 +1,7 @@
 import { Form, Input, Checkbox, Typography, message } from "antd";
 import { FaRegEyeSlash } from "react-icons/fa";
 import { FaRegEye } from "react-icons/fa6";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import brandlogo from "../../../assets/image/logo.png";
 
@@ -20,20 +20,36 @@ const NewPass = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
+  const { token } = useParams();
+  
   const onFinish = async (values) => {
-    setLoading(true);
-    const { email, newPassword, confirmPassword } = values;
+    const { newPassword, confirmPassword } = values;
 
-    // Simulate API call
-    setTimeout(() => {
-      if (newPassword !== confirmPassword) {
-        message.error("Passwords do not match!");
-      } else {
-        message.success("Password changed successfully");
-        navigate("/sign-in");
+    if (newPassword !== confirmPassword) {
+      message.error("Passwords do not match!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/auth/reset-password/${token}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to reset password');
       }
+
+      message.success("Password changed successfully");
+      navigate("/sign-in");
+    } catch (error) {
+      message.error(error.message);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

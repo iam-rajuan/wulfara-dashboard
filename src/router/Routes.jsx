@@ -87,7 +87,7 @@ export const router = createBrowserRouter([
     element: <VerifyCode />,
   },
   {
-    path: "/new-password",
+    path: "/new-password/:token",
     element: <NewPass />,
   },
   {
