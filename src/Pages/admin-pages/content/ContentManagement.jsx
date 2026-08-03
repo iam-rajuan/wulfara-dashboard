@@ -390,6 +390,14 @@ const ContentManagement = () => {
                     </Form.Item>
                     <Form.Item
                       {...restField}
+                      name={[name, 'topic']}
+                      label="Topic"
+                      rules={[{ required: true, message: 'Missing topic' }]}
+                    >
+                      <Input placeholder="e.g. General Questions, Suppliers, RFQ Protocols" />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
                       name={[name, 'answer']}
                       label="Answer"
                       rules={[{ required: true, message: 'Missing answer' }]}
