@@ -2,22 +2,23 @@ import React from "react";
 import { MoreVertical } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const data = [
-  { name: 'Jan', revenue: 4000 },
-  { name: 'Feb', revenue: 3000 },
-  { name: 'Mar', revenue: 5000 },
-  { name: 'Apr', revenue: 4500 },
-  { name: 'May', revenue: 6000 },
-  { name: 'Jun', revenue: 5500 },
-  { name: 'Jul', revenue: 7000 },
-  { name: 'Aug', revenue: 8500 },
-  { name: 'Sep', revenue: 7500 },
-  { name: 'Oct', revenue: 9000 },
-  { name: 'Nov', revenue: 8000 },
-  { name: 'Dec', revenue: 10000 },
+const fallbackData = [
+  { name: 'Jan', revenue: 0 },
+  { name: 'Feb', revenue: 0 },
+  { name: 'Mar', revenue: 0 },
+  { name: 'Apr', revenue: 0 },
+  { name: 'May', revenue: 0 },
+  { name: 'Jun', revenue: 0 },
+  { name: 'Jul', revenue: 0 },
+  { name: 'Aug', revenue: 0 },
+  { name: 'Sep', revenue: 0 },
+  { name: 'Oct', revenue: 0 },
+  { name: 'Nov', revenue: 0 },
+  { name: 'Dec', revenue: 0 },
 ];
 
-export default function RevenueOverview() {
+export default function RevenueOverview({ chartData }) {
+  const data = chartData || fallbackData;
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-full lg:col-span-2">
       <div className="flex justify-between items-center mb-6">

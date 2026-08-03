@@ -8,7 +8,7 @@ export default function RFQReply() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   
-  const { data: rfqResponse } = useGetRfqQuery(id);
+  const { data: rfqResponse, isLoading } = useGetRfqQuery(id);
   const [replyToRfq] = useReplyToRfqMutation();
   const [updateStatus] = useUpdateRfqStatusMutation();
   
@@ -32,6 +32,10 @@ export default function RFQReply() {
     targetDate: 'N/A', // Assuming targetDate isn't directly on RFQ yet
     buyerName: rawRfq.buyerUser?.name || rawRfq.buyerName || 'Unknown Buyer'
   } : null;
+
+  if (isLoading || !rfq) {
+    return <div className="p-8 mt-16 text-center text-gray-500 font-bold">Loading RFQ details...</div>;
+  }
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

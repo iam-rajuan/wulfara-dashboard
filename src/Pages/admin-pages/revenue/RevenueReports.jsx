@@ -8,12 +8,15 @@ import {
   PieChart, Pie, Cell 
 } from 'recharts';
 import { useGetAllPaymentsQuery } from '../../../redux/features/subscriptions/subscriptionsApi';
+import { useGetDashboardStatsQuery } from '../../../redux/features/reports/reportsApi';
 
 const RevenueReports = () => {
   const [timeframe, setTimeframe] = useState('Last 12 Months');
   const [isExporting, setIsExporting] = useState(false);
-  const { data: paymentsResponse, isLoading } = useGetAllPaymentsQuery();
+  const { data: paymentsResponse, isLoading: isPaymentsLoading } = useGetAllPaymentsQuery();
+  const { data: statsResponse, isLoading: isStatsLoading } = useGetDashboardStatsQuery();
   const payments = paymentsResponse?.data || [];
+  const chartData = statsResponse?.data?.chartData || [];
 
   const totalRevenue = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
   const formattedRevenue = totalRevenue >= 1000 ? (totalRevenue / 1000).toFixed(2) + 'K' : totalRevenue.toString();
@@ -27,20 +30,28 @@ const RevenueReports = () => {
     { title: 'PAID SUPPLIERS', value: paidSuppliersCount.toString(), icon: <Tag size={18} />, color: 'text-gray-700', sub: null },
   ];
 
-  // Bar Chart Data (Revenue by Month)
-  const defaultBarData = [
-    { name: 'JUL', uv: 2500, fill: '#f1f5f9' },
-    { name: 'AUG', uv: 3200, fill: '#f1f5f9' },
-    { name: 'SEP', uv: 2800, fill: '#f1f5f9' },
-    { name: 'OCT', uv: 4000, fill: '#e2e8f0' },
-    { name: 'NOV', uv: 4800, fill: '#e2e8f0' },
-    { name: 'DEC', uv: 5500, fill: '#cbd5e1' },
-    { name: 'JAN', uv: 4200, fill: '#cbd5e1' },
-    { name: 'FEB', uv: 5000, fill: '#cbd5e1' },
-    { name: 'MAR', uv: 5800, fill: '#86efac' },
-    { name: 'APR', uv: 6200, fill: '#4ade80' },
-    { name: 'MAY', uv: 5500, fill: '#86efac' },
-    { name: 'JUN', uv: 5800, fill: '#dcb14b' },
+  // Bar Chart Data (Revenue by Month) mapped from dynamic chartData
+  const defaultBarData = chartData.length > 0 ? chartData.map((d, index) => {
+    // Dynamic fill colors to match previous design aesthetics based on recent months
+    let fill = '#f1f5f9';
+    if (index >= 9) fill = '#4ade80'; // Last 3 months green
+    else if (index >= 6) fill = '#cbd5e1'; 
+    else if (index >= 3) fill = '#e2e8f0';
+    if (index === 11) fill = '#dcb14b'; // Current month gold
+    return { name: d.name.toUpperCase(), uv: d.revenue, fill };
+  }) : [
+    { name: 'JAN', uv: 0, fill: '#f1f5f9' },
+    { name: 'FEB', uv: 0, fill: '#f1f5f9' },
+    { name: 'MAR', uv: 0, fill: '#f1f5f9' },
+    { name: 'APR', uv: 0, fill: '#e2e8f0' },
+    { name: 'MAY', uv: 0, fill: '#e2e8f0' },
+    { name: 'JUN', uv: 0, fill: '#cbd5e1' },
+    { name: 'JUL', uv: 0, fill: '#cbd5e1' },
+    { name: 'AUG', uv: 0, fill: '#cbd5e1' },
+    { name: 'SEP', uv: 0, fill: '#86efac' },
+    { name: 'OCT', uv: 0, fill: '#4ade80' },
+    { name: 'NOV', uv: 0, fill: '#86efac' },
+    { name: 'DEC', uv: 0, fill: '#dcb14b' },
   ];
 
   const allTimeBarData = defaultBarData.map(d => ({ ...d, uv: d.uv * 1.8 }));
@@ -323,7 +334,7 @@ const RevenueReports = () => {
           <Table 
             columns={columns} 
             dataSource={tableData} 
-            loading={isLoading}
+            loading={isPaymentsLoading}
             pagination={{
               pageSize: 5,
               showSizeChanger: true,

@@ -1,17 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import MessageSidebar from '../../Components/Messages/MessageSidebar';
 import MessageContent from '../../Components/Messages/MessageContent';
 import { Plus } from 'lucide-react';
+import { useGetConversationsQuery } from '../../redux/features/messages/messagesApi';
 
 export default function Messages() {
+  const [searchParams] = useSearchParams();
+  const newUserId = searchParams.get('new');
+  const newUserName = searchParams.get('name');
+
   const [activeTab, setActiveTab] = useState('Inbox');
-  const [selectedChat, setSelectedChat] = useState(null);
+  const [selectedChat, setSelectedChat] = useState(newUserId ? `new-${newUserId}` : null);
+  
+  const { data: conversationsResponse, isLoading } = useGetConversationsQuery(undefined, { pollingInterval: 30000 });
+  const rawConversations = conversationsResponse?.data || [];
+
+  const conversations = useMemo(() => {
+    let list = [...rawConversations];
+    
+    if (newUserId && newUserName) {
+      const exists = list.some((c) => c.participants?.some((p) => p._id === newUserId));
+      if (!exists) {
+        list.unshift({
+          _id: `new-${newUserId}`,
+          participants: [{ _id: newUserId, firstName: newUserName, lastName: '', role: 'buyer' }],
+          lastMessage: { text: "Start a new conversation..." },
+          lastMessageAt: new Date().toISOString(),
+          hasUnread: false
+        });
+      }
+    }
+    
+    return list;
+  }, [rawConversations, newUserId, newUserName]);
 
   const tabs = [
     { id: 'Inbox', label: 'Inbox' },
     { id: 'Sourcing', label: 'Sourcing' },
     { id: 'RFQ', label: 'RFQ Conversations' },
-    { id: 'Unread', label: 'Unread', badge: '4' }
+    { id: 'Unread', label: 'Unread', badge: conversations.filter(c => c.hasUnread).length || null }
   ];
 
   return (
@@ -58,6 +86,8 @@ export default function Messages() {
         {/* Left Sidebar */}
         <div className="lg:col-span-4 xl:col-span-3 h-full min-h-0">
           <MessageSidebar
+            conversations={conversations}
+            isLoading={isLoading}
             activeTab={activeTab}
             selectedChat={selectedChat}
             setSelectedChat={setSelectedChat}

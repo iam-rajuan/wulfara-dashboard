@@ -1,29 +1,68 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Smile, Paperclip, Send, FileText, Image as ImageIcon, File, X } from 'lucide-react';
+import { io } from 'socket.io-client';
+import { useGetMessagesQuery, useSendMessageMutation } from '../../redux/features/messages/messagesApi';
+import { useSelector } from 'react-redux';
 
 export default function MessageActiveChat({ chatId }) {
-  const [message, setMessage] = useState("Hello, I attached our quote document and product specification sheet...");
-  const [attachments, setAttachments] = useState([
-    { id: 1, name: 'quote-document.pdf', size: '1.2 MB', ext: 'PDF', type: 'pdf' },
-    { id: 2, name: 'factory-product-photo.jpg', size: '4.8 MB', ext: 'JPG', type: 'image', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop' },
-    { id: 3, name: 'steel-spec-sheet.docx', size: '856 KB', ext: 'DOCX', type: 'doc' },
-  ]);
-  const [chatHistory, setChatHistory] = useState([
-    {
-      id: 1,
-      type: 'incoming',
-      text: 'Can you confirm if the primary carbon steel sheets meet the ASTM A36 standard for the upcoming Q3 shipment?',
-      time: 'Yesterday, 4:12 PM',
-      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop',
-      showDate: 'Yesterday'
-    },
-    {
-      id: 2,
-      type: 'outgoing',
-      text: "Yes, absolutely. All our structural components are ASTM certified. I'll get the documentation over to you shortly.",
-      time: 'Yesterday, 4:15 PM'
+  const { user } = useSelector(state => state.auth || { user: { _id: "admin" } });
+  const isNewChat = String(chatId).startsWith('new-');
+  const queryId = isNewChat ? "skip" : String(chatId);
+  const { data: messagesResponse, isLoading } = useGetMessagesQuery(queryId, { skip: !chatId || isNewChat });
+  const [sendMessageApi, { isLoading: isSending }] = useSendMessageMutation();
+
+  const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState([]);
+  const [socketMessages, setSocketMessages] = useState([]);
+  const socketRef = useRef(null);
+
+  const rawMessages = messagesResponse?.data || [];
+  
+  // Connect to socket when chat opens
+  useEffect(() => {
+    socketRef.current = io('http://localhost:5000');
+    socketRef.current.emit('join_room', chatId);
+
+    socketRef.current.on('receive_message', (newMsg) => {
+      setSocketMessages(prev => [...prev, newMsg]);
+    });
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }, [chatId]);
+
+  // Combine database messages and real-time socket messages
+  const chatHistory = [...rawMessages, ...socketMessages].map((msg, index) => {
+    // Check if it's already formatted from mock data (graceful fallback)
+    if (msg.type) return msg;
+
+    const isIncoming = msg.sender?.role === 'buyer' || (msg.sender?._id && user?._id && msg.sender._id !== user._id) || (msg.sender?.id && user?.id && msg.sender.id !== user.id) || (msg.sender !== 'me' && typeof msg.sender === 'string');
+    const msgTime = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    let msgAttachments = [];
+    if (msg.isFile) {
+      msgAttachments.push({
+        id: msg._id,
+        name: msg.fileName,
+        size: 'Unknown',
+        ext: msg.fileName?.split('.').pop()?.toUpperCase() || 'FILE',
+        type: msg.fileUrl?.match(/\.(jpeg|jpg|gif|png)$/) ? 'image' : 'doc',
+        url: msg.fileUrl
+      });
     }
-  ]);
+
+    const senderInitials = msg.sender?.firstName ? `${msg.sender.firstName.charAt(0)}${msg.sender.lastName?.charAt(0) || ''}`.toUpperCase() : (msg.sender?.role === 'buyer' ? 'B' : 'U');
+
+    return {
+      id: msg._id || index,
+      type: isIncoming ? 'incoming' : 'outgoing',
+      text: msg.text,
+      time: msgTime,
+      attachments: msgAttachments,
+      avatarInitials: senderInitials,
+    };
+  });
   
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -32,29 +71,42 @@ export default function MessageActiveChat({ chatId }) {
   const commonEmojis = ['😀', '😂', '🥰', '😎', '👍', '🙏', '🔥', '✨', '🎉', '💡', '✅', '👀'];
 
   useEffect(() => {
-    // Slight delay to ensure DOM is updated before scrolling
     setTimeout(() => {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 50);
   }, [chatHistory]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim() && attachments.length === 0) return;
 
-    const now = new Date();
-    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    try {
+      // If there are attachments, normally we'd upload to S3 first. For now, we simulate.
+      const isFile = attachments.length > 0;
+      const fileName = isFile ? attachments[0].name : null;
+      const fileUrl = isFile ? attachments[0].url : null;
 
-    const newMessage = {
-      id: Date.now(),
-      type: 'outgoing',
-      text: message,
-      time: `Today, ${timeString}`,
-      attachments: attachments
-    };
+      const payload = {
+        text: message,
+        isFile,
+        fileName,
+        fileUrl,
+        ...(isNewChat ? { recipientId: String(chatId).split('-')[1] } : {})
+      };
 
-    setChatHistory([...chatHistory, newMessage]);
-    setMessage("");
-    setAttachments([]);
+      const res = await sendMessageApi({ conversationId: isNewChat ? "new" : chatId, data: payload }).unwrap();
+      const savedMsg = res.data;
+
+      // Broadcast to socket
+      socketRef.current.emit('send_message', { roomId: savedMsg.conversation || chatId, message: savedMsg });
+
+      // Add to local real-time state instantly
+      setSocketMessages(prev => [...prev, savedMsg]);
+      
+      setMessage("");
+      setAttachments([]);
+    } catch (err) {
+      console.error("Failed to send message", err);
+    }
   };
 
   const removeAttachment = (id) => {
@@ -116,7 +168,7 @@ export default function MessageActiveChat({ chatId }) {
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                      <span className="text-blue-700 font-bold text-[11px]">B</span>
+                      <span className="text-blue-700 font-bold text-[11px]">{msg.avatarInitials}</span>
                     </div>
                   )}
                   <div>

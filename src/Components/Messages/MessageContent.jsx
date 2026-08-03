@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, FileText, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import MessageActiveChat from './MessageActiveChat';
 
 export default function MessageContent({ selectedChat }) {
@@ -74,9 +75,11 @@ export default function MessageContent({ selectedChat }) {
         </p>
         
         <div className="flex items-center gap-4">
-          <button className="px-6 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] transition rounded-md text-[13px] font-bold text-white shadow-sm">
-            View RFQ Dashboard
-          </button>
+          <Link to="/rfqs">
+            <button className="px-6 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] transition rounded-md text-[13px] font-bold text-white shadow-sm cursor-pointer">
+              View RFQ Dashboard
+            </button>
+          </Link>
           <button className="px-6 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 transition rounded-md text-[13px] font-bold text-[#0F172A]">
             Help Center
           </button>

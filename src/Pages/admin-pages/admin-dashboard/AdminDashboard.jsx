@@ -5,8 +5,12 @@ import RevenueOverview from "../../../Components/admin-components/Dashboard/Reve
 import PriorityActions from "../../../Components/admin-components/Dashboard/PriorityActions";
 import RecentSupplierListings from "../../../Components/admin-components/Dashboard/RecentSupplierListings";
 import RecentRFQs from "../../../Components/admin-components/Dashboard/RecentRFQs";
+import { useGetDashboardStatsQuery } from "../../../redux/features/reports/reportsApi";
 
 export default function AdminDashboard() {
+  const { data: statsResponse, isLoading } = useGetDashboardStatsQuery();
+  const stats = statsResponse?.data || {};
+
   return (
     <div className="min-h-screen mt-16 p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans">
       <div className="mb-8">
@@ -23,54 +27,54 @@ export default function AdminDashboard() {
         <AdminStatCard
           title="Total Suppliers"
           icon={Building2}
-          value="1,248"
-          trend="+12.5%"
-          trendType="positive"
+          value={isLoading ? "..." : stats.totalSuppliers?.toLocaleString()}
+          trend={stats.newSuppliersLast30Days > 0 ? `+${stats.newSuppliersLast30Days} this month` : "No new this month"}
+          trendType={stats.newSuppliersLast30Days > 0 ? "positive" : "neutral"}
         />
         <AdminStatCard
-          title="Active Buyers"
+          title="Total Users"
           icon={Users}
-          value="8,430"
-          trend="+9.2%"
-          trendType="positive"
+          value={isLoading ? "..." : stats.totalUsers?.toLocaleString()}
+          trend="Lifetime"
+          trendType="neutral"
         />
         <AdminStatCard
           title="Pending Listings"
           icon={ClipboardList}
-          value="37"
+          value="-"
           trend="Needs review"
           trendType="warning"
         />
         <AdminStatCard
           title="Active Subscriptions"
           icon={CreditCard}
-          value="684"
-          trend="+4.8%"
-          trendType="positive"
+          value="-"
+          trend="Auto-syncing"
+          trendType="neutral"
         />
       </div>
 
       {/* Top Stats - Row 2 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <AdminStatCard
-          title="Revenue (MRR)"
+          title="Total Revenue"
           icon={DollarSign}
-          value="$52,890"
-          trend="+18.4%"
+          value={isLoading ? "..." : `$${stats.totalRevenue?.toLocaleString() || 0}`}
+          trend="Lifetime"
           trendType="positive"
         />
         <AdminStatCard
-          title="Open RFQs"
+          title="Total RFQs"
           icon={FileText}
-          value="214"
-          trend="Awaiting response"
+          value={isLoading ? "..." : stats.totalRfqs?.toLocaleString()}
+          trend="System total"
           trendType="neutral"
         />
         <AdminStatCard
-          title="User Growth (MTD)"
+          title="User Growth"
           icon={LineChart}
-          value="+1,320"
-          trend="Strong momentum"
+          value="+"
+          trend="Growing network"
           trendType="positive"
           trendLabel="↑"
         />
@@ -80,7 +84,7 @@ export default function AdminDashboard() {
 
       {/* Middle Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <RevenueOverview />
+        <RevenueOverview chartData={stats.chartData} />
         <PriorityActions />
       </div>
 

@@ -1,46 +1,30 @@
 import React from 'react';
 import { Filter } from 'lucide-react';
 
-export default function MessageSidebar({ activeTab, selectedChat, setSelectedChat }) {
-  const allChats = [
-    {
-      id: 1,
-      buyerInitials: "BA",
-      buyerName: "Buyer A",
-      avatarBg: "bg-blue-100 text-blue-700",
-      time: "12 min ago",
-      tags: [{ label: "RFQ", color: "bg-orange-100 text-orange-700" }, { label: "Unread", color: "bg-gray-100 text-gray-600" }],
-      preview: "Please provide the updated pricing for the industrial turbine components...",
-      isActive: true, // Just for visual in this specific screenshot matching
-    },
-    {
-      id: 2,
-      isLogo: true,
-      buyerName: "Global Construction Group",
-      time: "1h ago",
-      tags: [{ label: "Attachment", color: "bg-yellow-50 text-yellow-700 border border-yellow-200" }, { label: "Open", color: "bg-gray-100 text-gray-600" }],
-      preview: "Sent a PDF document",
-      isItalic: true
-    },
-    {
-      id: 3,
-      buyerInitials: "BB",
-      buyerName: "Buyer B",
-      avatarBg: "bg-gray-200 text-gray-700",
-      time: "2h ago",
-      tags: [{ label: "Negotiation", color: "bg-blue-50 text-blue-600" }, { label: "Unread", color: "bg-gray-100 text-gray-600" }],
-      preview: "We have reviewed your last proposal and would like to adjust the shipping..."
-    },
-    {
-      id: 4,
-      buyerInitials: "TC",
-      buyerName: "TechCorp Solutions",
-      avatarBg: "bg-orange-100 text-orange-800",
-      time: "Yesterday",
-      tags: [{ label: "Closed", color: "bg-gray-100 text-gray-500" }],
-      preview: "The order has been confirmed by our procurement team."
-    }
-  ];
+export default function MessageSidebar({ conversations = [], isLoading, activeTab, selectedChat, setSelectedChat }) {
+  const allChats = conversations.map((conv, idx) => {
+    // Determine the other participant
+    const otherUser = conv.participants?.find(p => p.role !== 'admin' && p.role !== 'supplier') || conv.participants?.[0] || {};
+    
+    // Create random background colors for avatars based on id
+    const bgColors = ["bg-blue-100 text-blue-700", "bg-gray-200 text-gray-700", "bg-orange-100 text-orange-800", "bg-yellow-100 text-yellow-700"];
+    const avatarBg = bgColors[idx % bgColors.length];
+    
+    const tags = [];
+    if (conv.rfq) tags.push({ label: `RFQ #${conv.rfq.rfqNumber || '...' }`, color: "bg-orange-100 text-orange-700" });
+    if (conv.status === 'closed') tags.push({ label: "Closed", color: "bg-gray-100 text-gray-500" });
+    else tags.push({ label: "Open", color: "bg-blue-50 text-blue-600" });
+    
+    return {
+      id: conv._id,
+      buyerInitials: otherUser.firstName ? `${otherUser.firstName.charAt(0)}${otherUser.lastName?.charAt(0) || ''}`.toUpperCase() : "U",
+      buyerName: otherUser.firstName ? `${otherUser.firstName} ${otherUser.lastName}` : "Unknown User",
+      avatarBg,
+      time: new Date(conv.lastMessageAt || Date.now()).toLocaleDateString(),
+      tags,
+      preview: conv.lastMessage?.text || "Started a new conversation...",
+    };
+  });
 
   // For dynamic filtering (mocking)
   const filteredChats = activeTab === 'Unread' 
