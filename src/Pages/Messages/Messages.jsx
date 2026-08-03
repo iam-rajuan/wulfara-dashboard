@@ -24,7 +24,7 @@ export default function Messages() {
       if (!exists) {
         list.unshift({
           _id: `new-${newUserId}`,
-          participants: [{ _id: newUserId, firstName: newUserName, lastName: '', role: 'buyer' }],
+          participants: [{ _id: newUserId, name: newUserName, role: 'buyer' }],
           lastMessage: { text: "Start a new conversation..." },
           lastMessageAt: new Date().toISOString(),
           hasUnread: false

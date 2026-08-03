@@ -17,8 +17,8 @@ export default function MessageSidebar({ conversations = [], isLoading, activeTa
     
     return {
       id: conv._id,
-      buyerInitials: otherUser.firstName ? `${otherUser.firstName.charAt(0)}${otherUser.lastName?.charAt(0) || ''}`.toUpperCase() : "U",
-      buyerName: otherUser.firstName ? `${otherUser.firstName} ${otherUser.lastName}` : "Unknown User",
+      buyerInitials: otherUser.name ? otherUser.name.charAt(0).toUpperCase() : "U",
+      buyerName: otherUser.name || "Unknown User",
       avatarBg,
       time: new Date(conv.lastMessageAt || Date.now()).toLocaleDateString(),
       tags,

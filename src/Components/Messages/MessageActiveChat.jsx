@@ -52,7 +52,7 @@ export default function MessageActiveChat({ chatId }) {
       });
     }
 
-    const senderInitials = msg.sender?.firstName ? `${msg.sender.firstName.charAt(0)}${msg.sender.lastName?.charAt(0) || ''}`.toUpperCase() : (msg.sender?.role === 'buyer' ? 'B' : 'U');
+    const senderInitials = msg.sender?.name ? `${msg.sender.name.charAt(0).toUpperCase()}` : (msg.sender?.role === 'buyer' ? 'B' : 'U');
 
     return {
       id: msg._id || index,
