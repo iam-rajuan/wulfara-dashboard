@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronRight, Printer, X, FileText, Image as ImageIcon, File, Paperclip, Send, MapPin, CheckCircle, Clock } from 'lucide-react';
+import { ChevronRight, Printer, X, FileText, Image as ImageIcon, File, Paperclip, Send, MapPin, CheckCircle, Clock, Star } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import { useGetRfqQuery, useGetRfqMessagesQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation } from '../../redux/features/rfqs/rfqsApi';
+import { useCreateReviewMutation } from '../../redux/features/reviews/reviewsApi';
 
 export default function RFQDetails() {
   const { id } = useParams();
@@ -13,6 +15,12 @@ export default function RFQDetails() {
   const { data: messagesResponse } = useGetRfqMessagesQuery(id);
   const [replyToRfq, { isLoading: isReplying }] = useReplyToRfqMutation();
   const [updateStatus] = useUpdateRfqStatusMutation();
+  const [createReview, { isLoading: isReviewing }] = useCreateReviewMutation();
+  
+  const { user } = useSelector((state) => state.auth);
+  
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
 
   const rawRfq = rfqResponse?.data;
   const messages = messagesResponse?.data || [];
@@ -79,6 +87,38 @@ export default function RFQDetails() {
     }
   };
 
+  const handleComplete = async () => {
+    if (rfq) {
+      if (window.confirm("Are you sure you want to mark this RFQ as completed?")) {
+        try {
+          await updateStatus({ id: rfq.rawId, status: 'resolved' }).unwrap();
+          alert("RFQ marked as completed.");
+        } catch (error) {
+          alert("Failed to complete RFQ");
+        }
+      }
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewText.trim()) {
+      alert("Please enter a review comment.");
+      return;
+    }
+    try {
+      await createReview({
+        supplierId: rawRfq.supplier._id || rawRfq.supplier,
+        rfqId: rfq.rawId,
+        rating: reviewRating,
+        comment: reviewText
+      }).unwrap();
+      alert("Review submitted successfully!");
+      setReviewText('');
+    } catch (err) {
+      alert(err.data?.message || "Failed to submit review");
+    }
+  };
+
   const handleDecline = async () => {
     if (rfq) {
       if (window.confirm("Are you sure you want to decline this RFQ?")) {
@@ -135,6 +175,15 @@ export default function RFQDetails() {
               <Printer size={16} strokeWidth={2.5} />
               Print
             </button>
+            {user?.role === 'buyer' && rfq.status !== 'RESOLVED' && rfq.status !== 'CLOSED' && rfq.status !== 'DECLINED' && (
+              <button 
+                onClick={handleComplete} 
+                className="px-4 py-2 bg-[#D1FAE5] hover:bg-[#A7F3D0] text-[#065F46] transition rounded-md text-[13px] font-bold shadow-sm flex items-center gap-2"
+              >
+                <CheckCircle size={16} strokeWidth={2.5} />
+                Complete
+              </button>
+            )}
             <button 
               onClick={handleDecline} 
               disabled={rfq.status === 'DECLINED'}
@@ -211,57 +260,88 @@ export default function RFQDetails() {
           )}
 
           {/* Reply to Request */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-[20px] font-bold text-[#0F172A] mb-4">Reply to Request</h2>
-            
-            <div className="border border-gray-200 rounded-lg overflow-hidden bg-[#F8F9FB]">
-              <textarea 
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full h-32 p-4 bg-transparent resize-none outline-none text-[13px] font-medium placeholder:text-gray-400"
-                placeholder="Type your response or quote details here..."
-              ></textarea>
-              
-              {attachedFile && (
-                <div className="px-4 pb-3 flex items-center gap-2">
-                  <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 px-3 py-1.5 rounded-md text-[12px] font-bold">
-                    <FileText size={14} />
-                    <span className="truncate max-w-[200px]">{attachedFile.name}</span>
-                    <button 
-                      onClick={() => setAttachedFile(null)}
-                      className="ml-1 hover:text-blue-900 transition"
-                    >
-                      <X size={14} />
+          {rfq.status === 'RESOLVED' && user?.role === 'buyer' ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-[20px] font-bold text-[#0F172A] mb-4">Leave a Review</h2>
+              <div className="border border-gray-200 rounded-lg overflow-hidden bg-[#F8F9FB] p-4">
+                <div className="flex gap-2 mb-4">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button key={star} onClick={() => setReviewRating(star)}>
+                      <Star size={24} className={star <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} />
                     </button>
-                  </div>
+                  ))}
                 </div>
-              )}
-              
-              <div className="bg-white border-t border-gray-200 p-3 flex justify-between items-center">
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  ref={fileInputRef} 
-                  onChange={handleFileAttach}
-                />
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 text-[13px] font-bold text-gray-600 hover:text-gray-900 transition px-2"
-                >
-                  <Paperclip size={16} />
-                  Attach Quote
-                </button>
-                <button 
-                  onClick={handleReplySubmit}
-                  disabled={!message.trim() && !attachedFile}
-                  className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] disabled:bg-[#e4ce84] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2"
-                >
-                  <Send size={16} strokeWidth={2.5} />
-                  Send Proposal
-                </button>
+                <textarea 
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  className="w-full h-24 p-3 bg-white border border-gray-200 rounded-lg resize-none outline-none text-[13px] font-medium placeholder:text-gray-400 mb-4"
+                  placeholder="Share your experience working with this supplier..."
+                ></textarea>
+                <div className="flex justify-end">
+                  <button 
+                    onClick={handleSubmitReview}
+                    disabled={isReviewing}
+                    className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] disabled:bg-[#e4ce84] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2"
+                  >
+                    <Star size={16} strokeWidth={2.5} />
+                    Submit Review
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-[20px] font-bold text-[#0F172A] mb-4">Reply to Request</h2>
+              
+              <div className="border border-gray-200 rounded-lg overflow-hidden bg-[#F8F9FB]">
+                <textarea 
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full h-32 p-4 bg-transparent resize-none outline-none text-[13px] font-medium placeholder:text-gray-400"
+                  placeholder="Type your response or quote details here..."
+                ></textarea>
+                
+                {attachedFile && (
+                  <div className="px-4 pb-3 flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 px-3 py-1.5 rounded-md text-[12px] font-bold">
+                      <FileText size={14} />
+                      <span className="truncate max-w-[200px]">{attachedFile.name}</span>
+                      <button 
+                        onClick={() => setAttachedFile(null)}
+                        className="ml-1 hover:text-blue-900 transition"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="bg-white border-t border-gray-200 p-3 flex justify-between items-center">
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileAttach}
+                  />
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 text-[13px] font-bold text-gray-600 hover:text-gray-900 transition px-2"
+                  >
+                    <Paperclip size={16} />
+                    Attach Quote
+                  </button>
+                  <button 
+                    onClick={handleReplySubmit}
+                    disabled={!message.trim() && !attachedFile}
+                    className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] disabled:bg-[#e4ce84] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2"
+                  >
+                    <Send size={16} strokeWidth={2.5} />
+                    Send Proposal
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
 

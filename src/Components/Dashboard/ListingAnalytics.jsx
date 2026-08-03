@@ -14,7 +14,7 @@ const colors = ['#0F172A', '#0F172A', '#0F172A', '#D4AF37', '#D4AF37', '#D4AF37'
 
 export default function ListingAnalytics({ 
   onTimeframeChange, 
-  timeframeText = "Last 30 Days",
+  timeframeText = "Last 6 Months",
   chartData = defaultData
 }) {
   return (
