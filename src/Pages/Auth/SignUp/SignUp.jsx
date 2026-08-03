@@ -202,7 +202,7 @@ const SignUp = () => {
                     />
                   </div>
                   <div className="text-[14px] text-gray-600">
-                    I agree to the <a href="#" className="text-[#0052CC] font-medium hover:underline">Terms</a> and <a href="#" className="text-[#0052CC] font-medium hover:underline">Supplier Listing Policy</a>.
+                    I agree to the <a href="http://localhost:3000/policies" target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Terms</a> and <a href="http://localhost:3000/policies" target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Supplier Listing Policy</a>.
                   </div>
                 </label>
               </div>
