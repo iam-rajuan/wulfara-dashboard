@@ -40,7 +40,7 @@ const SignIn = () => {
       
       // We can use a direct fetch here to get user details for the credentials, 
       // since useQuery is a hook and we are inside a callback.
-      const response = await fetch("http://localhost:5000/api/v1/auth/me", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const userData = await response.json();

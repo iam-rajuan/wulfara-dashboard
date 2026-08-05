@@ -79,7 +79,7 @@ const SignUp = () => {
       const { token } = await verifyEmail({ email, verifyCode: otpCode }).unwrap();
       localStorage.setItem("token", token);
       
-      const response = await fetch("http://localhost:5000/api/v1/auth/me", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const userResponse = await response.json();
@@ -217,7 +217,7 @@ const SignUp = () => {
                     />
                   </div>
                   <div className="text-[14px] text-gray-600">
-                    I agree to the <a href="http://localhost:3000/policies" target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Terms</a> and <a href="http://localhost:3000/policies" target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Supplier Listing Policy</a>.
+                    I agree to the <a href={`${import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000'}/policies`} target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Terms</a> and <a href={`${import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000'}/policies`} target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Supplier Listing Policy</a>.
                   </div>
                 </label>
               </div>
