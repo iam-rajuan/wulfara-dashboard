@@ -161,6 +161,40 @@ export default function BusinessProfileForm({ data, onChange, onLogoUpload, isUp
           </div>
         </div>
 
+        {/* Business Details */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Established Year</label>
+            <input 
+              type="text" 
+              value={data.establishedYear || ''} 
+              onChange={(e) => onChange({ ...data, establishedYear: e.target.value })}
+              placeholder="e.g. 1998" 
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-[13px] bg-[#F9FAFB] focus:bg-white focus:outline-none focus:border-gray-300 transition" 
+            />
+          </div>
+          <div>
+            <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Employee Count</label>
+            <input 
+              type="text" 
+              value={data.employeeCount || ''} 
+              onChange={(e) => onChange({ ...data, employeeCount: e.target.value })}
+              placeholder="e.g. 50-100" 
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-[13px] bg-[#F9FAFB] focus:bg-white focus:outline-none focus:border-gray-300 transition" 
+            />
+          </div>
+          <div>
+            <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Annual Turnover</label>
+            <input 
+              type="text" 
+              value={data.annualTurnover || ''} 
+              onChange={(e) => onChange({ ...data, annualTurnover: e.target.value })}
+              placeholder="e.g. $5M - $10M" 
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-[13px] bg-[#F9FAFB] focus:bg-white focus:outline-none focus:border-gray-300 transition" 
+            />
+          </div>
+        </div>
+
         {/* Products & MOQ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>

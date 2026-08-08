@@ -12,13 +12,13 @@ export default function Messages() {
 
   const [activeTab, setActiveTab] = useState('Inbox');
   const [selectedChat, setSelectedChat] = useState(newUserId ? `new-${newUserId}` : null);
-  
+
   const { data: conversationsResponse, isLoading } = useGetConversationsQuery(undefined, { pollingInterval: 30000 });
   const rawConversations = conversationsResponse?.data || [];
 
   const conversations = useMemo(() => {
     let list = [...rawConversations];
-    
+
     if (newUserId && newUserName) {
       const exists = list.some((c) => c.participants?.some((p) => p._id === newUserId));
       if (!exists) {
@@ -31,7 +31,7 @@ export default function Messages() {
         });
       }
     }
-    
+
     return list;
   }, [rawConversations, newUserId, newUserName]);
 
@@ -53,10 +53,6 @@ export default function Messages() {
             Manage conversations with buyers, RFQs, sourcing requests, and supplier inquiries.
           </p>
         </div>
-        <button className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center justify-center gap-2 shrink-0">
-          <Plus size={16} strokeWidth={2.5} />
-          New Broadcast
-        </button>
       </div>
 
       {/* Tabs */}
@@ -66,8 +62,8 @@ export default function Messages() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`pb-3 text-[13px] font-bold whitespace-nowrap transition border-b-2 flex items-center gap-2 ${activeTab === tab.id
-                ? 'border-[#0F172A] text-[#0F172A]'
-                : 'border-transparent text-gray-500 hover:text-gray-900'
+              ? 'border-[#0F172A] text-[#0F172A]'
+              : 'border-transparent text-gray-500 hover:text-gray-900'
               }`}
           >
             {tab.label}
