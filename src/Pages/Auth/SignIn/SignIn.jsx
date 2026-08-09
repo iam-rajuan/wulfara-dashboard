@@ -34,7 +34,12 @@ const SignIn = () => {
     e.preventDefault();
     setLocalError("");
     try {
-      const { token } = await login({ email, password }).unwrap();
+      const credentials = {
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+      };
+
+      const { token } = await login(credentials).unwrap();
       // Temporarily store token so the getMe query or manual fetch works
       localStorage.setItem("token", token);
       
