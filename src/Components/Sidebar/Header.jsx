@@ -4,6 +4,7 @@ import { RxHamburgerMenu } from "react-icons/rx";
 import { IoMdNotifications } from "react-icons/io";
 import { Bell, Check } from "lucide-react";
 import { io } from "socket.io-client";
+import { API_BASE_URL, SOCKET_BASE_URL } from "../../config/urls";
 
 const Header = ({ showDrawer }) => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -29,7 +30,7 @@ const Header = ({ showDrawer }) => {
     const fetchNotifications = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/notifications`, {
+        const res = await fetch(`${API_BASE_URL}/notifications`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -47,7 +48,7 @@ const Header = ({ showDrawer }) => {
     fetchNotifications();
 
     // Socket.io connection
-    const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000");
+    const socket = io(SOCKET_BASE_URL);
     
     socket.emit("join_room", user._id);
     
@@ -64,7 +65,7 @@ const Header = ({ showDrawer }) => {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/notifications/read-all`, {
+      const res = await fetch(`${API_BASE_URL}/notifications/read-all`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`
@@ -83,7 +84,7 @@ const Header = ({ showDrawer }) => {
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/notifications/${id}/read`, {
+      const res = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`

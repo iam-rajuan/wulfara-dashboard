@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import brandlogo from "../../../assets/image/logo.png";
+import { API_BASE_URL } from "../../../config/urls";
 
 
 const ForgatePassword = () => {
@@ -11,7 +12,7 @@ const ForgatePassword = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/auth/forgot-password`, {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: values.email, isDashboard: true }),

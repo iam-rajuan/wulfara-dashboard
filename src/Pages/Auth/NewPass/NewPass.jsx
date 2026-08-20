@@ -4,6 +4,7 @@ import { FaRegEye } from "react-icons/fa6";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import brandlogo from "../../../assets/image/logo.png";
+import { API_BASE_URL } from "../../../config/urls";
 
 
 const NewPass = () => {
@@ -32,7 +33,7 @@ const NewPass = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/auth/reset-password/${token}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password/${token}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: newPassword }),

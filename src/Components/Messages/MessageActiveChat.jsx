@@ -3,6 +3,7 @@ import { Smile, Paperclip, Send, FileText, Image as ImageIcon, File, X } from 'l
 import { io } from 'socket.io-client';
 import { useGetMessagesQuery, useSendMessageMutation } from '../../redux/features/messages/messagesApi';
 import { useSelector } from 'react-redux';
+import { SOCKET_BASE_URL } from '../../config/urls';
 
 export default function MessageActiveChat({ chatId }) {
   const { user } = useSelector(state => state.auth || { user: { _id: "admin" } });
@@ -20,7 +21,7 @@ export default function MessageActiveChat({ chatId }) {
   
   // Connect to socket when chat opens
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000');
+    socketRef.current = io(SOCKET_BASE_URL);
     socketRef.current.emit('join_room', chatId);
 
     socketRef.current.on('receive_message', (newMsg) => {

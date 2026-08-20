@@ -5,6 +5,7 @@ import { setCredentials } from '../../../redux/features/auth/authSlice';
 import { useRegisterMutation, useVerifyEmailMutation } from '../../../redux/features/auth/authApi';
 import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake, X } from 'lucide-react';
 import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../svglogos/SvgIcons";
+import { API_BASE_URL, POLICIES_URL } from '../../../config/urls';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ const SignUp = () => {
       const { token } = await verifyEmail({ email, verifyCode: otpCode }).unwrap();
       localStorage.setItem("token", token);
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const userResponse = await response.json();
@@ -217,7 +218,7 @@ const SignUp = () => {
                     />
                   </div>
                   <div className="text-[14px] text-gray-600">
-                    I agree to the <a href={`${import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000'}/policies`} target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Terms</a> and <a href={`${import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000'}/policies`} target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Supplier Listing Policy</a>.
+                    I agree to the <a href={POLICIES_URL} target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Terms</a> and <a href={POLICIES_URL} target="_blank" rel="noopener noreferrer" className="text-[#0052CC] font-medium hover:underline">Supplier Listing Policy</a>.
                   </div>
                 </label>
               </div>
