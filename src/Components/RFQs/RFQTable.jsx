@@ -49,6 +49,7 @@ export default function RFQTable() {
         id: `RFQ-${rfq._id.substring(rfq._id.length - 4).toUpperCase()}`,
         buyerInitials: initials,
         buyerName: buyerName,
+        buyerAvatar: rfq.buyerUser?.avatar || "",
         buyerColor: "bg-[#4B6A7F]", // you can randomize this if you want
         product: rfq.subject || rfq.productDetails || 'Unknown Product',
         quantity: rfq.quantity || 'N/A',
@@ -154,8 +155,12 @@ export default function RFQTable() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold text-white ${rfq.buyerColor}`}>
-                      {rfq.buyerInitials}
+                    <div className={`w-7 h-7 rounded overflow-hidden flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${rfq.buyerColor}`}>
+                      {rfq.buyerAvatar ? (
+                        <img src={rfq.buyerAvatar} alt={rfq.buyerName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{rfq.buyerInitials}</span>
+                      )}
                     </div>
                     <span className="text-[13px] text-gray-600 font-medium">{rfq.buyerName}</span>
                   </div>

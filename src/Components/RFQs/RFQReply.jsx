@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, FileText, Clock, CloudUpload, Send, CheckCircle2, Circle, X } from 'lucide-react';
-import { useGetRfqQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation } from '../../redux/features/rfqs/rfqsApi';
+import axios from 'axios';
+import { useGetRfqQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation, useGetRfqUploadUrlMutation } from '../../redux/features/rfqs/rfqsApi';
 import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '../../config/urls';
 
 export default function RFQReply() {
@@ -12,6 +13,7 @@ export default function RFQReply() {
   const { data: rfqResponse, isLoading } = useGetRfqQuery(id);
   const [replyToRfq] = useReplyToRfqMutation();
   const [updateStatus] = useUpdateRfqStatusMutation();
+  const [getRfqUploadUrl] = useGetRfqUploadUrlMutation();
   
   const rawRfq = rfqResponse?.data;
   
@@ -24,6 +26,7 @@ export default function RFQReply() {
   });
   
   const [attachedFile, setAttachedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const rfq = rawRfq ? {
     id: `RFQ-${rawRfq._id.substring(rawRfq._id.length - 4).toUpperCase()}`,
@@ -59,7 +62,24 @@ export default function RFQReply() {
     }
     
     if (rfq) {
+      setIsUploading(true);
       try {
+        const attachmentUrls = [];
+        if (attachedFile) {
+          const res = await getRfqUploadUrl({ contentType: attachedFile.type }).unwrap();
+          const { uploadUrl, fileUrl } = res.data;
+          
+          await axios.put(uploadUrl, attachedFile, {
+            headers: {
+              'Content-Type': attachedFile.type
+            }
+          });
+          
+          if (fileUrl) {
+            attachmentUrls.push(fileUrl);
+          }
+        }
+
         const textMessage = `[QUOTE DETAILS]
 Price: $${formData.price} ${formData.isNegotiable ? '(Negotiable)' : '(Fixed)'}
 Timeline: ${formData.timeline}
@@ -72,15 +92,18 @@ ${formData.message}`;
           id: rfq.rawId,
           data: {
             text: textMessage,
-            attachments: [] // Skip attachments for now, or implement S3 upload
+            attachments: attachmentUrls
           }
         }).unwrap();
         
         await updateStatus({ id: rfq.rawId, status: 'responded' }).unwrap();
         
+        setIsUploading(false);
         alert(`Quote Response sent successfully for ${rfq.id}!`);
         navigate(`/rfqs/${rfq.rawId}`);
-      } catch {
+      } catch (err) {
+        console.error(err);
+        setIsUploading(false);
         alert("Failed to send quote response");
       }
     }
@@ -98,7 +121,7 @@ ${formData.message}`;
         <div className="flex items-center gap-2 text-[13px] font-bold text-gray-500 mb-4">
           <Link to="/rfqs" className="hover:text-gray-900 transition">RFQs</Link>
           <ChevronRight size={14} />
-          <Link to={`/rfqs/${rfq.id}`} className="hover:text-gray-900 transition">{rfq.id}</Link>
+          <Link to={`/rfqs/${rfq.rawId}`} className="hover:text-gray-900 transition">{rfq.id}</Link>
           <ChevronRight size={14} />
           <span className="text-[#0F172A]">Reply</span>
         </div>
@@ -121,7 +144,7 @@ ${formData.message}`;
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[13px] font-bold text-[#0F172A] mb-2">
-                    <span className="text-red-500">*</span>
+                    Quote Price <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -253,10 +276,11 @@ ${formData.message}`;
               </button>
               <button 
                 onClick={handleSendReply}
-                className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2"
+                disabled={isUploading}
+                className="px-6 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2 disabled:opacity-75 cursor-pointer"
               >
                 <Send size={16} strokeWidth={2.5} />
-                Send Reply
+                {isUploading ? 'Sending...' : 'Send Reply'}
               </button>
             </div>
           </div>
@@ -282,7 +306,7 @@ ${formData.message}`;
                 <div className="flex justify-between items-center py-2 border-b border-gray-50">
                   <span className="text-[12px] font-bold text-gray-500">Buyer</span>
                   <div className="flex items-center gap-2">
-                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" alt="Buyer" className="w-5 h-5 rounded-full object-cover" />
+                    <img src={rawRfq?.buyerUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(rfq.buyerName)}&background=D1A635&color=fff`} alt="Buyer" className="w-5 h-5 rounded-full object-cover" />
                     <span className="text-[13px] font-bold text-[#0F172A]">{rfq.buyerName}</span>
                   </div>
                 </div>
@@ -304,7 +328,7 @@ ${formData.message}`;
               </div>
               
               <div className="mt-5 text-center">
-                <Link to={`/rfqs/${rfq.id}`} className="text-[13px] font-bold text-[#0066FF] hover:underline">
+                <Link to={`/rfqs/${rfq.rawId}`} className="text-[13px] font-bold text-[#0066FF] hover:underline">
                   View Full RFQ Details
                 </Link>
               </div>

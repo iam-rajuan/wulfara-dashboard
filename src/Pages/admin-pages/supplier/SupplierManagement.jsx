@@ -36,7 +36,8 @@ export default function SupplierManagement() {
         plan: sup.subscriptionPlan ? `${sup.subscriptionPlan.charAt(0).toUpperCase()}${sup.subscriptionPlan.slice(1)}` : "Free",
         verification: sup.isApproved ? "Verified" : (sup.listingStatus === 'Suspended' ? "Suspended" : "Pending"),
         listingStatus: sup.listingStatus || "Pending",
-        subscription: sup.subscriptionStatus ? `${sup.subscriptionStatus.charAt(0).toUpperCase()}${sup.subscriptionStatus.slice(1)}` : "Inactive"
+        subscription: sup.subscriptionStatus ? `${sup.subscriptionStatus.charAt(0).toUpperCase()}${sup.subscriptionStatus.slice(1)}` : "Inactive",
+        featuredHeroPlacementActive: Boolean(sup.featuredHeroPlacement?.enabled)
       }));
   }, [listingsResponse?.data]);
 

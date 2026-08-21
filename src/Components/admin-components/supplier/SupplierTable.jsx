@@ -128,6 +128,13 @@ export default function SupplierTable({ suppliers, selectedIds, onSelect, onSele
                     <div className="text-[11px] text-gray-400">
                       {supplier.email}
                     </div>
+                    {supplier.featuredHeroPlacementActive && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                          Featured Hero Placement Active
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </td>

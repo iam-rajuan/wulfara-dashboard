@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, Printer, X, FileText, Image as ImageIcon, File, Paperclip, Send, MapPin, CheckCircle, Clock, Star } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { useGetRfqQuery, useGetRfqMessagesQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation } from '../../redux/features/rfqs/rfqsApi';
+import axios from 'axios';
+import { useGetRfqQuery, useGetRfqMessagesQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation, useGetRfqUploadUrlMutation, useLazyGetRfqAttachmentDownloadUrlQuery } from '../../redux/features/rfqs/rfqsApi';
 import { useCreateReviewMutation } from '../../redux/features/reviews/reviewsApi';
 import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '../../config/urls';
 
@@ -10,6 +11,7 @@ export default function RFQDetails() {
   const { id } = useParams();
   const [message, setMessage] = useState('');
   const [attachedFile, setAttachedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const { data: rfqResponse } = useGetRfqQuery(id);
@@ -17,8 +19,21 @@ export default function RFQDetails() {
   const [replyToRfq] = useReplyToRfqMutation();
   const [updateStatus] = useUpdateRfqStatusMutation();
   const [createReview, { isLoading: isReviewing }] = useCreateReviewMutation();
+  const [getRfqUploadUrl] = useGetRfqUploadUrlMutation();
+  const [triggerDownload] = useLazyGetRfqAttachmentDownloadUrlQuery();
   
   const { user } = useSelector((state) => state.auth);
+
+  const handleDownload = async (url) => {
+    try {
+      const res = await triggerDownload(url).unwrap();
+      if (res?.downloadUrl) {
+        window.open(res.downloadUrl, '_blank');
+      }
+    } catch (err) {
+      console.error('Failed to get download URL:', err);
+    }
+  };
   
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
@@ -58,14 +73,29 @@ export default function RFQDetails() {
 
   const handleReplySubmit = async () => {
     if ((message.trim() || attachedFile) && rfq) {
+      setIsUploading(true);
       try {
-        // We'll skip S3 file upload logic for now since this is just a quick reply
-        // In a real scenario, you'd upload attachedFile to S3 and get the URL
+        const attachmentUrls = [];
+        if (attachedFile) {
+          const res = await getRfqUploadUrl({ contentType: attachedFile.type }).unwrap();
+          const { uploadUrl, fileUrl } = res.data;
+          
+          await axios.put(uploadUrl, attachedFile, {
+            headers: {
+              'Content-Type': attachedFile.type
+            }
+          });
+          
+          if (fileUrl) {
+            attachmentUrls.push(fileUrl);
+          }
+        }
+
         await replyToRfq({
           id: rfq.rawId,
           data: {
             text: message,
-            attachments: [] // Add S3 URLs here if implemented
+            attachments: attachmentUrls
           }
         }).unwrap();
         
@@ -75,8 +105,11 @@ export default function RFQDetails() {
         
         setMessage('');
         setAttachedFile(null);
+        setIsUploading(false);
         alert("Reply sent successfully!");
-      } catch {
+      } catch (err) {
+        console.error(err);
+        setIsUploading(false);
         alert("Failed to send reply");
       }
     }
@@ -248,13 +281,17 @@ export default function RFQDetails() {
               
               <div className="space-y-3">
                 {rfq.attachments.map((file, idx) => (
-                  <a key={idx} href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cursor-pointer">
+                  <button 
+                    key={idx} 
+                    onClick={() => handleDownload(file.url)} 
+                    className="w-full flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cursor-pointer text-left focus:outline-none"
+                  >
                     {renderAttachmentIcon(file.type)}
                     <div>
                       <h4 className="text-[13px] font-bold text-[#0F172A] mb-0.5">{file.name}</h4>
                       <p className="text-[11px] font-bold text-gray-500">Attachment</p>
                     </div>
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
@@ -333,11 +370,11 @@ export default function RFQDetails() {
                   </button>
                   <button 
                     onClick={handleReplySubmit}
-                    disabled={!message.trim() && !attachedFile}
-                    className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] disabled:bg-[#e4ce84] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2"
+                    disabled={(!message.trim() && !attachedFile) || isUploading}
+                    className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#C29F31] disabled:bg-[#e4ce84] transition rounded-md text-[13px] font-bold text-[#0F172A] shadow-sm flex items-center gap-2 disabled:opacity-75 cursor-pointer"
                   >
                     <Send size={16} strokeWidth={2.5} />
-                    Send Proposal
+                    {isUploading ? 'Sending...' : 'Send Proposal'}
                   </button>
                 </div>
               </div>
@@ -358,7 +395,7 @@ export default function RFQDetails() {
             
             <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
               <div className="w-14 h-14 bg-gray-200 rounded-lg overflow-hidden shrink-0">
-                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" alt="Buyer" className="w-full h-full object-cover" />
+                <img src={rawRfq?.buyerUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(rfq.buyer.name)}&background=D1A635&color=fff`} alt="Buyer" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="text-[14px] font-bold text-[#0F172A] mb-0.5">{rfq.buyer.name}</h3>

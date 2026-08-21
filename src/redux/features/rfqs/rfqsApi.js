@@ -46,6 +46,16 @@ export const rfqsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Rfq', id }],
     }),
+    getRfqUploadUrl: builder.mutation({
+      query: (data) => ({
+        url: '/rfqs/upload-url',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    getRfqAttachmentDownloadUrl: builder.query({
+      query: (url) => `/rfqs/download?url=${encodeURIComponent(url)}`,
+    }),
   }),
 });
 
@@ -58,4 +68,6 @@ export const {
   useGetRfqMessagesQuery,
   useGetSupplierRfqsQuery,
   useReplyToRfqMutation,
+  useGetRfqUploadUrlMutation,
+  useLazyGetRfqAttachmentDownloadUrlQuery,
 } = rfqsApi;

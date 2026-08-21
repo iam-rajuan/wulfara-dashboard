@@ -89,8 +89,10 @@ const Subscription = () => {
   const supplier = onboardingResponse?.data?.supplier;
   const selectedPlanId = supplier?.selectedPlan?._id || supplier?.selectedPlan || '';
   const plans = useMemo(() => plansResponse?.data || [], [plansResponse?.data]);
+  const availableAddons = useMemo(() => plansResponse?.addons || [], [plansResponse?.addons]);
   const [currentPlanId, setCurrentPlanId] = useState('');
   const [billingFilter, setBillingFilter] = useState(BILLING_FILTERS.ALL);
+  const [selectedAddonCodes, setSelectedAddonCodes] = useState([]);
 
   useEffect(() => {
     if (!user) {
@@ -123,10 +125,23 @@ const Subscription = () => {
     setBillingFilter(nextFilter === BILLING_FILTERS.ALL ? BILLING_FILTERS.ALL : nextFilter);
   }, [plans, selectedPlanId]);
 
+  useEffect(() => {
+    const supplierAddonCodes = Array.isArray(supplier?.selectedAddons)
+      ? supplier.selectedAddons.filter(Boolean)
+      : [];
+    setSelectedAddonCodes(supplierAddonCodes);
+  }, [supplier?.selectedAddons]);
+
   const currentPlan = useMemo(
     () => plans.find((plan) => plan._id === currentPlanId) || null,
     [currentPlanId, plans]
   );
+  const featuredHeroAddon = useMemo(
+    () => availableAddons.find((addon) => addon.code === 'featured_hero_placement') || null,
+    [availableAddons]
+  );
+  const hasFeaturedHeroPlacementSelected =
+    featuredHeroAddon !== null && selectedAddonCodes.includes(featuredHeroAddon.code);
 
   const filteredPlans = useMemo(() => {
     if (billingFilter === BILLING_FILTERS.ALL) {
@@ -140,9 +155,19 @@ const Subscription = () => {
     currentPlan?.billingCycle || supplier?.selectedBillingCycle || 'One-time payment';
   const resolvedListingPeriod =
     supplier?.selectedListingPeriod || deriveListingPeriod(resolvedBillingCycle) || 'Included in selected plan';
-  const totalDueToday = Number(currentPlan?.price || 0);
+  const basePlanPrice = Number(currentPlan?.price || 0);
+  const addonTotal = hasFeaturedHeroPlacementSelected ? Number(featuredHeroAddon?.price || 0) : 0;
+  const totalDueToday = basePlanPrice + addonTotal;
   const selectedPlanBillingGroup = classifyBillingCycle(currentPlan?.billingCycle);
   const isSubmitting = isSaving || isCheckingOut;
+
+  const toggleAddon = (addonCode) => {
+    setSelectedAddonCodes((currentCodes) =>
+      currentCodes.includes(addonCode)
+        ? currentCodes.filter((code) => code !== addonCode)
+        : [...currentCodes, addonCode]
+    );
+  };
 
   const handleContinueToPayment = async () => {
     if (!currentPlanId || !currentPlan) {
@@ -153,6 +178,7 @@ const Subscription = () => {
     const payload = {
       supplierId,
       planId: currentPlanId,
+      addons: selectedAddonCodes,
     };
 
     try {
@@ -174,202 +200,290 @@ const Subscription = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans flex flex-col relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[300px] bg-gradient-to-b from-[#D1A635]/5 to-transparent blur-3xl pointer-events-none" />
+    <div className="min-h-screen lg:h-screen lg:max-h-screen bg-slate-50/50 font-sans flex flex-col relative overflow-hidden">
+      {/* Dynamic Background Gradients */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[250px] bg-gradient-to-b from-[#D1A635]/8 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-gradient-to-tr from-slate-200/30 to-transparent blur-3xl pointer-events-none" />
 
-      <div className="w-full text-center pt-14 pb-8 px-4 relative z-10">
-        <h1 className="text-3xl md:text-5xl font-black text-slate-800 mb-3 tracking-tight">Choose Your Subscription</h1>
-        <p className="text-[15px] text-slate-500 font-medium">Select the listing plan you want to pay for now.</p>
+      {/* Compact Header */}
+      <div className="w-full text-center py-4 lg:py-6 px-4 relative z-10 shrink-0">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-800 tracking-tight">Choose Your Subscription</h1>
+        <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Select the listing plan that best fits your business goals.</p>
       </div>
 
       {isCancelled && (
-        <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 relative z-10 mb-6">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+        <div className="w-full max-w-[1250px] mx-auto px-4 md:px-8 shrink-0 mb-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50/60 backdrop-blur px-4 py-3 text-amber-900 flex items-start gap-2.5 shadow-sm">
+            <AlertCircle className="w-4.5 h-4.5 shrink-0 mt-0.5 text-amber-600" />
             <div>
-              <div className="text-sm font-bold">Payment was cancelled.</div>
-              <div className="text-sm">No charge was made. Your selected plan is still saved below.</div>
+              <div className="text-xs font-bold">Payment was cancelled.</div>
+              <div className="text-[11px] text-amber-800">No charge was made. Your selected plan is still saved below.</div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 w-full mb-16 relative z-10 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-8 items-start">
-        <div>
+      {/* Main Grid: Height Constrained on Desktop */}
+      <div className="flex-1 w-full max-w-[1250px] mx-auto px-4 md:px-8 pb-6 lg:pb-8 overflow-y-auto lg:overflow-hidden relative z-10 flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch">
+        {/* Left Column: Toggles, Plans, Add-ons */}
+        <div className="flex-1 flex flex-col justify-between gap-4 lg:overflow-hidden min-w-0">
           {isLoadingPlans || isLoadingOnboarding ? (
-            <div className="py-16 text-center text-slate-500 flex items-center justify-center gap-2.5 font-medium">
-              <span className="w-5 h-5 border-2 border-slate-200 border-t-[#D1A635] rounded-full animate-spin" />
-              Loading subscription options...
+            <div className="flex-1 flex flex-col items-center justify-center py-16 text-slate-500 gap-3 font-medium">
+              <span className="w-6 h-6 border-2 border-slate-200 border-t-[#D1A635] rounded-full animate-spin" />
+              <span className="text-xs">Loading subscription options...</span>
             </div>
           ) : plans.length === 0 ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-amber-800 max-w-md mx-auto text-center font-medium shadow-sm">
-              No active pricing plans are available. Create a pricing package in the admin dashboard first.
+            <div className="flex-1 flex items-center justify-center py-12">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/50 backdrop-blur px-6 py-6 text-amber-800 max-w-md text-center font-medium shadow-sm">
+                No active pricing plans are available. Create a pricing package in the admin dashboard first.
+              </div>
             </div>
           ) : (
             <>
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">Billing</span>
-                {[
-                  { value: BILLING_FILTERS.ALL, label: 'All' },
-                  { value: BILLING_FILTERS.MONTHLY, label: 'Monthly' },
-                  { value: BILLING_FILTERS.YEARLY, label: 'Yearly' },
-                ].map((filterOption) => {
-                  const isActive = billingFilter === filterOption.value;
+              {/* Billing Period Toggle & Label */}
+              <div className="flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Billing Period</span>
+                  <div className="bg-slate-100 p-0.5 rounded-full flex gap-1 border border-slate-200/50">
+                    {[
+                      { value: BILLING_FILTERS.ALL, label: 'All' },
+                      { value: BILLING_FILTERS.MONTHLY, label: 'Monthly' },
+                      { value: BILLING_FILTERS.YEARLY, label: 'Yearly' },
+                    ].map((filterOption) => {
+                      const isActive = billingFilter === filterOption.value;
 
-                  return (
-                    <button
-                      key={filterOption.value}
-                      type="button"
-                      onClick={() => setBillingFilter(filterOption.value)}
-                      className={`rounded-full px-4 py-2 text-[13px] font-bold transition-colors ${
-                        isActive
-                          ? 'bg-[#D1A635] text-white shadow-sm'
-                          : 'bg-white text-slate-600 border border-slate-200 hover:border-[#D1A635]/40'
-                      }`}
-                    >
-                      {filterOption.label}
-                    </button>
-                  );
-                })}
+                      return (
+                        <button
+                          key={filterOption.value}
+                          type="button"
+                          onClick={() => setBillingFilter(filterOption.value)}
+                          className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all duration-200 ${
+                            isActive
+                              ? 'bg-gradient-to-r from-[#D1A635] to-[#B08620] text-white shadow-sm'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          {filterOption.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              {filteredPlans.length === 0 ? (
-                <div className="rounded-2xl border border-slate-200 bg-white px-6 py-8 text-center text-slate-500 shadow-sm">
-                  No {billingFilter} pricing plans are available right now.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                  {filteredPlans.map((plan) => {
-                    const isSelected = currentPlanId === plan._id;
-                    const planListingPeriod = deriveListingPeriod(plan.billingCycle);
-                    const priceLabel = getPriceLabel(plan.billingCycle);
+              {/* Plans Grid */}
+              <div className="flex-1 lg:overflow-y-auto pr-1 -mr-1">
+                {filteredPlans.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-6 py-8 text-center text-slate-500 shadow-sm">
+                    No {billingFilter} pricing plans are available right now.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5 py-2">
+                    {filteredPlans.map((plan) => {
+                      const isSelected = currentPlanId === plan._id;
+                      const planListingPeriod = deriveListingPeriod(plan.billingCycle);
+                      const priceLabel = getPriceLabel(plan.billingCycle);
 
-                    return (
-                      <button
-                        key={plan._id}
-                        type="button"
-                        onClick={() => setCurrentPlanId(plan._id)}
-                        className={`w-full bg-white rounded-3xl p-8 flex flex-col text-left transition-all duration-300 relative group cursor-pointer ${
-                          isSelected
-                            ? 'border-2 border-[#D1A635] shadow-[0_20px_50px_rgba(209,166,53,0.12)] scale-[1.02] z-10'
-                            : 'border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.05)] hover:border-[#D1A635]/40'
-                        }`}
-                      >
-                        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-wider font-extrabold px-4 py-1.5 rounded-full shadow-sm ${
-                          isSelected ? 'bg-gradient-to-r from-[#D1A635] to-[#B08620] text-white' : 'bg-slate-100 text-slate-600'
-                        }`}>
-                          {plan.badgeText || (isSelected ? 'Selected' : 'Available')}
-                        </div>
+                      return (
+                        <button
+                          key={plan._id}
+                          type="button"
+                          onClick={() => setCurrentPlanId(plan._id)}
+                          className={`w-full bg-white rounded-2xl p-5 flex flex-col text-left transition-all duration-300 relative group cursor-pointer ${
+                            isSelected
+                              ? 'border-2 border-[#D1A635] shadow-[0_12px_30px_rgba(209,166,53,0.08)] scale-[1.01] z-10'
+                              : 'border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#D1A635]/30'
+                          }`}
+                        >
+                          {/* Upper Label Row */}
+                          <div className="flex items-start justify-between mb-3 w-full">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 group-hover:text-[#D1A635] transition-colors">
+                              {plan.billingCycle || 'Plan'}
+                            </span>
+                            {(plan.badgeText || isSelected) && (
+                              <span className={`text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full border ${
+                                isSelected 
+                                  ? 'bg-[#D1A635]/10 border-[#D1A635] text-[#D1A635]' 
+                                  : 'bg-slate-100 border-slate-200 text-slate-500'
+                              }`}>
+                                {plan.badgeText || 'Selected'}
+                              </span>
+                            )}
+                          </div>
 
-                        <h2 className="text-2xl font-black text-slate-800 mb-2 mt-2 tracking-tight">{plan.name}</h2>
-                        <p className="text-[13px] text-slate-500 mb-6 min-h-[45px] leading-relaxed">{plan.description || 'Supplier listing plan'}</p>
+                          {/* Title & Description */}
+                          <h2 className="text-lg font-black text-slate-800 tracking-tight leading-tight mb-1">{plan.name}</h2>
+                          <p className="text-[11px] text-slate-400 leading-normal min-h-[34px] line-clamp-2 mb-3">
+                            {plan.description || 'Supplier listing plan'}
+                          </p>
 
-                        <div className="flex items-baseline gap-1 mb-3">
-                          <span className="text-4xl font-black text-slate-900 tracking-tight">${plan.price}</span>
-                          <span className="text-sm text-slate-400 font-semibold">{priceLabel}</span>
-                        </div>
-                        <p className="text-[12px] text-slate-500 font-semibold mb-6">
-                          {plan.billingCycle || 'Billing cycle not configured'}
-                          {planListingPeriod ? ` · ${planListingPeriod}` : ''}
-                        </p>
-
-                        <div className="space-y-4.5 flex-1 mb-8">
-                          {(plan.features || []).length > 0 ? (
-                            plan.features.map((feature) => (
-                              <div key={feature} className="flex items-start gap-3">
-                                <div className={`rounded-full p-0.5 flex-shrink-0 mt-0.5 ${isSelected ? 'bg-[#D1A635]/15' : 'bg-slate-100'}`}>
-                                  <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-[#D1A635]' : 'text-slate-500'}`} strokeWidth={3} />
-                                </div>
-                                <span className={`text-[13.5px] leading-snug ${isSelected ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>{feature}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-[13px] text-slate-400 italic">No feature highlights configured for this package yet.</div>
+                          {/* Price Details */}
+                          <div className="border-t border-slate-100 pt-3 mb-3 w-full flex items-baseline gap-1">
+                            <span className="text-3xl font-black text-slate-900 tracking-tight">${plan.price}</span>
+                            <span className="text-[11px] text-slate-400 font-semibold">{priceLabel}</span>
+                          </div>
+                          {planListingPeriod && (
+                            <p className="text-[10px] text-slate-500 font-bold mb-4">
+                              Listing period: {planListingPeriod}
+                            </p>
                           )}
-                        </div>
 
-                        <div className={`w-full py-3 px-4 rounded-xl text-center text-xs font-bold transition-all mt-auto ${
-                          isSelected ? 'bg-[#D1A635] text-white shadow-md shadow-[#D1A635]/20' : 'bg-slate-50 text-slate-600 border border-slate-200/50'
-                        }`}>
-                          {isSelected ? 'Selected Package' : 'Select Plan'}
-                        </div>
-                      </button>
-                    );
-                  })}
+                          {/* Feature List */}
+                          <div className="space-y-2 flex-1 mb-4 w-full">
+                            {(plan.features || []).length > 0 ? (
+                              (plan.features || []).slice(0, 4).map((feature) => (
+                                <div key={feature} className="flex items-start gap-2">
+                                  <div className={`rounded-full p-0.5 shrink-0 mt-0.5 ${isSelected ? 'bg-[#D1A635]/15' : 'bg-slate-100'}`}>
+                                    <Check className={`w-3 h-3 ${isSelected ? 'text-[#D1A635]' : 'text-slate-500'}`} strokeWidth={3} />
+                                  </div>
+                                  <span className={`text-xs leading-tight ${isSelected ? 'text-slate-800 font-bold' : 'text-slate-500'}`}>
+                                    {feature}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-[11px] text-slate-400 italic">No feature highlights.</div>
+                            )}
+                          </div>
+
+                          {/* Interactive Pill */}
+                          <div className={`w-full py-2 px-3 rounded-xl text-center text-[10px] font-bold tracking-wider uppercase transition-all duration-200 mt-auto ${
+                            isSelected 
+                              ? 'bg-[#D1A635] text-white shadow-sm shadow-[#D1A635]/10' 
+                              : 'bg-slate-50 text-slate-500 group-hover:bg-slate-100 border border-slate-200/40'
+                          }`}>
+                            {isSelected ? 'Active Plan' : 'Choose Plan'}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Compact Add-on Bar */}
+              {currentPlan && featuredHeroAddon && (
+                <div className="shrink-0 rounded-2xl border border-slate-200 bg-white shadow-sm p-4 mt-auto">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="addon-featured-hero"
+                        checked={hasFeaturedHeroPlacementSelected}
+                        onChange={() => toggleAddon(featuredHeroAddon.code)}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-[#D1A635] focus:ring-[#D1A635]/40 transition-colors cursor-pointer"
+                      />
+                      <div>
+                        <label htmlFor="addon-featured-hero" className="text-xs sm:text-sm font-bold text-slate-800 cursor-pointer flex flex-wrap items-center gap-2">
+                          {featuredHeroAddon.name}
+                          <span className="bg-amber-100 text-[#D1A635] text-[8px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                            Recommended Add-on
+                          </span>
+                        </label>
+                        <p className="text-[11px] text-slate-400 leading-normal mt-0.5">
+                          {featuredHeroAddon.description}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-left sm:text-right shrink-0">
+                      <span className="text-sm font-black text-slate-900">+${Number(featuredHeroAddon.price || 0).toFixed(2)}</span>
+                      <span className="text-[10px] text-slate-400 block leading-tight">one-time addon</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </>
           )}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 sticky top-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+        {/* Right Column: Order Summary Sidebar */}
+        <div className="w-full lg:w-[380px] shrink-0 flex flex-col justify-between bg-white border border-slate-200 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] p-5 lg:p-6 lg:h-full lg:max-h-full">
+          <div>
+            <h2 className="text-sm font-bold text-slate-800 pb-3 border-b border-slate-100 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-[#D1A635]" />
+              Order Summary
+            </h2>
 
-          <div className="space-y-4 mb-6">
-            <div className="flex justify-between gap-4 text-[14px]">
-              <span className="text-gray-600">Selected Plan</span>
-              <span className="font-bold text-gray-900 text-right">{currentPlan?.name || 'Choose a plan'}</span>
-            </div>
-            <div className="flex justify-between gap-4 text-[14px]">
-              <span className="text-gray-600">Billing</span>
-              <span className="font-bold text-gray-900 text-right">{resolvedBillingCycle}</span>
-            </div>
-            <div className="flex justify-between gap-4 text-[14px]">
-              <span className="text-gray-600">Listing Duration</span>
-              <span className="font-bold text-gray-900 text-right">{resolvedListingPeriod}</span>
-            </div>
-            <div className="flex justify-between gap-4 text-[14px]">
-              <span className="text-gray-600">Base Price</span>
-              <span className="font-bold text-gray-900 text-right">
-                {currentPlan ? `$${totalDueToday.toFixed(2)}` : 'Select a plan'}
-              </span>
+            <div className="py-4 space-y-3.5">
+              <div className="flex justify-between gap-4 text-xs">
+                <span className="text-slate-400 font-medium">Selected Plan</span>
+                <span className="font-bold text-slate-800 text-right">{currentPlan?.name || 'Choose a plan'}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-xs">
+                <span className="text-slate-400 font-medium">Billing Cycle</span>
+                <span className="font-bold text-slate-800 text-right">{resolvedBillingCycle}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-xs">
+                <span className="text-slate-400 font-medium">Listing Duration</span>
+                <span className="font-bold text-slate-800 text-right">{resolvedListingPeriod}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-xs">
+                <span className="text-slate-400 font-medium">Base Price</span>
+                <span className="font-bold text-slate-800 text-right">
+                  {currentPlan ? `$${basePlanPrice.toFixed(2)}` : 'Select a plan'}
+                </span>
+              </div>
+              {featuredHeroAddon && hasFeaturedHeroPlacementSelected && (
+                <div className="flex justify-between gap-4 text-xs pt-2.5 border-t border-dashed border-slate-100">
+                  <span className="text-slate-400 font-medium flex items-center gap-1">
+                    {featuredHeroAddon.name}
+                  </span>
+                  <span className="font-bold text-slate-800 text-right">
+                    +${Number(featuredHeroAddon.price || 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-6 mb-6">
-            <div className="flex justify-between items-end mb-1">
-              <span className="text-[16px] font-bold text-gray-900">Total Due Today</span>
-              <span className="text-[24px] font-bold text-gray-900">${totalDueToday.toFixed(2)}</span>
+          <div className="pt-4 border-t border-slate-100 space-y-4">
+            <div>
+              <div className="flex justify-between items-end mb-1">
+                <span className="text-xs font-bold text-slate-800">Total Due Today</span>
+                <span className="text-xl lg:text-2xl font-black text-slate-900">${totalDueToday.toFixed(2)}</span>
+              </div>
+              <p className="text-[10px] text-slate-400 leading-normal">
+                {selectedPlanBillingGroup === BILLING_FILTERS.MONTHLY
+                  ? 'Charged as the selected monthly plan plus any enabled add-ons.'
+                  : selectedPlanBillingGroup === BILLING_FILTERS.YEARLY
+                    ? 'Charged as the selected annual plan plus any enabled add-ons.'
+                    : 'Stripe charges the backend-selected plan amount and any enabled add-ons.'}
+              </p>
             </div>
-            <div className="text-right text-[11px] text-gray-500">
-              {selectedPlanBillingGroup === BILLING_FILTERS.MONTHLY
-                ? 'Charged as the selected monthly plan.'
-                : selectedPlanBillingGroup === BILLING_FILTERS.YEARLY
-                  ? 'Charged as the selected annual plan.'
-                  : 'Stripe charges the backend plan amount only.'}
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleContinueToPayment}
+                disabled={isSubmitting || !currentPlan}
+                className="w-full bg-gradient-to-r from-[#D1A635] to-[#B08620] hover:from-[#C2982B] hover:to-[#A0761B] text-white font-bold text-xs py-3 px-4 rounded-xl transition-all duration-200 shadow-md shadow-[#D1A635]/10 flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <CreditCard className="w-3.5 h-3.5" />
+                )}
+                {isSubmitting ? 'Preparing Checkout...' : 'Continue to Payment'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate(appendOnboardingContext('/company-info', searchParams))}
+                className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold text-xs py-3 px-4 rounded-xl transition-all duration-200 cursor-pointer"
+              >
+                Back to Company Info
+              </button>
             </div>
-          </div>
 
-          <button
-            type="button"
-            onClick={handleContinueToPayment}
-            disabled={isSubmitting || !currentPlan}
-            className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm flex items-center justify-center gap-2 mb-4 disabled:opacity-60"
-          >
-            {isSubmitting ? (
-              <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-            ) : (
-              <CreditCard className="w-4 h-4" />
-            )}
-            {isSubmitting ? 'Preparing Checkout...' : 'Continue to Payment'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate(appendOnboardingContext('/company-info', searchParams))}
-            className="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-800 font-medium text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm"
-          >
-            Back to Company Info
-          </button>
-
-          <div className="mt-8 space-y-4 text-[12px] text-slate-500">
-            <div className="flex items-start gap-3">
-              <Lock className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" />
-              <span>Payments are processed securely through Stripe.</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <HeadphonesIcon className="w-4 h-4 text-[#D1A635] shrink-0 mt-0.5" />
-              <span>Your listing activates after Stripe confirms payment through the webhook.</span>
+            <div className="space-y-2.5 pt-2 text-[10px] text-slate-400">
+              <div className="flex items-start gap-2">
+                <Lock className="w-3.5 h-3.5 text-[#D1A635] shrink-0 mt-0.5" />
+                <span>Secure checkout. All transactions are encrypted by Stripe.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <HeadphonesIcon className="w-3.5 h-3.5 text-[#D1A635] shrink-0 mt-0.5" />
+                <span>Instant activation after payment verification.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -379,3 +493,4 @@ const Subscription = () => {
 };
 
 export default Subscription;
+

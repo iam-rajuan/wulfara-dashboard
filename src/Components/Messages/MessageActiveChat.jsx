@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Smile, Paperclip, Send, FileText, Image as ImageIcon, File, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useGetMessagesQuery, useSendMessageMutation } from '../../redux/features/messages/messagesApi';
+import { useLazyGetRfqAttachmentDownloadUrlQuery } from '../../redux/features/rfqs/rfqsApi';
 import { useSelector } from 'react-redux';
 import { SOCKET_BASE_URL } from '../../config/urls';
 
@@ -11,13 +12,25 @@ export default function MessageActiveChat({ chatId }) {
   const queryId = isNewChat ? "skip" : String(chatId);
   const { data: messagesResponse } = useGetMessagesQuery(queryId, { skip: !chatId || isNewChat });
   const [sendMessageApi] = useSendMessageMutation();
+  const [triggerDownload] = useLazyGetRfqAttachmentDownloadUrlQuery();
 
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [socketMessages, setSocketMessages] = useState([]);
   const socketRef = useRef(null);
 
-  const rawMessages = messagesResponse?.data || [];
+  const handleDownload = async (url) => {
+    try {
+      const res = await triggerDownload(url).unwrap();
+      if (res?.downloadUrl) {
+        window.open(res.downloadUrl, '_blank');
+      }
+    } catch (err) {
+      console.error('Failed to get download URL:', err);
+    }
+  };
+
+  const rawMessages = useMemo(() => messagesResponse?.data || [], [messagesResponse?.data]);
   
   // Connect to socket when chat opens
   useEffect(() => {
@@ -33,37 +46,43 @@ export default function MessageActiveChat({ chatId }) {
     };
   }, [chatId]);
 
-  // Combine database messages and real-time socket messages
-  const chatHistory = [...rawMessages, ...socketMessages].map((msg, index) => {
-    // Check if it's already formatted from mock data (graceful fallback)
-    if (msg.type) return msg;
+  // Combine database messages and real-time socket messages (with inline filtering to prevent duplicate messages)
+  const chatHistory = useMemo(() => {
+    const uniqueSocketMessages = socketMessages.filter(
+      (sockMsg) => !rawMessages.some((dbMsg) => dbMsg._id === sockMsg._id)
+    );
 
-    const isIncoming = msg.sender?.role === 'buyer' || (msg.sender?._id && user?._id && msg.sender._id !== user._id) || (msg.sender?.id && user?.id && msg.sender.id !== user.id) || (msg.sender !== 'me' && typeof msg.sender === 'string');
-    const msgTime = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return [...rawMessages, ...uniqueSocketMessages].map((msg, index) => {
+      // Check if it's already formatted from mock data (graceful fallback)
+      if (msg.type) return msg;
 
-    let msgAttachments = [];
-    if (msg.isFile) {
-      msgAttachments.push({
-        id: msg._id,
-        name: msg.fileName,
-        size: 'Unknown',
-        ext: msg.fileName?.split('.').pop()?.toUpperCase() || 'FILE',
-        type: msg.fileUrl?.match(/\.(jpeg|jpg|gif|png)$/) ? 'image' : 'doc',
-        url: msg.fileUrl
-      });
-    }
+      const isIncoming = msg.sender?.role === 'buyer' || (msg.sender?._id && user?._id && msg.sender._id !== user._id) || (msg.sender?.id && user?.id && msg.sender.id !== user.id) || (msg.sender !== 'me' && typeof msg.sender === 'string');
+      const msgTime = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    const senderInitials = msg.sender?.name ? `${msg.sender.name.charAt(0).toUpperCase()}` : (msg.sender?.role === 'buyer' ? 'B' : 'U');
+      let msgAttachments = [];
+      if (msg.isFile) {
+        msgAttachments.push({
+          id: msg._id,
+          name: msg.fileName,
+          size: 'Unknown',
+          ext: msg.fileName?.split('.').pop()?.toUpperCase() || 'FILE',
+          type: msg.fileUrl?.match(/\.(jpeg|jpg|gif|png)$/) ? 'image' : 'doc',
+          url: msg.fileUrl
+        });
+      }
 
-    return {
-      id: msg._id || index,
-      type: isIncoming ? 'incoming' : 'outgoing',
-      text: msg.text,
-      time: msgTime,
-      attachments: msgAttachments,
-      avatarInitials: senderInitials,
-    };
-  });
+      const senderInitials = msg.sender?.name ? `${msg.sender.name.charAt(0).toUpperCase()}` : (msg.sender?.role === 'buyer' ? 'B' : 'U');
+
+      return {
+        id: msg._id || index,
+        type: isIncoming ? 'incoming' : 'outgoing',
+        text: msg.text,
+        time: msgTime,
+        attachments: msgAttachments,
+        avatarInitials: senderInitials,
+      };
+    });
+  }, [rawMessages, socketMessages, user]);
   
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -173,11 +192,35 @@ export default function MessageActiveChat({ chatId }) {
                     </div>
                   )}
                   <div>
-                    <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-tl-sm shadow-sm">
-                      <p className="text-[13px] text-gray-600 leading-relaxed font-medium">
-                        {msg.text}
-                      </p>
-                    </div>
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-2 justify-start">
+                        {msg.attachments.map(att => (
+                          att.type === 'image' ? (
+                            <button key={att.id} onClick={() => handleDownload(att.url)} className="focus:outline-none cursor-pointer">
+                              <img src={att.url} alt={att.name} className="max-w-[240px] rounded-2xl border border-gray-200 shadow-sm hover:opacity-90 transition" />
+                            </button>
+                          ) : (
+                            <button key={att.id} onClick={() => handleDownload(att.url)} className="bg-white border border-gray-200 p-3 rounded-xl flex items-center gap-3 shadow-sm min-w-[200px] text-left hover:bg-gray-50 transition cursor-pointer focus:outline-none">
+                              <div className={`w-8 h-8 flex items-center justify-center rounded-lg ${att.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                                {att.type === 'pdf' ? <FileText size={16} /> : <File size={16} />}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[12px] font-bold text-[#0F172A] truncate">{att.name}</p>
+                                <p className="text-[10px] text-gray-500">{att.size || 'Attachment'}</p>
+                              </div>
+                            </button>
+                          )
+                        ))}
+                      </div>
+                    )}
+                    
+                    {msg.text && (
+                      <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-tl-sm shadow-sm">
+                        <p className="text-[13px] text-gray-600 leading-relaxed font-medium">
+                          {msg.text}
+                        </p>
+                      </div>
+                    )}
                     <span className="text-[10px] text-gray-400 font-bold mt-1 ml-1">{msg.time}</span>
                   </div>
                 </div>
@@ -189,17 +232,19 @@ export default function MessageActiveChat({ chatId }) {
                         <div className="flex flex-wrap gap-2 mb-2 justify-end">
                           {msg.attachments.map(att => (
                             att.type === 'image' ? (
-                              <img key={att.id} src={att.url} alt={att.name} className="max-w-[240px] rounded-2xl border border-gray-200 shadow-sm" />
+                              <button key={att.id} onClick={() => handleDownload(att.url)} className="focus:outline-none cursor-pointer">
+                                <img src={att.url} alt={att.name} className="max-w-[240px] rounded-2xl border border-gray-200 shadow-sm hover:opacity-90 transition" />
+                              </button>
                             ) : (
-                              <div key={att.id} className="bg-white border border-gray-200 p-3 rounded-xl flex items-center gap-3 shadow-sm min-w-[200px]">
+                              <button key={att.id} onClick={() => handleDownload(att.url)} className="bg-white border border-gray-200 p-3 rounded-xl flex items-center gap-3 shadow-sm min-w-[200px] text-left hover:bg-gray-50 transition cursor-pointer focus:outline-none">
                                 <div className={`w-8 h-8 flex items-center justify-center rounded-lg ${att.type === 'pdf' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
                                   {att.type === 'pdf' ? <FileText size={16} /> : <File size={16} />}
                                 </div>
-                                <div className="text-left min-w-0">
+                                <div className="min-w-0">
                                   <p className="text-[12px] font-bold text-[#0F172A] truncate">{att.name}</p>
-                                  <p className="text-[10px] text-gray-500">{att.size}</p>
+                                  <p className="text-[10px] text-gray-500">{att.size || 'Attachment'}</p>
                                 </div>
-                              </div>
+                              </button>
                             )
                           ))}
                         </div>

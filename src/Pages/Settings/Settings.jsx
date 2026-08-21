@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  User, Building2, Shield, Bell, Plus, Download, Trash2, Save, Banknote, Mail, BadgeCheck, KeyRound,
+  User, Building2, Shield, Bell, Plus, Download, Trash2, Save, Banknote, Mail, BadgeCheck, KeyRound, Camera,
 } from 'lucide-react';
 import { Input, Select, Switch, Checkbox, Tag, Modal, Form, message, Spin } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
 import {
   useAssignAdminRoleMutation,
   useCreateAdminRoleMutation,
@@ -14,7 +15,7 @@ import {
   useGetAdminUsersQuery,
   useUpdateAdminRoleMutation,
 } from '../../redux/features/adminRoles/adminRolesApi';
-import { useDeleteUserMutation, useUpdateMeMutation } from '../../redux/features/users/usersApi';
+import { useDeleteUserMutation, useUpdateMeMutation, useGetUploadUrlMutation } from '../../redux/features/users/usersApi';
 import { updateUser } from '../../redux/features/auth/authSlice';
 import { hasAdminPermission } from '../../utils/adminAccess';
 
@@ -84,14 +85,52 @@ const UserProfile = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [updateMe, { isLoading }] = useUpdateMeMutation();
+  const [getUploadUrl] = useGetUploadUrlMutation();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || '');
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
   useEffect(() => {
     setName(user?.name || '');
     setEmail(user?.email || '');
+    setAvatarUrl(user?.avatar || '');
   }, [user]);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      message.error('Avatar size must be less than 2MB');
+      return;
+    }
+
+    setAvatarLoading(true);
+    try {
+      const presignResponse = await getUploadUrl(file.type).unwrap();
+      if (!presignResponse.success || !presignResponse.data) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      const { uploadUrl, fileUrl } = presignResponse.data;
+
+      await axios.put(uploadUrl, file, {
+        headers: {
+          'Content-Type': file.type
+        }
+      });
+
+      setAvatarUrl(fileUrl);
+      message.success('Avatar uploaded successfully!');
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to upload avatar. Please try again.');
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -100,7 +139,7 @@ const UserProfile = () => {
       return;
     }
     try {
-      const response = await updateMe({ name, email }).unwrap();
+      const response = await updateMe({ name, email, avatar: avatarUrl }).unwrap();
       if (response.success) {
         dispatch(updateUser(response.data));
         message.success('Profile updated successfully!');
@@ -121,13 +160,35 @@ const UserProfile = () => {
 
       <form onSubmit={handleSubmit} className="p-8 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center gap-5">
-          <div className="w-20 h-20 rounded-2xl bg-[#D4AF37] text-[#0E1726] flex items-center justify-center text-2xl font-black shadow-sm">
-            {(name || 'US')
-              .split(' ')
-              .slice(0, 2)
-              .map((part) => part[0] || '')
-              .join('')
-              .toUpperCase()}
+          <input
+            type="file"
+            id="avatar-input"
+            className="hidden"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleAvatarChange}
+          />
+          <div
+            onClick={() => document.getElementById('avatar-input').click()}
+            className="w-20 h-20 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center text-2xl font-black shadow-sm relative group overflow-hidden cursor-pointer shrink-0"
+          >
+            {avatarLoading ? (
+              <Spin size="small" />
+            ) : avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[#D4AF37] text-white">
+                {(name || 'US')
+                  .split(' ')
+                  .slice(0, 2)
+                  .map((part) => part[0] || '')
+                  .join('')
+                  .toUpperCase()}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Camera size={16} className="text-white mb-1" />
+              <span className="text-[9px] text-white font-bold uppercase tracking-wider">Upload</span>
+            </div>
           </div>
           <div>
             <h3 className="text-2xl font-black text-gray-900">{name || 'User'}</h3>
@@ -205,7 +266,7 @@ const UserProfile = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#dcb14b] hover:bg-[#c99f3b] text-gray-900 font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#dcb14b] hover:bg-[#c99f3b] text-gray-900 font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60 cursor-pointer"
           >
             <Save size={16} />
             {isLoading ? 'Saving...' : 'Save Changes'}

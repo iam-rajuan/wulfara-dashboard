@@ -143,6 +143,12 @@ const Header = ({ showDrawer }) => {
                   alt={supplierProfile?.companyName || user?.name || 'User'}
                   className="object-cover w-6 h-6 rounded-full"
                 />
+              ) : user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name || 'User'}
+                  className="object-cover w-6 h-6 rounded-full"
+                />
               ) : (
                 <img
                   src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=D1A635&color=fff`}
