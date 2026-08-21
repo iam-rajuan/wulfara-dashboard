@@ -10,6 +10,12 @@ import {
 } from '../../../redux/features/listings/listingsApi';
 import { appendOnboardingContext, buildOnboardingQueryString } from '../../../utils/onboarding';
 
+const BILLING_FILTERS = {
+  ALL: 'all',
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
+};
+
 const deriveListingPeriod = (billingCycle = '') => {
   const normalizedBillingCycle = String(billingCycle || '').trim().toLowerCase();
 
@@ -36,6 +42,38 @@ const deriveListingPeriod = (billingCycle = '') => {
   return billingCycle;
 };
 
+const classifyBillingCycle = (billingCycle = '') => {
+  const normalizedBillingCycle = String(billingCycle || '').trim().toLowerCase();
+
+  if (normalizedBillingCycle.includes('month')) {
+    return BILLING_FILTERS.MONTHLY;
+  }
+
+  if (
+    normalizedBillingCycle.includes('annual') ||
+    normalizedBillingCycle.includes('year') ||
+    normalizedBillingCycle.includes('12')
+  ) {
+    return BILLING_FILTERS.YEARLY;
+  }
+
+  return BILLING_FILTERS.ALL;
+};
+
+const getPriceLabel = (billingCycle = '') => {
+  const billingGroup = classifyBillingCycle(billingCycle);
+
+  if (billingGroup === BILLING_FILTERS.MONTHLY) {
+    return '/month';
+  }
+
+  if (billingGroup === BILLING_FILTERS.YEARLY) {
+    return '/year';
+  }
+
+  return '/plan';
+};
+
 const Subscription = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -52,6 +90,7 @@ const Subscription = () => {
   const selectedPlanId = supplier?.selectedPlan?._id || supplier?.selectedPlan || '';
   const plans = useMemo(() => plansResponse?.data || [], [plansResponse?.data]);
   const [currentPlanId, setCurrentPlanId] = useState('');
+  const [billingFilter, setBillingFilter] = useState(BILLING_FILTERS.ALL);
 
   useEffect(() => {
     if (!user) {
@@ -70,16 +109,39 @@ const Subscription = () => {
     }
   }, [plans, selectedPlanId]);
 
+  useEffect(() => {
+    if (!selectedPlanId) {
+      return;
+    }
+
+    const selectedPlan = plans.find((plan) => plan._id === selectedPlanId);
+    if (!selectedPlan) {
+      return;
+    }
+
+    const nextFilter = classifyBillingCycle(selectedPlan.billingCycle);
+    setBillingFilter(nextFilter === BILLING_FILTERS.ALL ? BILLING_FILTERS.ALL : nextFilter);
+  }, [plans, selectedPlanId]);
+
   const currentPlan = useMemo(
     () => plans.find((plan) => plan._id === currentPlanId) || null,
     [currentPlanId, plans]
   );
+
+  const filteredPlans = useMemo(() => {
+    if (billingFilter === BILLING_FILTERS.ALL) {
+      return plans;
+    }
+
+    return plans.filter((plan) => classifyBillingCycle(plan.billingCycle) === billingFilter);
+  }, [billingFilter, plans]);
 
   const resolvedBillingCycle =
     currentPlan?.billingCycle || supplier?.selectedBillingCycle || 'One-time payment';
   const resolvedListingPeriod =
     supplier?.selectedListingPeriod || deriveListingPeriod(resolvedBillingCycle) || 'Included in selected plan';
   const totalDueToday = Number(currentPlan?.price || 0);
+  const selectedPlanBillingGroup = classifyBillingCycle(currentPlan?.billingCycle);
   const isSubmitting = isSaving || isCheckingOut;
 
   const handleContinueToPayment = async () => {
@@ -91,8 +153,6 @@ const Subscription = () => {
     const payload = {
       supplierId,
       planId: currentPlanId,
-      billingCycle: currentPlan.billingCycle || '',
-      listingPeriod: deriveListingPeriod(currentPlan.billingCycle),
     };
 
     try {
@@ -146,64 +206,99 @@ const Subscription = () => {
               No active pricing plans are available. Create a pricing package in the admin dashboard first.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {plans.map((plan) => {
-                const isSelected = currentPlanId === plan._id;
-                const planListingPeriod = deriveListingPeriod(plan.billingCycle);
+            <>
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">Billing</span>
+                {[
+                  { value: BILLING_FILTERS.ALL, label: 'All' },
+                  { value: BILLING_FILTERS.MONTHLY, label: 'Monthly' },
+                  { value: BILLING_FILTERS.YEARLY, label: 'Yearly' },
+                ].map((filterOption) => {
+                  const isActive = billingFilter === filterOption.value;
 
-                return (
-                  <button
-                    key={plan._id}
-                    type="button"
-                    onClick={() => setCurrentPlanId(plan._id)}
-                    className={`w-full bg-white rounded-3xl p-8 flex flex-col text-left transition-all duration-300 relative group cursor-pointer ${
-                      isSelected
-                        ? 'border-2 border-[#D1A635] shadow-[0_20px_50px_rgba(209,166,53,0.12)] scale-[1.02] z-10'
-                        : 'border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.05)] hover:border-[#D1A635]/40'
-                    }`}
-                  >
-                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-wider font-extrabold px-4 py-1.5 rounded-full shadow-sm ${
-                      isSelected ? 'bg-gradient-to-r from-[#D1A635] to-[#B08620] text-white' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {plan.badgeText || (isSelected ? 'Selected' : 'Available')}
-                    </div>
+                  return (
+                    <button
+                      key={filterOption.value}
+                      type="button"
+                      onClick={() => setBillingFilter(filterOption.value)}
+                      className={`rounded-full px-4 py-2 text-[13px] font-bold transition-colors ${
+                        isActive
+                          ? 'bg-[#D1A635] text-white shadow-sm'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:border-[#D1A635]/40'
+                      }`}
+                    >
+                      {filterOption.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-                    <h2 className="text-2xl font-black text-slate-800 mb-2 mt-2 tracking-tight">{plan.name}</h2>
-                    <p className="text-[13px] text-slate-500 mb-6 min-h-[45px] leading-relaxed">{plan.description || 'Supplier listing plan'}</p>
+              {filteredPlans.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200 bg-white px-6 py-8 text-center text-slate-500 shadow-sm">
+                  No {billingFilter} pricing plans are available right now.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {filteredPlans.map((plan) => {
+                    const isSelected = currentPlanId === plan._id;
+                    const planListingPeriod = deriveListingPeriod(plan.billingCycle);
+                    const priceLabel = getPriceLabel(plan.billingCycle);
 
-                    <div className="flex items-baseline gap-1 mb-3">
-                      <span className="text-4xl font-black text-slate-900 tracking-tight">${plan.price}</span>
-                      <span className="text-sm text-slate-400 font-semibold">one-time</span>
-                    </div>
-                    <p className="text-[12px] text-slate-500 font-semibold mb-6">
-                      {plan.billingCycle || 'Billing cycle not configured'}
-                      {planListingPeriod ? ` · ${planListingPeriod}` : ''}
-                    </p>
+                    return (
+                      <button
+                        key={plan._id}
+                        type="button"
+                        onClick={() => setCurrentPlanId(plan._id)}
+                        className={`w-full bg-white rounded-3xl p-8 flex flex-col text-left transition-all duration-300 relative group cursor-pointer ${
+                          isSelected
+                            ? 'border-2 border-[#D1A635] shadow-[0_20px_50px_rgba(209,166,53,0.12)] scale-[1.02] z-10'
+                            : 'border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.05)] hover:border-[#D1A635]/40'
+                        }`}
+                      >
+                        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-wider font-extrabold px-4 py-1.5 rounded-full shadow-sm ${
+                          isSelected ? 'bg-gradient-to-r from-[#D1A635] to-[#B08620] text-white' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {plan.badgeText || (isSelected ? 'Selected' : 'Available')}
+                        </div>
 
-                    <div className="space-y-4.5 flex-1 mb-8">
-                      {(plan.features || []).length > 0 ? (
-                        plan.features.map((feature) => (
-                          <div key={feature} className="flex items-start gap-3">
-                            <div className={`rounded-full p-0.5 flex-shrink-0 mt-0.5 ${isSelected ? 'bg-[#D1A635]/15' : 'bg-slate-100'}`}>
-                              <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-[#D1A635]' : 'text-slate-500'}`} strokeWidth={3} />
-                            </div>
-                            <span className={`text-[13.5px] leading-snug ${isSelected ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>{feature}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-[13px] text-slate-400 italic">No feature highlights configured for this package yet.</div>
-                      )}
-                    </div>
+                        <h2 className="text-2xl font-black text-slate-800 mb-2 mt-2 tracking-tight">{plan.name}</h2>
+                        <p className="text-[13px] text-slate-500 mb-6 min-h-[45px] leading-relaxed">{plan.description || 'Supplier listing plan'}</p>
 
-                    <div className={`w-full py-3 px-4 rounded-xl text-center text-xs font-bold transition-all mt-auto ${
-                      isSelected ? 'bg-[#D1A635] text-white shadow-md shadow-[#D1A635]/20' : 'bg-slate-50 text-slate-600 border border-slate-200/50'
-                    }`}>
-                      {isSelected ? 'Selected Package' : 'Select Plan'}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                        <div className="flex items-baseline gap-1 mb-3">
+                          <span className="text-4xl font-black text-slate-900 tracking-tight">${plan.price}</span>
+                          <span className="text-sm text-slate-400 font-semibold">{priceLabel}</span>
+                        </div>
+                        <p className="text-[12px] text-slate-500 font-semibold mb-6">
+                          {plan.billingCycle || 'Billing cycle not configured'}
+                          {planListingPeriod ? ` · ${planListingPeriod}` : ''}
+                        </p>
+
+                        <div className="space-y-4.5 flex-1 mb-8">
+                          {(plan.features || []).length > 0 ? (
+                            plan.features.map((feature) => (
+                              <div key={feature} className="flex items-start gap-3">
+                                <div className={`rounded-full p-0.5 flex-shrink-0 mt-0.5 ${isSelected ? 'bg-[#D1A635]/15' : 'bg-slate-100'}`}>
+                                  <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-[#D1A635]' : 'text-slate-500'}`} strokeWidth={3} />
+                                </div>
+                                <span className={`text-[13.5px] leading-snug ${isSelected ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>{feature}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-[13px] text-slate-400 italic">No feature highlights configured for this package yet.</div>
+                          )}
+                        </div>
+
+                        <div className={`w-full py-3 px-4 rounded-xl text-center text-xs font-bold transition-all mt-auto ${
+                          isSelected ? 'bg-[#D1A635] text-white shadow-md shadow-[#D1A635]/20' : 'bg-slate-50 text-slate-600 border border-slate-200/50'
+                        }`}>
+                          {isSelected ? 'Selected Package' : 'Select Plan'}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -223,6 +318,12 @@ const Subscription = () => {
               <span className="text-gray-600">Listing Duration</span>
               <span className="font-bold text-gray-900 text-right">{resolvedListingPeriod}</span>
             </div>
+            <div className="flex justify-between gap-4 text-[14px]">
+              <span className="text-gray-600">Base Price</span>
+              <span className="font-bold text-gray-900 text-right">
+                {currentPlan ? `$${totalDueToday.toFixed(2)}` : 'Select a plan'}
+              </span>
+            </div>
           </div>
 
           <div className="border-t border-gray-100 pt-6 mb-6">
@@ -230,7 +331,13 @@ const Subscription = () => {
               <span className="text-[16px] font-bold text-gray-900">Total Due Today</span>
               <span className="text-[24px] font-bold text-gray-900">${totalDueToday.toFixed(2)}</span>
             </div>
-            <div className="text-right text-[11px] text-gray-500">Stripe charges the backend plan amount only.</div>
+            <div className="text-right text-[11px] text-gray-500">
+              {selectedPlanBillingGroup === BILLING_FILTERS.MONTHLY
+                ? 'Charged as the selected monthly plan.'
+                : selectedPlanBillingGroup === BILLING_FILTERS.YEARLY
+                  ? 'Charged as the selected annual plan.'
+                  : 'Stripe charges the backend plan amount only.'}
+            </div>
           </div>
 
           <button

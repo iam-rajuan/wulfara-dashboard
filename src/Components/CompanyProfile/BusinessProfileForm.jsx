@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Upload, Clock, Check, Globe, ChevronDown, Plus, X } from 'lucide-react';
 
 export default function BusinessProfileForm({ data, onChange, onLogoUpload, isUploadingLogo }) {
   const [newProduct, setNewProduct] = useState('');
   const [newCert, setNewCert] = useState('');
   const [newArea, setNewArea] = useState('');
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
+
+  const resolvedLogo = useMemo(() => {
+    if (!data.logo || data.logo === 'no-logo.jpg') {
+      return '';
+    }
+
+    return data.logo;
+  }, [data.logo]);
+
+  useEffect(() => {
+    setLogoLoadFailed(false);
+  }, [resolvedLogo]);
 
   const handleProductAdd = (e) => {
     if (e.key === 'Enter' && newProduct.trim()) {
@@ -79,8 +92,13 @@ export default function BusinessProfileForm({ data, onChange, onLogoUpload, isUp
           <label className="block text-[13px] font-bold text-[#0F172A] mb-3">Company Logo</label>
           <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
             <div className="w-24 h-24 border border-dashed border-gray-300 rounded-lg bg-gray-50 flex items-center justify-center p-1.5 overflow-hidden relative shrink-0">
-              {data.logo ? (
-                <img src={data.logo} alt="Company Logo" className="w-full h-full object-cover rounded" />
+              {resolvedLogo && !logoLoadFailed ? (
+                <img
+                  src={resolvedLogo}
+                  alt="Company Logo"
+                  className="w-full h-full object-cover rounded"
+                  onError={() => setLogoLoadFailed(true)}
+                />
               ) : (
                 <div className="w-full h-full bg-[#0F172A] flex items-center justify-center rounded">
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4AF37]">
@@ -96,7 +114,7 @@ export default function BusinessProfileForm({ data, onChange, onLogoUpload, isUp
               </p>
               <label className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2 border border-gray-300 rounded-lg text-[13px] font-bold text-gray-700 bg-white transition w-full sm:w-max ${isUploadingLogo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                 <Upload size={16} className="text-gray-500" />
-                {isUploadingLogo ? 'Uploading...' : data.logo ? 'Replace Logo' : 'Upload Logo'}
+                {isUploadingLogo ? 'Uploading...' : resolvedLogo && !logoLoadFailed ? 'Replace Logo' : 'Upload Logo'}
                 <input type="file" accept="image/png, image/jpeg" className="hidden" disabled={isUploadingLogo} onChange={handleLogoUpload} />
               </label>
             </div>

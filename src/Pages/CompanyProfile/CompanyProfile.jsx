@@ -35,7 +35,8 @@ export default function CompanyProfile() {
     name: "Company Name",
     location: "Location",
     description: "Company description...",
-    tags: []
+    tags: [],
+    logo: ""
   });
 
   // Load backend data into local state
@@ -46,7 +47,7 @@ export default function CompanyProfile() {
         ...prev,
         companyName: p.companyName || "",
         description: p.description || "",
-        logo: p.logo || "",
+        logo: p.logo && p.logo !== 'no-logo.jpg' ? p.logo : "",
         coreProducts: p.coreProducts || [],
         certifications: p.certifications || [],
         serviceAreas: p.serviceAreas || [],
@@ -67,7 +68,8 @@ export default function CompanyProfile() {
         name: p.companyName || "Company Name",
         location: p.contactEmail || "Email not set",
         description: p.description ? (p.description.slice(0, 100) + '...') : "No description provided...",
-        tags: p.certifications && p.certifications.length > 0 ? p.certifications.slice(0, 2) : []
+        tags: p.certifications && p.certifications.length > 0 ? p.certifications.slice(0, 2) : [],
+        logo: p.logo && p.logo !== 'no-logo.jpg' ? p.logo : ""
       });
     }
   }, [dashboardData]);
@@ -76,7 +78,7 @@ export default function CompanyProfile() {
     percentage: dashboardData?.data?.stats?.profileCompletion ? parseInt(dashboardData.data.stats.profileCompletion) : 0,
     tasks: [
       { id: 1, label: "Basic Business Info", completed: !!profileData.companyName && !!profileData.description },
-      { id: 2, label: "Upload Company Logo", completed: !!profileData.logo },
+      { id: 2, label: "Upload Company Logo", completed: !!profileData.logo && profileData.logo !== 'no-logo.jpg' },
       { id: 3, label: "Add Core Products", completed: profileData.coreProducts.length > 0 },
     ]
   };
@@ -123,7 +125,8 @@ export default function CompanyProfile() {
       description: profileData.description ? (profileData.description.slice(0, 100) + '...') : "No description...",
       tags: profileData.certifications && profileData.certifications.length > 0 
         ? profileData.certifications.slice(0, 2) 
-        : []
+        : [],
+      logo: profileData.logo && profileData.logo !== 'no-logo.jpg' ? profileData.logo : ""
     });
     toast.info("Listing preview updated with your current form data!");
   };
@@ -132,6 +135,10 @@ export default function CompanyProfile() {
     try {
       setIsUploadingLogo(true);
       toast.info("Uploading logo...");
+
+      if (!dashboardData?.data?.profile?._id) {
+        throw new Error("Supplier profile not found");
+      }
       
       const res = await getUploadUrl({ folder: 'logos', contentType: file.type }).unwrap();
       const { uploadUrl, fileUrl } = res.data;
@@ -142,10 +149,17 @@ export default function CompanyProfile() {
         body: file
       });
       
+      await updateListing({
+        id: dashboardData.data.profile._id,
+        data: { logo: fileUrl }
+      }).unwrap();
+
       setProfileData(prev => ({ ...prev, logo: fileUrl }));
-      toast.success("Logo uploaded successfully");
+      setPreviewData(prev => ({ ...prev, logo: fileUrl }));
+      toast.success("Logo uploaded and saved successfully");
+      refetch();
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to upload logo");
+      toast.error(error?.data?.message || error?.message || "Failed to upload logo");
     } finally {
       setIsUploadingLogo(false);
     }

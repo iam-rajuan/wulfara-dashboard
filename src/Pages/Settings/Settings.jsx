@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { Input, Select, Switch, Checkbox, Tag, Modal, Form, message, Spin } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   useAssignAdminRoleMutation,
   useCreateAdminRoleMutation,
@@ -14,7 +14,8 @@ import {
   useGetAdminUsersQuery,
   useUpdateAdminRoleMutation,
 } from '../../redux/features/adminRoles/adminRolesApi';
-import { useDeleteUserMutation } from '../../redux/features/users/usersApi';
+import { useDeleteUserMutation, useUpdateMeMutation } from '../../redux/features/users/usersApi';
+import { updateUser } from '../../redux/features/auth/authSlice';
 import { hasAdminPermission } from '../../utils/adminAccess';
 
 const SupplierGeneralConfiguration = () => (
@@ -79,108 +80,141 @@ const SupplierGeneralConfiguration = () => (
   </div>
 );
 
-const AdminProfile = ({ user }) => (
-  <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-    <div className="px-8 py-6 border-b border-gray-100">
-      <h2 className="text-xl font-bold text-gray-900">Admin Profile</h2>
-      <p className="text-[13px] text-gray-500 mt-1">Your internal admin account information.</p>
-    </div>
+const UserProfile = () => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const [updateMe, { isLoading }] = useUpdateMeMutation();
 
-    <div className="p-8 space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center gap-5">
-        <div className="w-20 h-20 rounded-2xl bg-[#D4AF37] text-[#0F172A] flex items-center justify-center text-2xl font-black shadow-sm">
-          {(user?.name || 'AD')
-            .split(' ')
-            .slice(0, 2)
-            .map((part) => part[0] || '')
-            .join('')
-            .toUpperCase()}
-        </div>
-        <div>
-          <h3 className="text-2xl font-black text-gray-900">{user?.name || 'Admin User'}</h3>
-          <p className="text-[14px] text-gray-500 mt-1">{user?.email || 'No email found'}</p>
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <Tag className="m-0 bg-blue-50 text-blue-700 border-blue-100 font-semibold">
-              {user?.adminRole?.name || 'Admin'}
-            </Tag>
-            <Tag className="m-0 bg-emerald-50 text-emerald-700 border-emerald-100 font-semibold">
-              {user?.status || 'Active'}
-            </Tag>
-            {user?.isVerified && (
-              <Tag className="m-0 bg-amber-50 text-amber-700 border-amber-100 font-semibold">
-                Verified
-              </Tag>
-            )}
-          </div>
-        </div>
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+
+  useEffect(() => {
+    setName(user?.name || '');
+    setEmail(user?.email || '');
+  }, [user]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim()) {
+      message.error('Name and email are required');
+      return;
+    }
+    try {
+      const response = await updateMe({ name, email }).unwrap();
+      if (response.success) {
+        dispatch(updateUser(response.data));
+        message.success('Profile updated successfully!');
+      } else {
+        message.error(response.message || 'Failed to update profile');
+      }
+    } catch (err) {
+      message.error(err.data?.message || 'An error occurred while updating profile');
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="px-8 py-6 border-b border-gray-100">
+        <h2 className="text-xl font-bold text-gray-900">My Profile</h2>
+        <p className="text-[13px] text-gray-500 mt-1">Your account and profile details.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="border border-gray-100 rounded-xl p-5 bg-gray-50/50">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600">
-              <User size={18} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Full Name</p>
-              <p className="text-[15px] font-semibold text-gray-900 mt-1">{user?.name || 'N/A'}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="border border-gray-100 rounded-xl p-5 bg-gray-50/50">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600">
-              <Mail size={18} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Email Address</p>
-              <p className="text-[15px] font-semibold text-gray-900 mt-1 break-all">{user?.email || 'N/A'}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="border border-gray-100 rounded-xl p-5 bg-gray-50/50">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600">
-              <Shield size={18} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Access Level</p>
-              <p className="text-[15px] font-semibold text-gray-900 mt-1">{user?.adminRole?.name || 'Admin'}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="border border-gray-100 rounded-xl p-5 bg-gray-50/50">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600">
-              <BadgeCheck size={18} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Account State</p>
-              <p className="text-[15px] font-semibold text-gray-900 mt-1">{user?.status || 'Active'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="border border-gray-100 rounded-xl p-6 bg-[#FAFAFA]">
-        <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shrink-0">
-            <KeyRound size={18} />
+      <form onSubmit={handleSubmit} className="p-8 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center gap-5">
+          <div className="w-20 h-20 rounded-2xl bg-[#D4AF37] text-[#0E1726] flex items-center justify-center text-2xl font-black shadow-sm">
+            {(name || 'US')
+              .split(' ')
+              .slice(0, 2)
+              .map((part) => part[0] || '')
+              .join('')
+              .toUpperCase()}
           </div>
           <div>
-            <h4 className="text-[15px] font-bold text-gray-900">Password & Security</h4>
-            <p className="text-[13px] text-gray-500 mt-1">
-              Use the dashboard sign-in screen “Forgot password?” flow if you need to reset this admin account password.
-            </p>
+            <h3 className="text-2xl font-black text-gray-900">{name || 'User'}</h3>
+            <p className="text-[14px] text-gray-500 mt-1">{email || 'No email found'}</p>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <Tag className="m-0 bg-blue-50 text-blue-700 border-blue-100 font-semibold uppercase">
+                {user?.role || 'User'}
+              </Tag>
+              <Tag className="m-0 bg-emerald-50 text-emerald-700 border-emerald-100 font-semibold">
+                {user?.status || 'Active'}
+              </Tag>
+              {user?.isVerified && (
+                <Tag className="m-0 bg-amber-50 text-amber-700 border-amber-100 font-semibold">
+                  Verified
+                </Tag>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Full Name</label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium focus:border-[#dcb14b] focus:ring-1 focus:ring-[#dcb14b]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Email Address</label>
+            <Input
+              value={email}
+              type="email"
+              onChange={(e) => setEmail(e.target.value)}
+              className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium focus:border-[#dcb14b] focus:ring-1 focus:ring-[#dcb14b]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Access Level / Role</label>
+            <Input
+              value={user?.role === 'admin' ? (user?.adminRole?.name || 'Admin') : 'Supplier'}
+              disabled
+              className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium bg-gray-50 text-gray-500 cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Account State</label>
+            <Input
+              value={user?.status || 'Active'}
+              disabled
+              className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium bg-gray-50 text-gray-500 cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        <div className="border border-gray-100 rounded-xl p-6 bg-[#FAFAFA]">
+          <div className="flex items-start gap-4">
+            <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shrink-0">
+              <KeyRound size={18} />
+            </div>
+            <div>
+              <h4 className="text-[15px] font-bold text-gray-900">Password & Security</h4>
+              <p className="text-[13px] text-gray-500 mt-1">
+                Use the dashboard sign-in screen “Forgot password?” flow if you need to reset your password.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t border-gray-100">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#dcb14b] hover:bg-[#c99f3b] text-gray-900 font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60"
+          >
+            <Save size={16} />
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
     </div>
-  </div>
-);
+  );
+};
 
 const RoleEditorModal = ({ open, onCancel, onSubmit, catalog, isSubmitting }) => {
   const [form] = Form.useForm();
@@ -702,7 +736,7 @@ const Settings = () => {
           </div>
 
           <div className="flex-1">
-            {activeTab === 'My Profile' && (isAdmin ? <AdminProfile user={user} /> : <SupplierGeneralConfiguration />)}
+            {activeTab === 'My Profile' && <UserProfile />}
             {activeTab === 'Company Details' && <SupplierGeneralConfiguration />}
             {activeTab === 'Roles & Permissions' && <RolesAndPermissions />}
             {activeTab === 'Notifications' && <NotificationsSettings />}

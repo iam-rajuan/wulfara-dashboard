@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../redux/features/auth/authSlice";
+import { useGetSupplierDashboardQuery } from "../../redux/features/listings/listingsApi";
 import { hasAdminPermission } from "../../utils/adminAccess";
 import brandlogo from "../../assets/image/logo.png";
 import {
@@ -36,6 +37,14 @@ const Sidebar = ({ closeDrawer }) => {
 
   const { user } = useSelector((state) => state.auth);
   const role = user?.role || "supplier";
+  const { data: dashboardResponse } = useGetSupplierDashboardQuery(undefined, {
+    skip: role !== "supplier",
+  });
+  const supplierProfile = dashboardResponse?.data?.profile;
+  const supplierLogo = supplierProfile?.logo && supplierProfile.logo !== "no-logo.jpg" ? supplierProfile.logo : "";
+  const supplierPlanLabel = supplierProfile?.subscriptionPlan
+    ? `${supplierProfile.subscriptionPlan.charAt(0).toUpperCase()}${supplierProfile.subscriptionPlan.slice(1)} Supplier`
+    : "Supplier";
 
   const handleLogout = () => {
     dispatch(logout());
@@ -145,8 +154,12 @@ const Sidebar = ({ closeDrawer }) => {
             </div>
         ) : (
           <div className="bg-[#152136] rounded-xl p-3 flex items-center gap-3 mb-4 border border-[#1C273C]">
-            <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center text-[13px]">
-              {user?.name ? user.name.substring(0, 2).toUpperCase() : "SP"}
+            <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center text-[13px] overflow-hidden">
+              {supplierLogo ? (
+                <img src={supplierLogo} alt={supplierProfile?.companyName || user?.name || "Supplier"} className="w-full h-full object-cover" />
+              ) : (
+                <span>{user?.name ? user.name.substring(0, 2).toUpperCase() : "SP"}</span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-medium text-white truncate">
@@ -154,7 +167,7 @@ const Sidebar = ({ closeDrawer }) => {
               </p>
               <div className="flex items-center gap-1 text-[#D4AF37] text-[11px] mt-0.5">
                 <BadgeCheck size={12} strokeWidth={2.5} />
-                <span className="font-medium">Premium Suppl</span>
+                <span className="font-medium truncate">{supplierPlanLabel}</span>
               </div>
             </div>
           </div>

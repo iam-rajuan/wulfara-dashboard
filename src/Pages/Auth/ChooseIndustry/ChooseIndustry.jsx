@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, ArrowLeft, Check, LayoutGrid } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../../redux/features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { useGetCategoriesQuery } from '../../../redux/features/categories/categoryApi';
 import {
@@ -45,6 +46,7 @@ const getIndustryBannerStyle = (bannerUrl) => {
 
 const ChooseIndustry = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const { user } = useSelector((state) => state.auth);
   const supplierId = user?.role === 'admin' ? searchParams.get('supplierId') : undefined;
@@ -242,7 +244,10 @@ const ChooseIndustry = () => {
         <div className="border-t border-gray-200 bg-[#F9FAFB] py-4 px-6 md:px-12 w-full flex justify-between items-center sticky bottom-0 z-20">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              dispatch(logout());
+              navigate('/sign-in');
+            }}
             className="flex items-center gap-2 px-6 py-2.5 rounded border border-gray-300 bg-white text-gray-800 font-medium text-[14px] hover:bg-gray-50 transition-colors shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" />

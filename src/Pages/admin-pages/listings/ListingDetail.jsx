@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useGetListingQuery, useReviewListingMutation, useFeatureListingMutation } from "../../../redux/features/listings/listingsApi";
 import {
@@ -24,14 +24,56 @@ export default function ListingDetail() {
   const listing = listingResponse?.data;
 
   const [checklist, setChecklist] = useState({
-    companyInfo: true,
-    mediaAssets: true,
+    companyInfo: false,
+    mediaAssets: false,
     certifications: false
   });
 
   const toggleChecklist = (key) => {
     setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const galleryImages = useMemo(
+    () => (listing?.gallery || []).filter((item) => item?.url && !item?.isPdf),
+    [listing?.gallery]
+  );
+
+  const primaryGalleryImage = useMemo(
+    () => galleryImages.find((item) => item.isPrimary)?.url || galleryImages[0]?.url || "",
+    [galleryImages]
+  );
+
+  const logoImage = useMemo(() => {
+    if (listing?.logo && listing.logo !== "no-logo.jpg") {
+      return listing.logo;
+    }
+
+    return primaryGalleryImage;
+  }, [listing?.logo, primaryGalleryImage]);
+
+  const coverImage = primaryGalleryImage || logoImage;
+  const hasCompanyInfo = Boolean(
+    listing?.companyName &&
+    listing?.description &&
+    (listing?.contactEmail || listing?.user?.email) &&
+    listing?.contactPhone &&
+    listing?.website
+  );
+  const hasMediaAssets = Boolean(logoImage || galleryImages.length > 0);
+  const hasCertifications = Boolean((listing?.certifications || []).length > 0);
+  const displayContactEmail = listing?.contactEmail || listing?.user?.email || "N/A";
+  const displayContactPhone = listing?.contactPhone || "N/A";
+  const displayWebsite = listing?.website || "N/A";
+  const displayLocation = listing?.location?.formattedAddress || "Location not provided";
+  const categoryNames = listing?.categories || [];
+
+  useEffect(() => {
+    setChecklist({
+      companyInfo: hasCompanyInfo,
+      mediaAssets: hasMediaAssets,
+      certifications: hasCertifications,
+    });
+  }, [hasCertifications, hasCompanyInfo, hasMediaAssets]);
 
   const handleApprove = async () => {
     try {
@@ -91,13 +133,16 @@ export default function ListingDetail() {
     return <div className="min-h-screen p-6 mt-16 lg:p-8 flex items-center justify-center">Loading...</div>;
   }
 
-  // Calculate quality score
+  const completedQualityFields = [
+    Boolean(listing.companyName),
+    Boolean(listing.description),
+    Boolean(displayContactEmail && displayContactEmail !== "N/A"),
+    Boolean(logoImage),
+    Boolean(categoryNames.length > 0),
+  ].filter(Boolean).length;
+
   let qualityScore = 0;
-  if (listing.companyName) qualityScore += 20;
-  if (listing.description) qualityScore += 20;
-  if (listing.contactEmail) qualityScore += 20;
-  if (listing.logo && listing.logo !== 'no-logo.jpg') qualityScore += 20;
-  if (listing.categories && listing.categories.length > 0) qualityScore += 20;
+  qualityScore = completedQualityFields * 20;
 
   return (
     <div className="min-h-screen p-6 mt-16 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans pt-24">
@@ -112,8 +157,8 @@ export default function ListingDetail() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex items-center gap-5">
           <div className="w-14 h-14 bg-[#0F172A] rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-             {listing.logo && listing.logo !== 'no-logo.jpg' ? (
-                <img src={listing.logo} alt="Logo" className="w-full h-full object-cover" />
+             {logoImage ? (
+                <img src={logoImage} alt={`${listing.companyName} logo`} className="w-full h-full object-cover" />
              ) : (
                 <div className="text-white opacity-80 font-bold text-xl">{listing.companyName.charAt(0)}</div>
              )}
@@ -181,11 +226,17 @@ export default function ListingDetail() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
             {/* Cover Image */}
             <div className="h-48 md:h-64 bg-slate-300 relative">
-              <img
-                src="https://images.unsplash.com/photo-1533422902779-babd49fb294e?q=80&w=2070&auto=format&fit=crop"
-                alt="Cover"
-                className="w-full h-full object-cover"
-              />
+              {coverImage ? (
+                <img
+                  src={coverImage}
+                  alt={`${listing.companyName} cover`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-600 text-sm font-semibold">
+                  No gallery image uploaded yet
+                </div>
+              )}
               <div className="absolute top-4 right-4">
                 <button className="flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-sm border border-white/20 rounded-md text-[12px] font-bold text-gray-700 shadow-sm hover:bg-white transition-colors">
                   <Monitor size={14} />
@@ -200,11 +251,17 @@ export default function ListingDetail() {
               {/* Avatar & Contact Button Row */}
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-8 relative">
                 <div className="w-28 h-28 bg-[#0F172A] rounded-xl border-4 border-white shadow-lg -mt-14 relative z-10 flex items-center justify-center overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1563906267088-b029e7101114?q=80&w=2070&auto=format&fit=crop"
-                    alt="Logo"
-                    className="w-full h-full object-cover opacity-80"
-                  />
+                  {logoImage ? (
+                    <img
+                      src={logoImage}
+                      alt={`${listing.companyName} logo`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-white opacity-80 font-bold text-4xl">
+                      {listing.companyName.charAt(0)}
+                    </div>
+                  )}
                 </div>
 
                 <button className="mt-4 sm:mt-0 px-6 py-2.5 bg-[#818CF8] text-white text-[13px] font-bold rounded-md hover:bg-[#6366F1] transition-colors shadow-sm">
@@ -233,14 +290,29 @@ export default function ListingDetail() {
                         listing.products.map((product, index) => (
                           <div key={index} className="bg-[#F8F9FB] rounded-xl border border-gray-200 overflow-hidden group">
                             <div className="h-32 bg-gray-200 overflow-hidden flex items-center justify-center">
-                              {/* Placeholder for product image since it's not in the model yet */}
-                              <span className="text-gray-400 font-bold">No Image</span>
+                              {product.image ? (
+                                <img
+                                  src={product.image}
+                                  alt={product.title || product.name || `Product ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-gray-400 font-bold">No Image</span>
+                              )}
                             </div>
                             <div className="p-4">
-                              <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">{product.name}</h4>
+                              <h4 className="text-[14px] font-bold text-[#0F172A] mb-1">
+                                {product.title || product.name || "Untitled Product"}
+                              </h4>
                               <p className="text-[12px] text-[#64748B] leading-relaxed">{product.description || "No description."}</p>
                               {product.price && <p className="text-[13px] font-bold text-[#2563EB] mt-2">${product.price}</p>}
                             </div>
+                          </div>
+                        ))
+                      ) : listing.coreProducts && listing.coreProducts.length > 0 ? (
+                        listing.coreProducts.map((product, index) => (
+                          <div key={`${product}-${index}`} className="bg-[#F8F9FB] rounded-xl border border-gray-200 p-4">
+                            <h4 className="text-[14px] font-bold text-[#0F172A]">{product}</h4>
                           </div>
                         ))
                       ) : (
@@ -260,7 +332,15 @@ export default function ListingDetail() {
                       <MapPin size={16} className="text-[#D4AF37] mt-0.5" />
                       <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Contact</p>
-                        <p className="text-[13px] font-bold text-[#0F172A] leading-snug">{listing.contactEmail || "N/A"}<br />{listing.contactPhone}</p>
+                        <p className="text-[13px] font-bold text-[#0F172A] leading-snug">{displayContactEmail}<br />{displayContactPhone}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <Factory size={16} className="text-[#D4AF37] mt-0.5" />
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Location</p>
+                        <p className="text-[13px] font-bold text-[#0F172A] leading-snug">{displayLocation}</p>
                       </div>
                     </div>
 
@@ -268,7 +348,18 @@ export default function ListingDetail() {
                       <Factory size={16} className="text-[#D4AF37] mt-0.5" />
                       <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Website</p>
-                        <p className="text-[13px] font-bold text-[#2563EB] leading-snug overflow-hidden text-ellipsis">{listing.website || "N/A"}</p>
+                        {displayWebsite !== "N/A" ? (
+                          <a
+                            href={displayWebsite}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[13px] font-bold text-[#2563EB] leading-snug break-all"
+                          >
+                            {displayWebsite}
+                          </a>
+                        ) : (
+                          <p className="text-[13px] font-bold text-[#0F172A] leading-snug">N/A</p>
+                        )}
                       </div>
                     </div>
 
@@ -277,8 +368,8 @@ export default function ListingDetail() {
                       <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Categories</p>
                         <div className="flex flex-wrap gap-2">
-                          {listing.categories && listing.categories.length > 0 ? (
-                             listing.categories.map(cat => (
+                          {categoryNames.length > 0 ? (
+                             categoryNames.map(cat => (
                                <span key={cat._id} className="px-2 py-1 bg-white border border-gray-200 text-[11px] font-bold text-gray-600 rounded">{cat.name}</span>
                              ))
                           ) : (
@@ -318,7 +409,9 @@ export default function ListingDetail() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-[#0F172A] leading-none mb-1.5">Company Info Complete</p>
-                  <p className="text-[11px] font-medium text-gray-500 leading-snug">All required text fields populated.</p>
+                  <p className="text-[11px] font-medium text-gray-500 leading-snug">
+                    {hasCompanyInfo ? "Company profile contains the required business fields." : "Missing one or more required business fields."}
+                  </p>
                 </div>
               </div>
 
@@ -332,7 +425,9 @@ export default function ListingDetail() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-[#0F172A] leading-none mb-1.5">Media Assets Validated</p>
-                  <p className="text-[11px] font-medium text-gray-500 leading-snug">High-res logo and gallery images present.</p>
+                  <p className="text-[11px] font-medium text-gray-500 leading-snug">
+                    {hasMediaAssets ? `${galleryImages.length} gallery image(s) and/or logo available.` : "No logo or gallery image uploaded yet."}
+                  </p>
                 </div>
               </div>
 
@@ -346,7 +441,9 @@ export default function ListingDetail() {
                 </div>
                 <div>
                   <p className="text-[13px] font-bold text-[#0F172A] leading-none mb-1.5">Certifications Verified</p>
-                  <p className="text-[11px] font-medium text-gray-500 leading-snug">Check ISO documents against external database.</p>
+                  <p className="text-[11px] font-medium text-gray-500 leading-snug">
+                    {hasCertifications ? `${listing.certifications.length} certification item(s) present.` : "No certification data provided on this listing."}
+                  </p>
                 </div>
               </div>
 

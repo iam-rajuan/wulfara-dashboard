@@ -22,14 +22,22 @@ export const usersApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'User', id }, 'User'],
     }),
+    updateMe: builder.mutation({
+      query: (userData) => ({
+        url: '/users/me',
+        method: 'PUT',
+        body: userData,
+      }),
+      invalidatesTags: ['User'],
+    }),
     deleteUser: builder.mutation({
       query: (id) => ({
         url: `/users/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['User'],
+      invalidatesTags: ['User', 'Listing'],
     }),
   }),
 });
 
-export const { useGetUsersQuery, useCreateUserMutation, useUpdateUserMutation, useDeleteUserMutation } = usersApi;
+export const { useGetUsersQuery, useCreateUserMutation, useUpdateUserMutation, useUpdateMeMutation, useDeleteUserMutation } = usersApi;

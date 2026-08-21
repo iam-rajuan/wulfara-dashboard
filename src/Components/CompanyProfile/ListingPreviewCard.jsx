@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BadgeCheck, MapPin } from 'lucide-react';
 
 export default function ListingPreviewCard({ previewData }) {
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
+  const resolvedLogo = previewData.logo && previewData.logo !== 'no-logo.jpg' ? previewData.logo : '';
+
+  useEffect(() => {
+    setLogoLoadFailed(false);
+  }, [resolvedLogo]);
+
   return (
     <div className="bg-[#F8F9FB] rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
       <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-[#F4F6F9]">
@@ -10,11 +17,20 @@ export default function ListingPreviewCard({ previewData }) {
       </div>
       <div className="p-5 bg-white">
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-12 h-12 bg-[#0F172A] rounded flex items-center justify-center shrink-0">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4AF37]">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" strokeWidth="2" />
-            </svg>
+          <div className="w-12 h-12 bg-[#0F172A] rounded flex items-center justify-center shrink-0 overflow-hidden">
+            {resolvedLogo && !logoLoadFailed ? (
+              <img
+                src={resolvedLogo}
+                alt={`${previewData.name} logo`}
+                className="w-full h-full object-cover"
+                onError={() => setLogoLoadFailed(true)}
+              />
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#D4AF37]">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" strokeWidth="2" />
+              </svg>
+            )}
           </div>
           <div>
             <div className="flex items-center gap-1.5">

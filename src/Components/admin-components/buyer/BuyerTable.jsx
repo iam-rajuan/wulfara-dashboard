@@ -1,7 +1,7 @@
 import React from "react";
 import { BadgeCheck, ShieldAlert, AlertCircle, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
 
-export function Pagination({ currentPage, totalItems, pageSize, onPageChange }) {
+export function Pagination({ currentPage, totalItems, pageSize, onPageChange, entityType = "buyers" }) {
   const totalPages = Math.ceil(totalItems / pageSize);
   
   if (totalPages <= 1) return null;
@@ -28,7 +28,7 @@ export function Pagination({ currentPage, totalItems, pageSize, onPageChange }) 
   return (
     <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
       <div className="text-[13px] text-gray-500">
-        Showing {startItem} to {endItem} of {totalItems} buyers
+        Showing {startItem} to {endItem} of {totalItems} {entityType}
       </div>
       
       <div className="flex items-center gap-1">
@@ -188,7 +188,7 @@ export default function BuyerTable({ buyers, selectedIds, onSelect, onSelectAll,
                           className="fixed inset-0 z-50" 
                           onClick={() => setOpenActionId(null)}
                         ></div>
-                        <div className={`absolute right-6 w-32 bg-white rounded-md shadow-xl border border-gray-100 z-50 py-1 overflow-hidden ${index === buyers.length - 1 && buyers.length > 1 ? 'bottom-8' : 'top-10'}`}>
+                        <div className={`absolute right-6 w-32 bg-white rounded-md shadow-xl border border-gray-100 z-50 py-1 overflow-hidden ${((index >= buyers.length - 3 && buyers.length > 3) || (index === buyers.length - 1 && buyers.length > 1)) ? 'bottom-8' : 'top-10'}`}>
                           <button 
                             onClick={() => {
                               setOpenActionId(null);

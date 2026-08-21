@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Download, Plus, ChevronDown, Search, Filter } from "lucide-react";
+import { Download, Plus, ChevronDown, Search, Filter, AlertTriangle, Trash2 } from "lucide-react";
+import { Modal, message, Spin } from "antd";
 import { 
   useGetListingsQuery, 
   useUpdateListingMutation 
@@ -16,7 +17,7 @@ import { hasAdminPermission } from "../../../utils/adminAccess";
 export default function SupplierManagement() {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { data: listingsResponse, isLoading, error } = useGetListingsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: listingsResponse, isLoading, error, refetch } = useGetListingsQuery(undefined, { refetchOnMountOrArgChange: true });
   const [updateListing] = useUpdateListingMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
@@ -24,17 +25,19 @@ export default function SupplierManagement() {
   // Filter only suppliers
   const suppliers = useMemo(() => {
     const suppliersData = listingsResponse?.data || [];
-    return suppliersData.map(sup => ({
-      id: sup._id,
-      icon: "Box", 
-      name: sup.user?.name || sup.contactEmail || "Unknown",
-      company: sup.companyName || "No Company Name",
-      email: sup.contactEmail || sup.user?.email || "No Email",
-      plan: sup.subscriptionPlan ? `${sup.subscriptionPlan.charAt(0).toUpperCase()}${sup.subscriptionPlan.slice(1)}` : "Free",
-      verification: sup.isApproved ? "Verified" : (sup.listingStatus === 'Suspended' ? "Suspended" : "Pending"),
-      listingStatus: sup.listingStatus || "Pending",
-      subscription: sup.subscriptionStatus ? `${sup.subscriptionStatus.charAt(0).toUpperCase()}${sup.subscriptionStatus.slice(1)}` : "Inactive"
-    }));
+    return suppliersData
+      .filter(sup => sup.user !== null && sup.user !== undefined)
+      .map(sup => ({
+        id: sup._id,
+        icon: "Box", 
+        name: sup.user?.name || sup.contactEmail || "Unknown",
+        company: sup.companyName || "No Company Name",
+        email: sup.contactEmail || sup.user?.email || "No Email",
+        plan: sup.subscriptionPlan ? `${sup.subscriptionPlan.charAt(0).toUpperCase()}${sup.subscriptionPlan.slice(1)}` : "Free",
+        verification: sup.isApproved ? "Verified" : (sup.listingStatus === 'Suspended' ? "Suspended" : "Pending"),
+        listingStatus: sup.listingStatus || "Pending",
+        subscription: sup.subscriptionStatus ? `${sup.subscriptionStatus.charAt(0).toUpperCase()}${sup.subscriptionStatus.slice(1)}` : "Inactive"
+      }));
   }, [listingsResponse?.data]);
 
   const suppliersData = listingsResponse?.data || [];
@@ -50,7 +53,10 @@ export default function SupplierManagement() {
   const [verificationFilter, setVerificationFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [bulkAction, setBulkAction] = useState("");
-  const pageSize = 4; // Design shows 4 items per page
+  const pageSize = 10; // Design shows 10 items per page
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const canManageSuppliers = hasAdminPermission(user, "suppliers.manage");
 
   const handleSaveSupplier = async (savedSupplier) => {
@@ -101,20 +107,31 @@ export default function SupplierManagement() {
     }
   };
 
-  const handleDeleteSupplier = async (id) => {
-    if (window.confirm("Are you sure you want to delete this supplier listing?")) {
-      try {
-        const originalSup = suppliersData.find(s => s._id === id);
-        const userId = originalSup?.user?._id || originalSup?.user;
-        if (userId) {
-           await deleteUser(userId).unwrap();
-        } else {
-           alert("No user account associated with this listing");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error deleting supplier");
+  const handleDeleteSupplier = (id) => {
+    const originalSup = suppliersData.find(s => s._id === id);
+    setSupplierToDelete(originalSup);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteSupplier = async () => {
+    if (!supplierToDelete) return;
+    setIsDeleting(true);
+    try {
+      const userId = supplierToDelete.user?._id || supplierToDelete.user;
+      if (userId) {
+        await deleteUser(userId).unwrap();
+        refetch();
+        message.success("Supplier deleted successfully");
+      } else {
+        message.error("No user account associated with this listing");
       }
+      setDeleteModalOpen(false);
+      setSupplierToDelete(null);
+    } catch (err) {
+      console.error(err);
+      message.error("Error deleting supplier");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -379,6 +396,7 @@ export default function SupplierManagement() {
             totalItems={filteredSuppliers.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
+            entityType="suppliers"
           />
         )}
 
@@ -398,6 +416,45 @@ export default function SupplierManagement() {
         onClose={() => setIsViewModalOpen(false)}
         supplier={viewingSupplier}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={deleteModalOpen}
+        onCancel={() => !isDeleting && setDeleteModalOpen(false)}
+        footer={null}
+        closable={!isDeleting}
+        centered
+        width={400}
+      >
+        <div className="p-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={24} />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Supplier</h3>
+          <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+            Are you sure you want to delete <span className="font-semibold text-gray-800">{supplierToDelete?.companyName || supplierToDelete?.company || "this supplier"}</span>? This will permanently delete the supplier listing and the associated user account.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={() => setDeleteModalOpen(false)}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={confirmDeleteSupplier}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
+            >
+              {isDeleting ? <Spin size="small" className="text-white" /> : <Trash2 size={16} />}
+              {isDeleting ? 'Deleting...' : 'Delete Supplier'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

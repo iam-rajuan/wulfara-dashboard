@@ -22,6 +22,12 @@ const SignIn = () => {
   const isPublicSupplierOnboardingIntent = searchParams.get("intent") === "supplier-onboarding";
 
   useEffect(() => {
+    if (user || token || localStorage.getItem('token')) {
+      dispatch(logout());
+    }
+  }, []);
+
+  useEffect(() => {
     if (isError && error) {
       setLocalError(error.data?.message || "Login failed");
     }

@@ -16,13 +16,13 @@ const PrivateRoute = () => {
         isFetching: isRefreshingMe,
         isError: isMeError,
         error: meError,
-    } = useGetMeQuery(undefined, {
+    } = useGetMeQuery(token, {
         skip: !token,
     });
     const effectiveUser = token ? (meResponse?.data || user) : null;
     const isSupplier = effectiveUser?.role === "supplier";
     const isBuyer = effectiveUser?.role === "buyer";
-    const { data, isLoading } = useGetOnboardingStatusQuery(undefined, { skip: !isSupplier });
+    const { data, isLoading } = useGetOnboardingStatusQuery(effectiveUser?._id || undefined, { skip: !isSupplier });
     const onboarding = data?.data?.onboarding;
     const isOnboardingRoute = ONBOARDING_ROUTES.includes(location.pathname);
     const isUnauthorized = meError?.status === 401;
@@ -75,13 +75,19 @@ const PrivateRoute = () => {
         return <Navigate to={getFirstAccessibleAdminRoute(effectiveUser)} replace />
     }
 
-    if (isSupplier && !isOnboardingRoute) {
+    if (isSupplier) {
         if (isLoading) {
             return null;
         }
 
-        if (onboarding?.isComplete === false && onboarding?.nextRoute && location.pathname !== onboarding.nextRoute) {
-            return <Navigate to={onboarding.nextRoute} replace />
+        if (onboarding?.isComplete === false) {
+            if (!isOnboardingRoute && onboarding?.nextRoute && location.pathname !== onboarding.nextRoute) {
+                return <Navigate to={onboarding.nextRoute} replace />
+            }
+        } else {
+            if (isOnboardingRoute) {
+                return <Navigate to="/dashboard" replace />
+            }
         }
     }
 

@@ -5,6 +5,7 @@ import { RxHamburgerMenu } from "react-icons/rx";
 import { IoMdNotifications } from "react-icons/io";
 import { Bell } from "lucide-react";
 import { io } from "socket.io-client";
+import { useGetSupplierDashboardQuery } from "../../redux/features/listings/listingsApi";
 import { API_BASE_URL, SOCKET_BASE_URL } from "../../config/urls";
 
 const Header = ({ showDrawer }) => {
@@ -13,6 +14,11 @@ const Header = ({ showDrawer }) => {
 
   const userId = user?._id;
   const role = user?.role || "supplier";
+  const { data: dashboardResponse } = useGetSupplierDashboardQuery(undefined, {
+    skip: role !== "supplier",
+  });
+  const supplierProfile = dashboardResponse?.data?.profile;
+  const supplierLogo = supplierProfile?.logo && supplierProfile.logo !== "no-logo.jpg" ? supplierProfile.logo : "";
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -131,11 +137,19 @@ const Header = ({ showDrawer }) => {
           {/* =============================Profile Icon============================= */}
           <Link to="/settings">
             <div className="p-2 text-blue-700 transition border border-blue-500 rounded-full hover:bg-blue-50">
-              <img
-                src="https://ui-avatars.com/api/?name=Admin&background=D1A635&color=fff"
-                alt="Admin"
-                className="object-cover w-6 h-6 rounded-full"
-              />
+              {supplierLogo ? (
+                <img
+                  src={supplierLogo}
+                  alt={supplierProfile?.companyName || user?.name || 'User'}
+                  className="object-cover w-6 h-6 rounded-full"
+                />
+              ) : (
+                <img
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=D1A635&color=fff`}
+                  alt={user?.name || 'User'}
+                  className="object-cover w-6 h-6 rounded-full"
+                />
+              )}
             </div>
           </Link>
         </div>

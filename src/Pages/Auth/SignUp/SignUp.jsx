@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCredentials } from '../../../redux/features/auth/authSlice';
+import { setCredentials, logout } from '../../../redux/features/auth/authSlice';
 import { useRegisterMutation, useVerifyEmailMutation } from '../../../redux/features/auth/authApi';
 import { useCreateAdminAssistedSupplierMutation } from '../../../redux/features/listings/listingsApi';
 import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake, X } from 'lucide-react';
@@ -35,6 +35,12 @@ const SignUp = () => {
   const [otpCode, setOtpCode] = useState('');
   const isAdminAssistedMode = searchParams.get('mode') === 'admin_assisted' && user?.role === 'admin';
   const isPublicSupplierOnboardingIntent = searchParams.get('intent') === 'supplier-onboarding';
+
+  useEffect(() => {
+    if ((user || localStorage.getItem('token')) && !isAdminAssistedMode) {
+      dispatch(logout());
+    }
+  }, []);
 
   useEffect(() => {
     if (isError && error) {

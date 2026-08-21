@@ -56,30 +56,6 @@ export const router = createBrowserRouter([
     element: <VerifyEmail />,
   },
   {
-    path: "/choose-industry",
-    element: <ChooseIndustry />,
-  },
-  {
-    path: "/company-info",
-    element: <CompanyInfo />,
-  },
-  {
-    path: "/subscription",
-    element: <Subscription />,
-  },
-  {
-    path: "/cart",
-    element: <Cart />,
-  },
-  {
-    path: "/listing-period",
-    element: <ListingPeriod />,
-  },
-  {
-    path: "/listed",
-    element: <Listed />,
-  },
-  {
     path: "/forgate-password",
     element: <ForgatePassword />,
   },
@@ -98,6 +74,30 @@ export const router = createBrowserRouter([
   {
     element: <PrivateRoute />,
     children: [
+      {
+        path: "/choose-industry",
+        element: <ChooseIndustry />,
+      },
+      {
+        path: "/company-info",
+        element: <CompanyInfo />,
+      },
+      {
+        path: "/subscription",
+        element: <Subscription />,
+      },
+      {
+        path: "/cart",
+        element: <Cart />,
+      },
+      {
+        path: "/listing-period",
+        element: <ListingPeriod />,
+      },
+      {
+        path: "/listed",
+        element: <Listed />,
+      },
       {
         path: "/",
         element: <MainLayout />,
