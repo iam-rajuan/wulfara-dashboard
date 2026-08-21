@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, setCredentials } from "../../../redux/features/auth/authSlice";
 import { useLoginMutation } from "../../../redux/features/auth/authApi";
 import { Mail, Lock, Eye, EyeOff, Info, ArrowRight, Globe } from "lucide-react";
 import brandlogo from "../../../assets/image/logo.png";
 import { API_BASE_URL } from "../../../config/urls";
+import { appendOnboardingContext, getPostAuthPath } from "../../../utils/onboarding";
 
 const SignIn = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,15 +19,23 @@ const SignIn = () => {
 
   const { user, token } = useSelector((state) => state.auth);
   const [login, { isLoading, isError, error }] = useLoginMutation();
+  const isPublicSupplierOnboardingIntent = searchParams.get("intent") === "supplier-onboarding";
 
   useEffect(() => {
     if (isError && error) {
       setLocalError(error.data?.message || "Login failed");
     }
     if (user && token) {
-      navigate("/dashboard");
+      if (searchParams.get("session_id") || searchParams.get("cancelled")) {
+        navigate(getPostAuthPath(searchParams), { replace: true });
+        return;
+      }
+
+      if (!isPublicSupplierOnboardingIntent) {
+        navigate("/dashboard");
+      }
     }
-  }, [user, token, isError, error, navigate]);
+  }, [user, token, isError, error, navigate, isPublicSupplierOnboardingIntent, searchParams]);
 
   useEffect(() => {
     if (user && !token) {
@@ -56,9 +66,15 @@ const SignIn = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const userData = await response.json();
+
+      if (userData?.data?.role === "buyer") {
+        localStorage.removeItem("token");
+        setLocalError("Buyer accounts must use the website portal, not the supplier/admin dashboard.");
+        return;
+      }
       
       dispatch(setCredentials({ user: userData.data, token }));
-      navigate("/dashboard");
+      navigate(getPostAuthPath(searchParams), { replace: true });
     } catch (err) {
       setLocalError(err.data?.message || "Login failed");
     }
@@ -164,7 +180,7 @@ const SignIn = () => {
 
               <p className="text-[14px] text-gray-500 text-center mt-6">
                 Don't have an account?{" "}
-                <Link to="/sign-up" className="text-[#D1A635] hover:text-[#C2982B] hover:underline font-bold transition-colors ml-1">
+                <Link to={isPublicSupplierOnboardingIntent ? appendOnboardingContext("/sign-up", searchParams) : "/sign-up"} className="text-[#D1A635] hover:text-[#C2982B] hover:underline font-bold transition-colors ml-1">
                   Sign up
                 </Link>
               </p>

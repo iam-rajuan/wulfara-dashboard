@@ -2,26 +2,32 @@ export const ONBOARDING_ROUTES = [
   "/choose-industry",
   "/company-info",
   "/subscription",
-  "/cart",
-  "/listing-period",
   "/listed",
 ];
 
 export const buildOnboardingQueryString = (searchParams) => {
   const params = new URLSearchParams();
-  const supplierId = searchParams.get("supplierId");
-  const mode = searchParams.get("mode");
-
-  if (supplierId) {
-    params.set("supplierId", supplierId);
-  }
-
-  if (mode) {
-    params.set("mode", mode);
-  }
+  ["supplierId", "mode", "session_id", "intent", "cancelled"].forEach((key) => {
+    const value = searchParams.get(key);
+    if (value) {
+      params.set(key, value);
+    }
+  });
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : "";
 };
 
 export const appendOnboardingContext = (path, searchParams) => `${path}${buildOnboardingQueryString(searchParams)}`;
+
+export const getPostAuthPath = (searchParams) => {
+  if (searchParams.get("session_id")) {
+    return appendOnboardingContext("/listed", searchParams);
+  }
+
+  if (searchParams.get("cancelled")) {
+    return appendOnboardingContext("/subscription", searchParams);
+  }
+
+  return "/dashboard";
+};

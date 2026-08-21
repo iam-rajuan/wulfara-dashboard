@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Award, Info, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
@@ -11,12 +11,10 @@ const Cart = () => {
   const { user } = useSelector((state) => state.auth);
   const supplierId = user?.role === 'admin' ? searchParams.get('supplierId') : undefined;
   const { data: onboardingResponse, isLoading } = useGetOnboardingStatusQuery(supplierId, { skip: !user });
-  const [addons, setAddons] = useState({ heroPlacement: false });
   const supplier = onboardingResponse?.data?.supplier;
   const selectedPlan = supplier?.selectedPlan;
   const basePrice = selectedPlan?.price || 0;
-  const heroPrice = 15;
-  const total = basePrice + (addons.heroPlacement ? heroPrice : 0);
+  const total = basePrice;
 
   useEffect(() => {
     if (!user) {
@@ -73,21 +71,10 @@ const Cart = () => {
                 </div>
 
                 <div className="bg-[#F8F9FA] rounded-xl p-6 border border-gray-100">
-                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-5">Optional Listing Add-ons</h3>
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="flex items-center h-5 mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={addons.heroPlacement}
-                        onChange={() => setAddons((prev) => ({ ...prev, heroPlacement: !prev.heroPlacement }))}
-                        className="w-4 h-4 text-[#D1A635] bg-white border-gray-300 rounded focus:ring-[#D1A635]"
-                      />
-                    </div>
-                    <div>
-                      <div className="text-[13.5px] font-bold text-gray-900 group-hover:text-black transition-colors">Featured Hero Placement (+$15.00)</div>
-                      <div className="text-[12.5px] text-gray-500 mt-1">Pin your listing to the top of category searches.</div>
-                    </div>
-                  </label>
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3">Payment Notice</h3>
+                  <p className="text-[13px] text-gray-600 leading-relaxed">
+                    The payable total is determined by the backend pricing plan only. Optional add-ons are not part of this checkout flow.
+                  </p>
                 </div>
               </>
             ) : (
@@ -115,13 +102,6 @@ const Cart = () => {
                 <span className="text-gray-600">{selectedPlan?.name || 'Selected Plan'}</span>
                 <span className="font-bold text-gray-900">${basePrice.toFixed(2)}</span>
               </div>
-
-              {addons.heroPlacement && (
-                <div className="flex justify-between items-center text-[14px]">
-                  <span className="text-gray-600">Featured Hero Placement</span>
-                  <span className="font-bold text-gray-900">${heroPrice.toFixed(2)}</span>
-                </div>
-              )}
             </div>
 
             <div className="border-t border-gray-100 pt-6 mb-6">

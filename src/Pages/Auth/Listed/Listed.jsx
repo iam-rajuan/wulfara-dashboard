@@ -1,9 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Check, FileText, Inbox } from 'lucide-react';
+import { AlertTriangle, Check, FileText, Inbox, LoaderCircle } from 'lucide-react';
 import { useGetOnboardingStatusQuery } from '../../../redux/features/listings/listingsApi';
 import { appendOnboardingContext, buildOnboardingQueryString } from '../../../utils/onboarding';
+
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 15;
+const REDIRECT_DELAY_MS = 1800;
 
 const Listed = () => {
   const navigate = useNavigate();
@@ -14,54 +18,102 @@ const Listed = () => {
   const { data: onboardingResponse, isLoading, refetch } = useGetOnboardingStatusQuery(supplierId, { skip: !user });
   const onboarding = onboardingResponse?.data?.onboarding;
   const supplier = onboardingResponse?.data?.supplier;
+  const [pollAttempts, setPollAttempts] = useState(0);
+  const [status, setStatus] = useState(sessionId ? 'processing' : 'idle');
+
+  const shouldKeepPolling = useMemo(
+    () => Boolean(sessionId && onboarding?.isComplete === false && pollAttempts < MAX_POLL_ATTEMPTS),
+    [onboarding?.isComplete, pollAttempts, sessionId]
+  );
 
   useEffect(() => {
     if (!user) {
-      navigate(`/sign-in${buildOnboardingQueryString(searchParams)}`);
+      navigate(`/sign-in${buildOnboardingQueryString(searchParams)}`, { replace: true });
+    }
+  }, [navigate, searchParams, user]);
+
+  useEffect(() => {
+    if (!sessionId || !user) {
       return;
     }
 
-    if (sessionId && onboarding?.isComplete === false) {
-      const timer = window.setTimeout(() => {
-        refetch();
-      }, 2000);
+    if (onboarding?.isComplete) {
+      setStatus('success');
+      const redirectTimer = window.setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, REDIRECT_DELAY_MS);
 
-      return () => window.clearTimeout(timer);
+      return () => window.clearTimeout(redirectTimer);
     }
 
-    if (!isLoading && onboarding?.isComplete === false && onboarding?.nextRoute) {
+    if (shouldKeepPolling) {
+      setStatus('processing');
+      const pollTimer = window.setTimeout(() => {
+        setPollAttempts((current) => current + 1);
+        refetch();
+      }, POLL_INTERVAL_MS);
+
+      return () => window.clearTimeout(pollTimer);
+    }
+
+    if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+      setStatus('timeout');
+    }
+  }, [navigate, onboarding?.isComplete, pollAttempts, refetch, sessionId, shouldKeepPolling, user]);
+
+  useEffect(() => {
+    if (!sessionId || isLoading || !user) {
+      return;
+    }
+
+    if (onboarding?.isComplete === false && onboarding?.nextRoute && status === 'idle') {
       navigate(appendOnboardingContext(onboarding.nextRoute, searchParams), { replace: true });
     }
-  }, [isLoading, navigate, onboarding, refetch, searchParams, sessionId, user]);
+  }, [isLoading, navigate, onboarding, searchParams, sessionId, status, user]);
 
   if (!user) {
     return null;
   }
 
+  const isProcessing = status === 'processing';
+  const isSuccess = status === 'success' || onboarding?.isComplete;
+  const isTimeout = status === 'timeout';
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-sans flex items-center justify-center p-6">
       <div className="w-full max-w-[950px] flex flex-col lg:flex-row gap-6 items-start">
         <div className="w-full lg:w-[60%] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="h-1.5 w-full bg-[#D1A635]"></div>
+          <div className={`h-1.5 w-full ${isTimeout ? 'bg-amber-500' : 'bg-[#D1A635]'}`}></div>
           <div className="p-8 md:p-12 text-center">
-            <div className="w-20 h-20 bg-[#F0F5FA] rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <div className="w-8 h-8 bg-[#D1A635] rounded-full flex items-center justify-center shadow-sm">
-                <Check className="w-5 h-5 text-white" strokeWidth={3} />
-              </div>
+            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${isTimeout ? 'bg-amber-50' : 'bg-[#F0F5FA]'}`}>
+              {isProcessing ? (
+                <LoaderCircle className="w-8 h-8 text-[#D1A635] animate-spin" />
+              ) : isTimeout ? (
+                <AlertTriangle className="w-8 h-8 text-amber-600" />
+              ) : (
+                <div className="w-8 h-8 bg-[#D1A635] rounded-full flex items-center justify-center shadow-sm">
+                  <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                </div>
+              )}
             </div>
 
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-200 bg-white mb-6">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-              <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Listing Active</span>
+              <div className={`w-1.5 h-1.5 rounded-full ${isTimeout ? 'bg-amber-500' : 'bg-blue-600'}`}></div>
+              <span className={`text-[11px] font-bold uppercase tracking-wider ${isTimeout ? 'text-amber-700' : 'text-blue-600'}`}>
+                {isProcessing ? 'Payment Processing' : isTimeout ? 'Verification Delayed' : 'Listing Active'}
+              </span>
             </div>
 
             <h1 className="text-3xl md:text-[40px] font-bold text-[#111827] mb-4 leading-tight">
-              {onboarding?.isComplete ? 'Your company is now listed on WULFARA.' : 'Finalizing your supplier listing.'}
+              {isProcessing && 'Confirming your payment and activating your listing...'}
+              {isSuccess && 'Your company is now listed on WULFARA.'}
+              {isTimeout && 'We are still confirming your payment.'}
             </h1>
-            <p className="text-[14px] text-gray-500 mb-10 max-w-sm mx-auto leading-relaxed">
-              {onboarding?.isComplete
-                ? 'Your payment was successful and your supplier listing is now active. Buyers can now find your company and send RFQs.'
-                : 'We are confirming your payment and activating your listing. This usually finishes within a few seconds.'}
+
+            <p className="text-[14px] text-gray-500 mb-10 max-w-md mx-auto leading-relaxed">
+              {isProcessing && 'Stripe returned successfully. We are waiting for the backend webhook to finish activating your supplier listing.'}
+              {isSuccess && 'Your payment was successful and your supplier listing is active. Redirecting you to your Supplier Dashboard now.'}
+              {isTimeout && 'We could not confirm the listing yet. Please refresh this page or contact support if this continues.'}
             </p>
 
             <div className="w-full h-px bg-gray-100 mb-10"></div>
@@ -69,17 +121,17 @@ const Listed = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <button
                 type="button"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate('/dashboard')}
                 className="flex-1 w-full max-w-[220px] mx-auto sm:mx-0 py-3 px-6 bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[13px] rounded-md transition-colors shadow-sm"
               >
-                View Listing
+                {isSuccess ? 'Open Supplier Dashboard' : 'Go to Dashboard'}
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/profile')}
                 className="flex-1 w-full max-w-[220px] mx-auto sm:mx-0 py-3 px-6 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-bold text-[13px] rounded-md transition-colors shadow-sm"
               >
-                Go to Supplier Dashboard
+                View Listing
               </button>
             </div>
           </div>
@@ -106,11 +158,13 @@ const Listed = () => {
                 </div>
                 <div className="flex justify-between items-center border-b border-gray-50 pb-4">
                   <span className="text-[13px] text-gray-500">Status</span>
-                  <span className="text-[13px] font-bold text-[#D1A635]">Active</span>
+                  <span className={`text-[13px] font-bold ${isTimeout ? 'text-amber-700' : 'text-[#D1A635]'}`}>
+                    {isTimeout ? 'Pending Confirmation' : 'Active'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[13px] text-gray-500">Payment</span>
-                  <span className="text-[13px] font-bold text-gray-900">{supplier?.paymentStatus || 'Paid'}</span>
+                  <span className="text-[13px] font-bold text-gray-900">{supplier?.paymentStatus || 'Pending'}</span>
                 </div>
               </div>
             )}

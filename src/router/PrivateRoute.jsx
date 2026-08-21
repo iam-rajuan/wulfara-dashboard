@@ -21,6 +21,7 @@ const PrivateRoute = () => {
     });
     const effectiveUser = token ? (meResponse?.data || user) : null;
     const isSupplier = effectiveUser?.role === "supplier";
+    const isBuyer = effectiveUser?.role === "buyer";
     const { data, isLoading } = useGetOnboardingStatusQuery(undefined, { skip: !isSupplier });
     const onboarding = data?.data?.onboarding;
     const isOnboardingRoute = ONBOARDING_ROUTES.includes(location.pathname);
@@ -44,6 +45,12 @@ const PrivateRoute = () => {
         }
     }, [dispatch, isMeError, isUnauthorized, token]);
 
+    useEffect(() => {
+        if (token && isBuyer) {
+            dispatch(logout());
+        }
+    }, [dispatch, isBuyer, token]);
+
     if (!token) {
         return <Navigate to="/sign-in" replace state={{ from: location }} />;
     }
@@ -57,6 +64,10 @@ const PrivateRoute = () => {
     }
 
     if (!effectiveUser) {
+        return <Navigate to="/sign-in" replace state={{ from: location }} />;
+    }
+
+    if (isBuyer) {
         return <Navigate to="/sign-in" replace state={{ from: location }} />;
     }
 

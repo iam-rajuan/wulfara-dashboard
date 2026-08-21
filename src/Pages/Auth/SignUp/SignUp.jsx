@@ -7,6 +7,7 @@ import { useCreateAdminAssistedSupplierMutation } from '../../../redux/features/
 import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake, X } from 'lucide-react';
 import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../svglogos/SvgIcons";
 import { API_BASE_URL, POLICIES_URL } from '../../../config/urls';
+import { appendOnboardingContext, buildOnboardingQueryString } from '../../../utils/onboarding';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -18,12 +19,10 @@ const SignUp = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    companyName: '',
-    phone: '',
     agreedToTerms: false
   });
 
-  const { name, email, password, confirmPassword, companyName, phone, agreedToTerms } = formData;
+  const { name, email, password, confirmPassword, agreedToTerms } = formData;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localError, setLocalError] = useState('');
@@ -35,15 +34,16 @@ const SignUp = () => {
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const isAdminAssistedMode = searchParams.get('mode') === 'admin_assisted' && user?.role === 'admin';
+  const isPublicSupplierOnboardingIntent = searchParams.get('intent') === 'supplier-onboarding';
 
   useEffect(() => {
     if (isError && error) {
       setLocalError(error.data?.message || 'Registration failed');
     }
-    if (user && !isAdminAssistedMode) {
+    if (user && !isAdminAssistedMode && !isPublicSupplierOnboardingIntent) {
       navigate("/dashboard");
     }
-  }, [user, isError, error, navigate, isAdminAssistedMode]);
+  }, [user, isError, error, navigate, isAdminAssistedMode, isPublicSupplierOnboardingIntent]);
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -64,11 +64,11 @@ const SignUp = () => {
       setLocalError('You must agree to the Terms and Supplier Listing Policy');
       return;
     }
-    const userData = { name, email, password, companyName, phone, role: 'supplier' };
+    const userData = { name, email, password, role: 'supplier' };
     
     try {
       if (isAdminAssistedMode) {
-        const response = await createAdminAssistedSupplier({ name, email, password, companyName, phone }).unwrap();
+        const response = await createAdminAssistedSupplier({ name, email, password }).unwrap();
         const supplierId = response?.data?.supplier?._id;
         navigate(`/choose-industry?mode=admin_assisted&supplierId=${supplierId}`);
         return;
@@ -97,7 +97,7 @@ const SignUp = () => {
       const userResponse = await response.json();
       
       dispatch(setCredentials({ user: userResponse.data, token }));
-      navigate("/dashboard");
+      navigate(appendOnboardingContext("/choose-industry", searchParams), { replace: true });
     } catch (err) {
       setLocalError(err.data?.message || "Verification failed");
     }
@@ -193,32 +193,6 @@ const SignUp = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[13px] font-bold text-gray-900 mb-2">Company Name</label>
-                  <input
-                    type="text"
-                    name="companyName"
-                    value={companyName}
-                    onChange={onChange}
-                    required
-                    placeholder="Legal company name"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[13px] font-bold text-gray-900 mb-2">Phone Number</label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={phone}
-                    onChange={onChange}
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                  />
-                </div>
-              </div>
-
               <div className="pt-2">
                 <label className="flex items-start gap-2.5 cursor-pointer">
                   <div className="flex items-center h-5 mt-0.5">
@@ -252,7 +226,7 @@ const SignUp = () => {
               {!isAdminAssistedMode && (
                 <div className="text-center pt-2">
                   <p className="text-[14px] text-gray-600">
-                    Already have an account? <Link to="/sign-in" className="text-[#0052CC] font-medium hover:underline">Login</Link>
+                    Already have an account? <Link to={isPublicSupplierOnboardingIntent ? `/sign-in${buildOnboardingQueryString(searchParams)}` : "/sign-in"} className="text-[#0052CC] font-medium hover:underline">Login</Link>
                   </p>
                 </div>
               )}
