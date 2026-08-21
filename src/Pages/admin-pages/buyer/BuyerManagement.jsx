@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useSelector } from "react-redux";
 import { Download, Plus, ChevronDown } from "lucide-react";
 import { 
   useGetUsersQuery, 
@@ -8,16 +9,18 @@ import {
 } from "../../../redux/features/users/usersApi";
 import BuyerTable, { Pagination } from "../../../Components/admin-components/buyer/BuyerTable";
 import BuyerFormModal from "../../../Components/admin-components/buyer/BuyerFormModal";
+import { hasAdminPermission } from "../../../utils/adminAccess";
 
 export default function BuyerManagement() {
+  const { user } = useSelector((state) => state.auth);
   const { data: usersResponse, isLoading } = useGetUsersQuery();
-  const users = usersResponse?.data || [];
   const [createUser] = useCreateUserMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
 
   // Filter only buyers
   const buyers = useMemo(() => {
+    const users = usersResponse?.data || [];
     return users.filter(user => user.role === 'buyer').map(user => ({
       id: user._id,
       name: user.name,
@@ -31,7 +34,7 @@ export default function BuyerManagement() {
       avatarColor: "bg-[#DBEAFE]", // default
       initials: user.name ? user.name.substring(0, 2).toUpperCase() : "NA"
     }));
-  }, [users]);
+  }, [usersResponse?.data]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -40,6 +43,7 @@ export default function BuyerManagement() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [verificationFilter, setVerificationFilter] = useState("All");
   const pageSize = 6;
+  const canManageUsers = hasAdminPermission(user, "users.manage");
 
   const handleSaveBuyer = async (savedBuyer) => {
     try {
@@ -175,6 +179,7 @@ export default function BuyerManagement() {
           </button>
           <button 
             onClick={openAddModal}
+            disabled={!canManageUsers}
             className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
           >
             <Plus size={16} strokeWidth={3} />
@@ -234,14 +239,14 @@ export default function BuyerManagement() {
             <span className="text-[12px] font-bold text-gray-500 mr-1">Bulk Actions:</span>
             <button
               onClick={handleBulkVerify}
-              disabled={!hasSelection || isLoading}
+              disabled={!canManageUsers || !hasSelection || isLoading}
               className="px-4 py-2 border border-gray-200 rounded-md text-[12px] font-bold text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               Verify
             </button>
             <button
               onClick={handleBulkSuspend}
-              disabled={!hasSelection || isLoading}
+              disabled={!canManageUsers || !hasSelection || isLoading}
               className="px-4 py-2 border border-gray-200 rounded-md text-[12px] font-bold text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               Suspend
@@ -259,8 +264,8 @@ export default function BuyerManagement() {
             selectedIds={selectedIds}
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
-            onEdit={openEditModal}
-            onDelete={handleDeleteBuyer}
+            onEdit={canManageUsers ? openEditModal : undefined}
+            onDelete={canManageUsers ? handleDeleteBuyer : undefined}
           />
         )}
 
@@ -276,12 +281,14 @@ export default function BuyerManagement() {
 
       </div>
 
-      <BuyerFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveBuyer}
-        buyer={editingBuyer}
-      />
+      {canManageUsers && (
+        <BuyerFormModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveBuyer}
+          buyer={editingBuyer}
+        />
+      )}
     </div>
   );
 }

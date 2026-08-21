@@ -24,7 +24,7 @@ export default function SubscriptionManagement() {
             <LayoutGrid size={14} />
             Manage Add-ons
           </button>
-          <Link to="/suppliers" className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+          <Link to="/subscriptions/active" className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
             <Users size={14} />
             View Active Subscriptions
           </Link>

@@ -5,51 +5,17 @@ import {
   Eye,
   EyeOff,
   Download,
-  Plus,
-  Diamond,
-  Settings2,
-  Truck,
-  Wrench,
-  Briefcase,
-  Beaker,
-  Factory
+  Plus
 } from "lucide-react";
-import CategoryHierarchyPanel from "../../../Components/admin-components/categories/CategoryHierarchyPanel";
 import CategoryRegistryTable from "../../../Components/admin-components/categories/CategoryRegistryTable";
 import { Link } from "react-router-dom";
 import { useGetCategoriesQuery, useDeleteCategoryMutation } from "../../../redux/features/categories/categoryApi";
 
-// Helper to build tree from flat list
-const buildCategoryTree = (flatCats) => {
-  const categoryMap = new Map();
-  flatCats.forEach(c => categoryMap.set(c._id, {
-    ...c,
-    id: c._id,
-    isRoot: !c.parentCategory,
-    children: []
-  }));
-
-  const rootNodes = [];
-  flatCats.forEach(c => {
-    if (c.parentCategory && categoryMap.has(c.parentCategory)) {
-      categoryMap.get(c.parentCategory).children.push(categoryMap.get(c._id));
-    } else {
-      rootNodes.push(categoryMap.get(c._id));
-    }
-  });
-  return rootNodes;
-};
-
 export default function CategoryManagement() {
-  const { data: categoriesResponse, isLoading } = useGetCategoriesQuery();
+  const { data: categoriesResponse } = useGetCategoriesQuery();
   const categories = categoriesResponse?.data || [];
   const [deleteCategory] = useDeleteCategoryMutation();
   const [activeCategoryId, setActiveCategoryId] = useState(null);
-
-  const handleUpdateCategory = (categoryId, updates) => {
-    // For now, this is mock UI update. Proper implementation needs PUT API.
-    console.log("Update requested for", categoryId, updates);
-  };
 
   const handleDeleteCategory = async (categoryId) => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
@@ -63,7 +29,6 @@ export default function CategoryManagement() {
     }
   };
 
-  const categoryTree = buildCategoryTree(categories);
   const flatCategories = categories;
 
   // Calculate dynamic stats

@@ -3,7 +3,7 @@ import { apiSlice } from '../../api/apiSlice';
 export const listingsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getListings: builder.query({
-      query: () => '/suppliers',
+      query: (queryString = '') => `/suppliers${queryString ? `?${queryString}` : ''}`,
       providesTags: ['Listing'],
     }),
     getListing: builder.query({
@@ -21,6 +21,42 @@ export const listingsApi = apiSlice.injectEndpoints({
     getSupplierDashboard: builder.query({
       query: () => '/suppliers/dashboard',
       providesTags: ['Listing'],
+    }),
+    getOnboardingStatus: builder.query({
+      query: (supplierId) => `/suppliers/onboarding${supplierId ? `?supplierId=${supplierId}` : ''}`,
+      providesTags: ['Onboarding', 'Listing'],
+    }),
+    saveOnboardingIndustry: builder.mutation({
+      query: (payload) => ({
+        url: '/suppliers/onboarding/industry',
+        method: 'PUT',
+        body: payload,
+      }),
+      invalidatesTags: ['Onboarding', 'Listing'],
+    }),
+    saveOnboardingCompanyInfo: builder.mutation({
+      query: (payload) => ({
+        url: '/suppliers/onboarding/company-info',
+        method: 'PUT',
+        body: payload,
+      }),
+      invalidatesTags: ['Onboarding', 'Listing'],
+    }),
+    saveOnboardingSubscription: builder.mutation({
+      query: (payload) => ({
+        url: '/suppliers/onboarding/subscription',
+        method: 'PUT',
+        body: payload,
+      }),
+      invalidatesTags: ['Onboarding', 'Listing'],
+    }),
+    createAdminAssistedSupplier: builder.mutation({
+      query: (payload) => ({
+        url: '/suppliers/admin-assisted',
+        method: 'POST',
+        body: payload,
+      }),
+      invalidatesTags: ['Onboarding', 'Listing', 'User'],
     }),
     featureListing: builder.mutation({
       query: ({ id, isFeatured }) => ({
@@ -53,6 +89,11 @@ export const {
   useGetListingQuery,
   useReviewListingMutation,
   useGetSupplierDashboardQuery,
+  useGetOnboardingStatusQuery,
+  useSaveOnboardingIndustryMutation,
+  useSaveOnboardingCompanyInfoMutation,
+  useSaveOnboardingSubscriptionMutation,
+  useCreateAdminAssistedSupplierMutation,
   useFeatureListingMutation,
   useUpdateListingMutation,
   useGetSupplierUploadUrlMutation,

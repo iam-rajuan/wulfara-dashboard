@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import Sidebar from "../../Components/Sidebar/Sidebar";
 import { Drawer } from "antd";
 import Header from "../../Components/Sidebar/Header";
@@ -7,11 +7,8 @@ import Header from "../../Components/Sidebar/Header";
 const MainLayout = () => {
   const onClose = () => setOpen(false);
   const [open, setOpen] = useState(false);
-  const location = useLocation();
 
   const showDrawer = () => setOpen(true);
-  const toggleNotificationDropdown = () =>
-    setShowNotifications(!showNotifications);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -29,10 +26,7 @@ const MainLayout = () => {
       <div className="flex flex-col flex-1 h-full lg:ml-72">
         {/* Styled Header */}
         <div className="fixed left-0 z-20 px-6 rounded-lg bg-gray-50 subtract-width lg:ml-72">
-          <Header
-            showDrawer={showDrawer}
-            toggleNotificationDropdown={toggleNotificationDropdown}
-          />
+          <Header showDrawer={showDrawer} />
         </div>
 
         {/* Scrollable Outlet Section */}

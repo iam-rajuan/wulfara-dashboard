@@ -6,6 +6,7 @@ import ProfileCompletion from '../../Components/Dashboard/ProfileCompletion';
 import RecentRFQsTable from '../../Components/Dashboard/RecentRFQsTable';
 
 import { useGetSupplierDashboardQuery } from '../../redux/features/listings/listingsApi';
+import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '../../config/urls';
 
 export default function SupplierDashboard() {
   const { data, isLoading } = useGetSupplierDashboardQuery();
@@ -36,9 +37,9 @@ export default function SupplierDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-500 pt-6 pb-4 px-2 text-center md:text-left">
         <p className="mb-4 md:mb-0">© 2024 WULFARA Industrial Marketplace. All rights reserved.</p>
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-gray-500">
-          <a href="#" className="hover:text-gray-900 transition">Support</a>
-          <a href="#" className="hover:text-gray-900 transition">Privacy Policy</a>
-          <a href="#" className="hover:text-gray-900 transition">Terms of Service</a>
+          <a href={SUPPORT_URL} className="hover:text-gray-900 transition">Support</a>
+          <a href={PRIVACY_URL} className="hover:text-gray-900 transition">Privacy Policy</a>
+          <a href={TERMS_URL} className="hover:text-gray-900 transition">Terms of Service</a>
         </div>
       </div>
     </div>

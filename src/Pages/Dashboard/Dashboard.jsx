@@ -1,10 +1,11 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import AdminDashboard from "../admin-pages/admin-dashboard/AdminDashboard";
 import SupplierDashboard from "./SupplierDashboard";
 
 export default function Dashboard() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const role = user.role || "supplier";
+  const { user } = useSelector((state) => state.auth);
+  const role = user?.role || "supplier";
 
   if (role === "admin") {
     return <AdminDashboard />;

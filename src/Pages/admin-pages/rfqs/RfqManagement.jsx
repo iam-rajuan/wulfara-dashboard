@@ -8,14 +8,13 @@ import RfqTable from "../../../Components/admin-components/rfqs/RfqTable";
 import ManualEntryModal from "../../../Components/admin-components/rfqs/ManualEntryModal";
 
 export default function RfqManagement() {
-  const { data: rfqsResponse, isLoading } = useGetRfqsQuery();
+  const { data: rfqsResponse } = useGetRfqsQuery();
   const { data: statsResponse } = useGetRfqStatsQuery();
   const [createRfq] = useCreateRfqMutation();
-  
-  const rfqs = rfqsResponse?.data || [];
   const stats = statsResponse?.data || null;
 
   const rfqsList = useMemo(() => {
+    const rfqs = rfqsResponse?.data || [];
     return rfqs.map(rfq => ({
       id: rfq._id,
       displayId: `#RFQ-${rfq._id.substring(0, 8).toUpperCase()}`,
@@ -31,7 +30,7 @@ export default function RfqManagement() {
       created: new Date(rfq.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
       dispute: rfq.status === 'disputed' ? "Yes" : "No"
     }));
-  }, [rfqs]);
+  }, [rfqsResponse?.data]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");

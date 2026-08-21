@@ -77,6 +77,7 @@ export function Pagination({ currentPage, totalItems, pageSize, onPageChange }) 
 export default function BuyerTable({ buyers, selectedIds, onSelect, onSelectAll, onEdit, onDelete }) {
   const [openActionId, setOpenActionId] = React.useState(null);
   const allSelected = buyers.length > 0 && selectedIds.length === buyers.length;
+  const canManage = Boolean(onEdit || onDelete);
 
   return (
     <div className="overflow-x-auto">
@@ -172,42 +173,48 @@ export default function BuyerTable({ buyers, selectedIds, onSelect, onSelectAll,
                 </div>
               </td>
               <td className="py-4 pr-6 text-right relative">
-                <button 
-                  onClick={() => setOpenActionId(openActionId === buyer.id ? null : buyer.id)}
-                  className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
-                >
-                  <MoreHorizontal size={18} />
-                </button>
-
-                {openActionId === buyer.id && (
+                {canManage ? (
                   <>
-                    <div 
-                      className="fixed inset-0 z-50" 
-                      onClick={() => setOpenActionId(null)}
-                    ></div>
-                    <div className={`absolute right-6 w-32 bg-white rounded-md shadow-xl border border-gray-100 z-50 py-1 overflow-hidden ${index === buyers.length - 1 && buyers.length > 1 ? 'bottom-8' : 'top-10'}`}>
-                      <button 
-                        onClick={() => {
-                          setOpenActionId(null);
-                          onEdit && onEdit(buyer);
-                        }}
-                        className="w-full px-4 py-2 text-[12px] font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                      >
-                        <Edit2 size={14} />
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setOpenActionId(null);
-                          onDelete && onDelete(buyer.id);
-                        }}
-                        className="w-full px-4 py-2 text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                        Delete
-                      </button>
-                    </div>
+                    <button 
+                      onClick={() => setOpenActionId(openActionId === buyer.id ? null : buyer.id)}
+                      className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    >
+                      <MoreHorizontal size={18} />
+                    </button>
+
+                    {openActionId === buyer.id && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-50" 
+                          onClick={() => setOpenActionId(null)}
+                        ></div>
+                        <div className={`absolute right-6 w-32 bg-white rounded-md shadow-xl border border-gray-100 z-50 py-1 overflow-hidden ${index === buyers.length - 1 && buyers.length > 1 ? 'bottom-8' : 'top-10'}`}>
+                          <button 
+                            onClick={() => {
+                              setOpenActionId(null);
+                              onEdit && onEdit(buyer);
+                            }}
+                            className="w-full px-4 py-2 text-[12px] font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                          >
+                            <Edit2 size={14} />
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setOpenActionId(null);
+                              onDelete && onDelete(buyer.id);
+                            }}
+                            className="w-full px-4 py-2 text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </>
+                ) : (
+                  <span className="text-[12px] font-medium text-gray-400">View only</span>
                 )}
               </td>
             </tr>

@@ -1,30 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { IoMdNotifications } from "react-icons/io";
-import { Bell, Check } from "lucide-react";
+import { Bell } from "lucide-react";
 import { io } from "socket.io-client";
 import { API_BASE_URL, SOCKET_BASE_URL } from "../../config/urls";
 
 const Header = ({ showDrawer }) => {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationsCount] = useState(5);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { user } = useSelector((state) => state.auth);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const role = user.role || "supplier";
-
-  const adminProfile = {
-    name: "James",
-    role: "admin",
-  };
+  const userId = user?._id;
+  const role = user?.role || "supplier";
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!user || !user._id) return;
+    if (!userId) return;
     
     // Fetch initial notifications
     const fetchNotifications = async () => {
@@ -50,7 +44,7 @@ const Header = ({ showDrawer }) => {
     // Socket.io connection
     const socket = io(SOCKET_BASE_URL);
     
-    socket.emit("join_room", user._id);
+    socket.emit("join_room", userId);
     
     socket.on("new_notification", (newNotification) => {
       setNotifications(prev => [newNotification, ...prev]);
@@ -60,7 +54,7 @@ const Header = ({ showDrawer }) => {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [userId]);
 
   const markAllAsRead = async () => {
     try {
@@ -99,8 +93,6 @@ const Header = ({ showDrawer }) => {
       console.error("Error marking as read:", err);
     }
   };
-
-  const isMessagesActive = location.pathname === "/messages";
 
   return (
     <div className="relative mt-2 border-b-2">

@@ -18,7 +18,7 @@ export default function EditSubscription() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Overview");
   
-  const { data: planResponse, isLoading } = useGetPlanQuery(id, { skip: !id });
+  const { data: planResponse } = useGetPlanQuery(id, { skip: !id });
   const { data: plansResponse } = useGetPlansQuery();
   const [updatePlan] = useUpdatePlanMutation();
   

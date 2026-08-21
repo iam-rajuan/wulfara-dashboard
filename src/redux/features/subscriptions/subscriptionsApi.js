@@ -48,6 +48,10 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
       query: () => '/subscriptions/admin/payments',
       providesTags: ['Payment'],
     }),
+    getActiveSubscriptions: builder.query({
+      query: () => '/subscriptions/admin/active',
+      providesTags: ['Subscription'],
+    }),
   }),
 });
 
@@ -60,4 +64,5 @@ export const {
   useCreateCheckoutSessionMutation,
   useGetInvoicesQuery,
   useGetAllPaymentsQuery,
+  useGetActiveSubscriptionsQuery,
 } = subscriptionsApi;

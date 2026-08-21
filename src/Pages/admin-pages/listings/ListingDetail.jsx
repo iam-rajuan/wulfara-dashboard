@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useGetListingQuery, useReviewListingMutation, useFeatureListingMutation } from "../../../redux/features/listings/listingsApi";
 import {
   ChevronRight,
@@ -17,8 +17,7 @@ import {
 
 export default function ListingDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  
+
   const { data: listingResponse, isLoading } = useGetListingQuery(id);
   const [reviewListing] = useReviewListingMutation();
   const [featureListing] = useFeatureListingMutation();

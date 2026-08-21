@@ -9,8 +9,8 @@ export default function MessageActiveChat({ chatId }) {
   const { user } = useSelector(state => state.auth || { user: { _id: "admin" } });
   const isNewChat = String(chatId).startsWith('new-');
   const queryId = isNewChat ? "skip" : String(chatId);
-  const { data: messagesResponse, isLoading } = useGetMessagesQuery(queryId, { skip: !chatId || isNewChat });
-  const [sendMessageApi, { isLoading: isSending }] = useSendMessageMutation();
+  const { data: messagesResponse } = useGetMessagesQuery(queryId, { skip: !chatId || isNewChat });
+  const [sendMessageApi] = useSendMessageMutation();
 
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState([]);
@@ -146,7 +146,7 @@ export default function MessageActiveChat({ chatId }) {
       {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 bg-[#F8F9FB] flex flex-col gap-6 min-h-0">
 
-        {chatHistory.map((msg, index) => {
+        {chatHistory.map((msg) => {
           return (
             <React.Fragment key={msg.id}>
               {/* Date Divider (Only shown if specified) */}

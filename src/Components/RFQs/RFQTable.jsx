@@ -5,7 +5,7 @@ import { useGetSupplierRfqsQuery } from '../../redux/features/rfqs/rfqsApi';
 
 export default function RFQTable() {
   const navigate = useNavigate();
-  const { data: rfqsData, isLoading } = useGetSupplierRfqsQuery();
+  const { data: rfqsData } = useGetSupplierRfqsQuery();
 
   const [filters, setFilters] = useState({
     search: '',
@@ -16,9 +16,9 @@ export default function RFQTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
 
-  const rawRfqs = rfqsData?.data || [];
-
   const rfqs = useMemo(() => {
+    const rawRfqs = rfqsData?.data || [];
+
     return rawRfqs.map((rfq) => {
       const buyerName = rfq.buyerUser?.name || rfq.buyerName || 'Unknown Buyer';
       const initials = buyerName.substring(0, 2).toUpperCase();
@@ -59,7 +59,7 @@ export default function RFQTable() {
         createdAt: rfq.createdAt
       };
     });
-  }, [rawRfqs]);
+  }, [rfqsData?.data]);
 
   const filteredRfqs = useMemo(() => {
     return rfqs.filter(r => {

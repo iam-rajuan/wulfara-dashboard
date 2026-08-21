@@ -1,7 +1,8 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, FileText, Clock, CloudUpload, Send, CheckCircle2, Circle, X } from 'lucide-react';
 import { useGetRfqQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation } from '../../redux/features/rfqs/rfqsApi';
+import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '../../config/urls';
 
 export default function RFQReply() {
   const { id } = useParams();
@@ -79,7 +80,7 @@ ${formData.message}`;
         
         alert(`Quote Response sent successfully for ${rfq.id}!`);
         navigate(`/rfqs/${rfq.rawId}`);
-      } catch (error) {
+      } catch {
         alert("Failed to send quote response");
       }
     }
@@ -344,9 +345,9 @@ ${formData.message}`;
       <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-500 pt-6 mt-12 pb-4 border-t border-gray-200">
         <p>© 2024 WULFARA Industrial Marketplace. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0 text-gray-500">
-          <a href="#" className="hover:text-gray-900 transition">Support</a>
-          <a href="#" className="hover:text-gray-900 transition">Privacy Policy</a>
-          <a href="#" className="hover:text-gray-900 transition">Terms of Service</a>
+          <a href={SUPPORT_URL} className="hover:text-gray-900 transition">Support</a>
+          <a href={PRIVACY_URL} className="hover:text-gray-900 transition">Privacy Policy</a>
+          <a href={TERMS_URL} className="hover:text-gray-900 transition">Terms of Service</a>
         </div>
       </div>
     </div>

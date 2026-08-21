@@ -6,10 +6,11 @@ import ProductModal from '../../Components/ProductsServices/ProductModal';
 
 import { toast } from 'react-toastify';
 import { useGetSupplierDashboardQuery, useUpdateListingMutation, useGetSupplierUploadUrlMutation } from '../../redux/features/listings/listingsApi';
+import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '../../config/urls';
 
 export default function ProductsServices() {
-  const { data: dashboardData, isLoading: isFetching, refetch } = useGetSupplierDashboardQuery();
-  const [updateListing, { isLoading: isUpdating }] = useUpdateListingMutation();
+  const { data: dashboardData, refetch } = useGetSupplierDashboardQuery();
+  const [updateListing] = useUpdateListingMutation();
   const [getUploadUrl] = useGetSupplierUploadUrlMutation();
 
   const [filters, setFilters] = useState({
@@ -18,7 +19,7 @@ export default function ProductsServices() {
     status: 'All Statuses'
   });
 
-  const products = dashboardData?.data?.profile?.products || [];
+  const products = useMemo(() => dashboardData?.data?.profile?.products || [], [dashboardData]);
 
   const summaryData = useMemo(() => {
     return {
@@ -98,7 +99,7 @@ export default function ProductsServices() {
         });
         
         finalImageUrl = fileUrl;
-      } catch (error) {
+      } catch {
         toast.error("Failed to upload product image, proceeding without it.");
       }
     }
@@ -177,9 +178,9 @@ export default function ProductsServices() {
       <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-500 pt-4 pb-4 border-t border-gray-200">
         <p>© 2024 WULFARA Industrial Marketplace. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0 text-gray-500">
-          <a href="#" className="hover:text-gray-900 transition">Support</a>
-          <a href="#" className="hover:text-gray-900 transition">Privacy Policy</a>
-          <a href="#" className="hover:text-gray-900 transition">Terms of Service</a>
+          <a href={SUPPORT_URL} className="hover:text-gray-900 transition">Support</a>
+          <a href={PRIVACY_URL} className="hover:text-gray-900 transition">Privacy Policy</a>
+          <a href={TERMS_URL} className="hover:text-gray-900 transition">Terms of Service</a>
         </div>
       </div>
     </div>

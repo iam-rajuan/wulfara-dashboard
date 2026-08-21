@@ -1,7 +1,7 @@
-import { Form, Input, Checkbox, Typography, message } from "antd";
+import { Form, Input, Typography, message } from "antd";
 import { FaRegEyeSlash } from "react-icons/fa";
 import { FaRegEye } from "react-icons/fa6";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import brandlogo from "../../../assets/image/logo.png";
 import { API_BASE_URL } from "../../../config/urls";

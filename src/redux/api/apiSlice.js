@@ -3,8 +3,8 @@ import { API_BASE_URL } from '../../config/urls';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,
-  prepareHeaders: (headers) => {
-    const token = localStorage.getItem('token');
+  prepareHeaders: (headers, { getState }) => {
+    const token = getState()?.auth?.token || localStorage.getItem('token');
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
@@ -15,6 +15,6 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery,
-  tagTypes: ['Auth', 'User', 'Category', 'Listing', 'Rfq', 'Subscription', 'Page', 'Banner'],
+  tagTypes: ['Auth', 'User', 'Category', 'Listing', 'Rfq', 'Subscription', 'Page', 'Banner', 'Payment', 'Onboarding', 'AdminRole'],
   endpoints: () => ({}),
 });

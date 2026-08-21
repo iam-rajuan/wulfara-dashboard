@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setCredentials } from "../../../redux/features/auth/authSlice";
+import { logout, setCredentials } from "../../../redux/features/auth/authSlice";
 import { useLoginMutation } from "../../../redux/features/auth/authApi";
 import { Mail, Lock, Eye, EyeOff, Info, ArrowRight, Globe } from "lucide-react";
 import brandlogo from "../../../assets/image/logo.png";
@@ -15,17 +15,23 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState("");
 
-  const { user } = useSelector((state) => state.auth);
+  const { user, token } = useSelector((state) => state.auth);
   const [login, { isLoading, isError, error }] = useLoginMutation();
 
   useEffect(() => {
     if (isError && error) {
       setLocalError(error.data?.message || "Login failed");
     }
-    if (user) {
+    if (user && token) {
       navigate("/dashboard");
     }
-  }, [user, isError, error, navigate]);
+  }, [user, token, isError, error, navigate]);
+
+  useEffect(() => {
+    if (user && !token) {
+      dispatch(logout());
+    }
+  }, [dispatch, token, user]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -102,7 +108,7 @@ const SignIn = () => {
                 <label className="block text-[13px] font-bold text-gray-700">
                   Password
                 </label>
-                <Link to="/forgate-password" className="text-[12px] font-bold text-gray-900 hover:text-[#D1A635] transition-colors">
+                <Link to="/forgot-password" className="text-[12px] font-bold text-gray-900 hover:text-[#D1A635] transition-colors">
                   Forgot password?
                 </Link>
               </div>

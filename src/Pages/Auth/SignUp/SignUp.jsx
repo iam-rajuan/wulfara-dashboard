@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCredentials } from '../../../redux/features/auth/authSlice';
 import { useRegisterMutation, useVerifyEmailMutation } from '../../../redux/features/auth/authApi';
+import { useCreateAdminAssistedSupplierMutation } from '../../../redux/features/listings/listingsApi';
 import { Info, Eye, EyeOff, ArrowRight, Search, Mail, Settings, Network, UserPlus, Building2, FileText, Users, Handshake, X } from 'lucide-react';
 import { CustomNetworkIcon, CustomSettingsIcon, CustomMailIcon } from "../../../svglogos/SvgIcons";
 import { API_BASE_URL, POLICIES_URL } from '../../../config/urls';
@@ -10,6 +11,7 @@ import { API_BASE_URL, POLICIES_URL } from '../../../config/urls';
 const SignUp = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -29,17 +31,19 @@ const SignUp = () => {
   const { user } = useSelector((state) => state.auth);
   const [register, { isLoading, isError, error }] = useRegisterMutation();
   const [verifyEmail, { isLoading: isVerifying }] = useVerifyEmailMutation();
+  const [createAdminAssistedSupplier, { isLoading: isCreatingAdminAssisted }] = useCreateAdminAssistedSupplierMutation();
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
+  const isAdminAssistedMode = searchParams.get('mode') === 'admin_assisted' && user?.role === 'admin';
 
   useEffect(() => {
     if (isError && error) {
       setLocalError(error.data?.message || 'Registration failed');
     }
-    if (user) {
+    if (user && !isAdminAssistedMode) {
       navigate("/dashboard");
     }
-  }, [user, isError, error, navigate]);
+  }, [user, isError, error, navigate, isAdminAssistedMode]);
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -63,6 +67,13 @@ const SignUp = () => {
     const userData = { name, email, password, companyName, phone, role: 'supplier' };
     
     try {
+      if (isAdminAssistedMode) {
+        const response = await createAdminAssistedSupplier({ name, email, password, companyName, phone }).unwrap();
+        const supplierId = response?.data?.supplier?._id;
+        navigate(`/choose-industry?mode=admin_assisted&supplierId=${supplierId}`);
+        return;
+      }
+
       await register(userData).unwrap();
       setShowOtpModal(true);
     } catch (err) {
@@ -99,7 +110,9 @@ const SignUp = () => {
         <div className="w-full max-w-[480px]">
           <h1 className="text-[28px] font-bold text-[#111827] mb-2">Create Supplier Account</h1>
           <p className="text-[15px] text-gray-600 mb-8 leading-relaxed">
-            Create a supplier account to add your company profile, receive RFQs, and connect with customers searching for your services.
+            {isAdminAssistedMode
+              ? 'Create the supplier identity, then continue through the exact same onboarding, subscription, and payment workflow.'
+              : 'Create a supplier account to add your company profile, receive RFQs, and connect with customers searching for your services.'}
           </p>
 
           <div className="bg-white p-6 md:p-8 rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100">
@@ -228,19 +241,21 @@ const SignUp = () => {
               <div className="pt-4">
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || isCreatingAdminAssisted}
                     className="w-full flex items-center justify-center gap-2 bg-[#D1A635] hover:bg-[#C2982B] text-gray-900 font-bold py-3.5 px-4 rounded-md transition-colors disabled:opacity-70"
                   >
-                    {isLoading ? 'Creating Account...' : 'Create Supplier Account'}
-                    {!isLoading && <ArrowRight className="w-4 h-4 font-bold" />}
+                    {(isLoading || isCreatingAdminAssisted) ? 'Creating Account...' : isAdminAssistedMode ? 'Create & Continue Onboarding' : 'Create Supplier Account'}
+                    {!(isLoading || isCreatingAdminAssisted) && <ArrowRight className="w-4 h-4 font-bold" />}
                   </button>
               </div>
 
-              <div className="text-center pt-2">
-                <p className="text-[14px] text-gray-600">
-                  Already have an account? <Link to="/sign-in" className="text-[#0052CC] font-medium hover:underline">Login</Link>
-                </p>
-              </div>
+              {!isAdminAssistedMode && (
+                <div className="text-center pt-2">
+                  <p className="text-[14px] text-gray-600">
+                    Already have an account? <Link to="/sign-in" className="text-[#0052CC] font-medium hover:underline">Login</Link>
+                  </p>
+                </div>
+              )}
 
             </form>
           </div>
@@ -349,7 +364,7 @@ const SignUp = () => {
       </div>
 
       {/* OTP Modal */}
-      {showOtpModal && (
+      {!isAdminAssistedMode && showOtpModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200">
             <button 

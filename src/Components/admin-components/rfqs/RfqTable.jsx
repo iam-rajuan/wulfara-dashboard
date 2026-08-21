@@ -1,8 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Eye, Pencil } from "lucide-react";
+import { Eye } from "lucide-react";
 
-export default function RfqTable({ rfqs, currentPage, setCurrentPage, totalPages, totalItems, itemsPerPage, onView, onEdit }) {
+export default function RfqTable({ rfqs, currentPage, setCurrentPage, totalPages, totalItems, itemsPerPage }) {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 

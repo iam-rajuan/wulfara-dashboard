@@ -5,6 +5,7 @@ import { Pagination } from "../buyer/BuyerTable"; // Re-use pagination
 export default function SupplierTable({ suppliers, selectedIds, onSelect, onSelectAll, onEdit, onDelete, onApprove, onView }) {
   const [openActionId, setOpenActionId] = React.useState(null);
   const allSelected = suppliers.length > 0 && selectedIds.length === suppliers.length;
+  const canManage = Boolean(onEdit || onDelete || onApprove);
 
   const renderSupplierIcon = (iconName) => {
     switch (iconName) {
@@ -143,64 +144,75 @@ export default function SupplierTable({ suppliers, selectedIds, onSelect, onSele
                 {getSubscriptionStatus(supplier.subscription)}
               </td>
               <td className="py-4 pr-6 text-right relative">
-                <button
-                  onClick={() => setOpenActionId(openActionId === supplier.id ? null : supplier.id)}
-                  className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
-                >
-                  <MoreHorizontal size={18} />
-                </button>
-
-                {openActionId === supplier.id && (
+                {canManage ? (
                   <>
-                    <div 
-                      className="fixed inset-0 z-50"
-                      onClick={() => setOpenActionId(null)}
-                    ></div>
-                    <div className={`absolute right-6 w-32 bg-white rounded-md shadow-xl border border-gray-100 z-50 py-1 overflow-hidden ${index === suppliers.length - 1 && suppliers.length > 1 ? 'bottom-8' : 'top-10'}`}>
-                      <button
-                        onClick={() => {
-                          setOpenActionId(null);
-                          onView && onView(supplier);
-                        }}
-                        className="w-full px-4 py-2 text-[12px] font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                      >
-                        <Eye size={14} />
-                        View
-                      </button>
-                      {supplier.verification === 'Pending' && (
-                        <button
-                          onClick={() => {
-                            setOpenActionId(null);
-                            onApprove && onApprove(supplier);
-                          }}
-                          className="w-full px-4 py-2 text-[12px] font-bold text-green-700 hover:bg-green-50 flex items-center gap-2 transition-colors"
-                        >
-                          <CheckCircle size={14} />
-                          Approve
-                        </button>
-                      )}
-                      <button
-                        onClick={() => {
-                          setOpenActionId(null);
-                          onEdit && onEdit(supplier);
-                        }}
-                        className="w-full px-4 py-2 text-[12px] font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                      >
-                        <Edit2 size={14} />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          setOpenActionId(null);
-                          onDelete && onDelete(supplier.id);
-                        }}
-                        className="w-full px-4 py-2 text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                        Delete
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setOpenActionId(openActionId === supplier.id ? null : supplier.id)}
+                      className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    >
+                      <MoreHorizontal size={18} />
+                    </button>
+
+                    {openActionId === supplier.id && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-50"
+                          onClick={() => setOpenActionId(null)}
+                        ></div>
+                        <div className={`absolute right-6 w-32 bg-white rounded-md shadow-xl border border-gray-100 z-50 py-1 overflow-hidden ${index === suppliers.length - 1 && suppliers.length > 1 ? 'bottom-8' : 'top-10'}`}>
+                          <button
+                            onClick={() => {
+                              setOpenActionId(null);
+                              onView && onView(supplier);
+                            }}
+                            className="w-full px-4 py-2 text-[12px] font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                          >
+                            <Eye size={14} />
+                            View
+                          </button>
+                          {supplier.verification === 'Pending' && (
+                            <button
+                              onClick={() => {
+                                setOpenActionId(null);
+                                onApprove && onApprove(supplier);
+                              }}
+                              className="w-full px-4 py-2 text-[12px] font-bold text-green-700 hover:bg-green-50 flex items-center gap-2 transition-colors"
+                            >
+                              <CheckCircle size={14} />
+                              Approve
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setOpenActionId(null);
+                              onEdit && onEdit(supplier);
+                            }}
+                            className="w-full px-4 py-2 text-[12px] font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                          >
+                            <Edit2 size={14} />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              setOpenActionId(null);
+                              onDelete && onDelete(supplier.id);
+                            }}
+                            className="w-full px-4 py-2 text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </>
+                ) : (
+                  <button
+                    onClick={() => onView && onView(supplier)}
+                    className="text-[12px] font-medium text-gray-500 hover:text-gray-700"
+                  >
+                    View
+                  </button>
                 )}
               </td>
             </tr>

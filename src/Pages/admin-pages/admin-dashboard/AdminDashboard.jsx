@@ -6,6 +6,7 @@ import PriorityActions from "../../../Components/admin-components/Dashboard/Prio
 import RecentSupplierListings from "../../../Components/admin-components/Dashboard/RecentSupplierListings";
 import RecentRFQs from "../../../Components/admin-components/Dashboard/RecentRFQs";
 import { useGetDashboardStatsQuery } from "../../../redux/features/reports/reportsApi";
+import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from "../../../config/urls";
 
 export default function AdminDashboard() {
   const { data: statsResponse, isLoading } = useGetDashboardStatsQuery();
@@ -98,9 +99,9 @@ export default function AdminDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-500 pt-6 pb-2 px-2 border-t border-gray-200 mt-12">
         <p>© 2024 WULFARA Industrial Marketplace. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0 text-gray-500">
-          <a href="#" className="hover:text-gray-900 transition">Support</a>
-          <a href="#" className="hover:text-gray-900 transition">Privacy Policy</a>
-          <a href="#" className="hover:text-gray-900 transition">Terms of Service</a>
+          <a href={SUPPORT_URL} className="hover:text-gray-900 transition">Support</a>
+          <a href={PRIVACY_URL} className="hover:text-gray-900 transition">Privacy Policy</a>
+          <a href={TERMS_URL} className="hover:text-gray-900 transition">Terms of Service</a>
         </div>
       </div>
     </div>

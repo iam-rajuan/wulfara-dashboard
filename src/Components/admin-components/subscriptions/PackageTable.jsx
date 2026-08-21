@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useGetPlansQuery, useDeletePlanMutation } from "../../../redux/features/subscriptions/subscriptionsApi";
 import { ChevronDown, Edit2, MoreVertical, Filter, Award, Star, Diamond, Zap } from "lucide-react";
 import { toast } from 'react-toastify';
@@ -17,7 +17,7 @@ export default function PackageTable() {
       try {
         await deletePlan(id).unwrap();
         toast.success("Plan deleted successfully");
-      } catch (err) {
+      } catch {
         toast.error("Failed to delete plan");
       }
     }

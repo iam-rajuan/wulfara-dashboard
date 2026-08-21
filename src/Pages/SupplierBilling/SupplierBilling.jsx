@@ -5,7 +5,7 @@ import { useGetSupplierDashboardQuery } from '../../redux/features/listings/list
 import { useGetInvoicesQuery } from '../../redux/features/subscriptions/subscriptionsApi';
 
 export default function SupplierBilling() {
-  const { data: dashboardData, isLoading: isLoadingProfile } = useGetSupplierDashboardQuery();
+  const { data: dashboardData } = useGetSupplierDashboardQuery();
   const { data: invoicesData, isLoading: isLoadingInvoices } = useGetInvoicesQuery();
 
   const profile = dashboardData?.data?.profile;

@@ -3,6 +3,7 @@ import { Rocket, Link as LinkIcon, FileText, HelpCircle, UploadCloud, Trash2, Pl
 import { Modal } from 'antd';
 import { toast } from 'react-toastify';
 import { useGetPagesQuery, useCreatePageMutation, useUpdatePageMutation } from '../../../redux/features/cms/cmsApi';
+import { SUPPLIER_ONBOARDING_URL } from '../../../config/urls';
 
 const HomepageSettings = () => {
   // State for Hero Section
@@ -16,9 +17,9 @@ const HomepageSettings = () => {
 
   // State for Button Configuration
   const [dynamicButtons, setDynamicButtons] = useState([
-    { id: 1, label: 'Browse Suppliers', route: '#features', style: 'primary' },
-    { id: 2, label: 'List Your Company', route: '#list-company', style: 'secondary' },
-    { id: 3, label: 'Login', route: '#login', style: 'outline' }
+    { id: 1, label: 'Browse Suppliers', route: '/suppliers', style: 'primary' },
+    { id: 2, label: 'List Your Company', route: SUPPLIER_ONBOARDING_URL, style: 'secondary' },
+    { id: 3, label: 'Login', route: '/login', style: 'outline' }
   ]);
 
   // State for Mission Statement
@@ -85,9 +86,9 @@ const HomepageSettings = () => {
         } else if (parsed.buttonSettings) {
           // Backward compatibility
           setDynamicButtons([
-            { id: 1, label: parsed.buttonSettings.primaryCTA || 'Browse Suppliers', route: '#features', style: 'primary' },
-            { id: 2, label: parsed.buttonSettings.secondaryCTA || 'List Your Company', route: '#list-company', style: 'secondary' },
-            { id: 3, label: parsed.buttonSettings.accountLogin || 'Login', route: '#login', style: 'outline' }
+            { id: 1, label: parsed.buttonSettings.primaryCTA || 'Browse Suppliers', route: '/suppliers', style: 'primary' },
+            { id: 2, label: parsed.buttonSettings.secondaryCTA || 'List Your Company', route: SUPPLIER_ONBOARDING_URL, style: 'secondary' },
+            { id: 3, label: parsed.buttonSettings.accountLogin || 'Login', route: '/login', style: 'outline' }
           ]);
         }
         if (parsed.missionSettings) setMissionSettings(parsed.missionSettings);
@@ -241,7 +242,7 @@ const HomepageSettings = () => {
           </div>
 
           <div className="space-y-4">
-            {dynamicButtons.map((btn, index) => (
+            {dynamicButtons.map((btn) => (
               <div key={btn.id} className="flex flex-col md:flex-row items-center gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="w-full md:w-1/3">
                   <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Label</label>

@@ -68,13 +68,13 @@ const VerifyCode = () => {
             </div>
             <div  className="flex items-center justify-between py-2">
               <p className="text-gray-500 ">Didn't receive the email? </p>
-                 <p
-              href="#"
+                 <button
+              type="button"
               onClick={handleResend}
               className="text-sky-400 hover:text-sky-500 focus:outline-none"
             >
               Resend
-            </p>
+            </button>
             </div>
 
             <button

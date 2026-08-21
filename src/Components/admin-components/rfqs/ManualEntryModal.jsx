@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useGetListingsQuery } from "../../../redux/features/listings/listingsApi";
 import { X } from "lucide-react";
 
-export default function ManualEntryModal({ isOpen, onClose, onSubmit, mode = "create", initialData = null }) {
-  const { data: listingsResponse } = useGetListingsQuery(undefined, { skip: !isOpen });
+export default function ManualEntryModal({ isOpen, onClose, onSubmit, mode = "create" }) {
+  const { data: listingsResponse } = useGetListingsQuery("eligibleForRfq=true", { skip: !isOpen });
   const listings = listingsResponse?.data || [];
 
   const [formData, setFormData] = useState({

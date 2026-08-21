@@ -4,17 +4,14 @@ import {
   Filter, Download, Search, LayoutGrid, ShoppingCart, Truck, HelpCircle
 } from 'lucide-react';
 import { Input, Select, Switch, Upload, Table, message } from 'antd';
-import { useNavigate } from 'react-router-dom';
 import { useGetSeoByPathQuery, useUpdateSeoSettingsMutation } from '../../../redux/features/seo/seoApi';
 
 const { TextArea } = Input;
 
 const SeoSettings = () => {
-  const navigate = useNavigate();
-  
   // Use 'global' as the path for site-wide settings
-  const { data: globalSeoResponse, isLoading } = useGetSeoByPathQuery('global');
-  const [updateSeoSettings, { isLoading: isUpdating }] = useUpdateSeoSettingsMutation();
+  const { data: globalSeoResponse } = useGetSeoByPathQuery('global');
+  const [updateSeoSettings] = useUpdateSeoSettingsMutation();
 
   const [siteTitle, setSiteTitle] = useState('WULFARA | B2B Supplier Marketplace Directory');
   const [metaDesc, setMetaDesc] = useState('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
@@ -36,21 +33,21 @@ const SeoSettings = () => {
   const initialPageData = [
     { key: '1', entity: { icon: <LayoutGrid size={16} />, name: 'Marketplace Homepage' }, path: '/', metaConfig: 'WULFARA | Global B2B Supplier Marketplace', status: 'OPTIMIZED', indexed: true, updated: '2h ago' },
     { key: '2', entity: { icon: <ShoppingCart size={16} />, name: 'Suppliers Directory' }, path: '/suppliers', metaConfig: 'Verified B2B Suppliers & Manufacturers Directory', status: 'NEEDS KEYWORDS', indexed: true, updated: 'Yesterday' },
-    { key: '3', entity: { icon: <Truck size={16} />, name: 'Logistics Hub' }, path: '/logistics-hub', metaConfig: 'Strategic Global Logistics and Chain Solutions', status: 'NEEDS REVIEW', indexed: false, updated: '3 days ago' },
-    { key: '4', entity: { icon: <HelpCircle size={16} />, name: 'Support Center' }, path: '/support', metaConfig: 'Wulfara Support Center - B2B Marketplace', status: 'OPTIMIZED', indexed: true, updated: 'May 12, 2024' },
-    { key: '5', entity: { icon: <LayoutGrid size={16} />, name: 'About Us' }, path: '/about', metaConfig: 'About Wulfara | Neo-industrial Enterprise', status: 'OPTIMIZED', indexed: true, updated: '1 week ago' },
-    { key: '6', entity: { icon: <ShoppingCart size={16} />, name: 'Pricing Plans' }, path: '/pricing', metaConfig: 'B2B Marketplace Pricing & Subscriptions', status: 'NEEDS KEYWORDS', indexed: true, updated: '2 weeks ago' },
+    { key: '3', entity: { icon: <Truck size={16} />, name: 'Supplier Map' }, path: '/suppliers/map', metaConfig: 'Strategic Global Logistics and Chain Solutions', status: 'NEEDS REVIEW', indexed: false, updated: '3 days ago' },
+    { key: '4', entity: { icon: <HelpCircle size={16} />, name: 'Support Center' }, path: '/help-center', metaConfig: 'Wulfara Support Center - B2B Marketplace', status: 'OPTIMIZED', indexed: true, updated: 'May 12, 2024' },
+    { key: '5', entity: { icon: <LayoutGrid size={16} />, name: 'Supplier Categories' }, path: '/category', metaConfig: 'About Wulfara | Neo-industrial Enterprise', status: 'OPTIMIZED', indexed: true, updated: '1 week ago' },
+    { key: '6', entity: { icon: <ShoppingCart size={16} />, name: 'Supplier Sign Up' }, path: '/signup', metaConfig: 'B2B Marketplace Pricing & Subscriptions', status: 'NEEDS KEYWORDS', indexed: true, updated: '2 weeks ago' },
     { key: '7', entity: { icon: <HelpCircle size={16} />, name: 'FAQ' }, path: '/faq', metaConfig: 'Frequently Asked Questions | Wulfara Matrix', status: 'OPTIMIZED', indexed: true, updated: '3 weeks ago' },
-    { key: '8', entity: { icon: <Truck size={16} />, name: 'Shipping API' }, path: '/api/shipping', metaConfig: 'Global Shipping & Logistics API Documentation', status: 'NEEDS REVIEW', indexed: false, updated: '1 month ago' },
-    { key: '9', entity: { icon: <LayoutGrid size={16} />, name: 'Contact Us' }, path: '/contact', metaConfig: 'Contact Wulfara Support & Sales', status: 'OPTIMIZED', indexed: true, updated: '1 month ago' },
-    { key: '10', entity: { icon: <ShoppingCart size={16} />, name: 'Featured Suppliers' }, path: '/featured', metaConfig: 'Top Tier-One Industrial Partners', status: 'OPTIMIZED', indexed: true, updated: '2 months ago' },
-    { key: '11', entity: { icon: <HelpCircle size={16} />, name: 'Terms of Service' }, path: '/terms', metaConfig: 'Legal Terms of Service | Wulfara', status: 'NEEDS KEYWORDS', indexed: true, updated: '3 months ago' },
-    { key: '12', entity: { icon: <LayoutGrid size={16} />, name: 'Privacy Policy' }, path: '/privacy', metaConfig: 'Privacy Policy & Data Protection', status: 'OPTIMIZED', indexed: true, updated: '6 months ago' },
-    { key: '13', entity: { icon: <LayoutGrid size={16} />, name: 'Careers' }, path: '/careers', metaConfig: 'Join the Wulfara Team | Careers', status: 'NEEDS REVIEW', indexed: false, updated: '6 months ago' },
-    { key: '14', entity: { icon: <Truck size={16} />, name: 'Warehouse Network' }, path: '/warehouses', metaConfig: 'Global Warehouse Network & Storage', status: 'OPTIMIZED', indexed: true, updated: '7 months ago' }
+    { key: '8', entity: { icon: <Truck size={16} />, name: 'Search' }, path: '/search', metaConfig: 'Global Shipping & Logistics API Documentation', status: 'NEEDS REVIEW', indexed: false, updated: '1 month ago' },
+    { key: '9', entity: { icon: <LayoutGrid size={16} />, name: 'Contact Us' }, path: '/help-center', metaConfig: 'Contact Wulfara Support & Sales', status: 'OPTIMIZED', indexed: true, updated: '1 month ago' },
+    { key: '10', entity: { icon: <ShoppingCart size={16} />, name: 'Featured Suppliers' }, path: '/suppliers', metaConfig: 'Top Tier-One Industrial Partners', status: 'OPTIMIZED', indexed: true, updated: '2 months ago' },
+    { key: '11', entity: { icon: <HelpCircle size={16} />, name: 'Terms of Service' }, path: '/policies', metaConfig: 'Legal Terms of Service | Wulfara', status: 'NEEDS KEYWORDS', indexed: true, updated: '3 months ago' },
+    { key: '12', entity: { icon: <LayoutGrid size={16} />, name: 'Privacy Policy' }, path: '/policies', metaConfig: 'Privacy Policy & Data Protection', status: 'OPTIMIZED', indexed: true, updated: '6 months ago' },
+    { key: '13', entity: { icon: <LayoutGrid size={16} />, name: 'Careers' }, path: '/help-center', metaConfig: 'Join the Wulfara Team | Careers', status: 'NEEDS REVIEW', indexed: false, updated: '6 months ago' },
+    { key: '14', entity: { icon: <Truck size={16} />, name: 'Warehouse Network' }, path: '/suppliers/map', metaConfig: 'Global Warehouse Network & Storage', status: 'OPTIMIZED', indexed: true, updated: '7 months ago' }
   ];
 
-  const [pageData, setPageData] = useState(initialPageData);
+  const pageData = initialPageData;
 
   const handleImageUpload = (info) => {
     if (info.fileList && info.fileList.length > 0) {

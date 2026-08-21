@@ -23,9 +23,8 @@ const ForgatePassword = () => {
         throw new Error(data.message || 'Failed to send reset email');
       }
       
-      message.success("Reset instructions sent to your email!");
-      // We don't need to navigate to verify-code since they will receive a link.
-      // We can just keep them here or redirect to login.
+        message.success("Reset instructions sent to your email!");
+      navigate("/sign-in");
     } catch (error) {
       message.error(error.message);
     } finally {
@@ -39,9 +38,9 @@ const ForgatePassword = () => {
        <div className="flex justify-center">
          <img className="w-auto h-10 object-contain" src={brandlogo} alt="brandlogo" />
        </div>
-        <h1 className="my-2 font-bold">Forget password</h1>
+        <h1 className="my-2 font-bold">Forgot password</h1>
         <p className="mb-4 text-gray-600 ">
-          Enter your email address to receive password reset instructions
+          Enter your admin email address and we will send you a password reset link.
         </p>
 
         <Form name="forgotPassword" onFinish={onFinish} layout="vertical">
@@ -65,7 +64,7 @@ const ForgatePassword = () => {
                 className=" bg-[#0A3019] w-full text-white py-3 px-20 rounded-lg"
                 disabled={loading}
               >
-                {loading ? "Sending..." : "Send a Code"}
+                {loading ? "Sending..." : "Send Reset Link"}
               </button>
             </div>
           </Form.Item>

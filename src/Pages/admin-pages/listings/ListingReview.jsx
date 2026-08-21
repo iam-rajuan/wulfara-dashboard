@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useMemo } from "react";
 import { useGetListingsQuery, useReviewListingMutation, useFeatureListingMutation } from "../../../redux/features/listings/listingsApi";
-import { ChevronRight, Filter, Download, Search, Hourglass, CheckCircle2, XCircle, Star, TrendingUp } from "lucide-react";
+import { Filter, Download, Search, Hourglass, CheckCircle2, XCircle, Star, TrendingUp } from "lucide-react";
 import ListingTable from "../../../Components/admin-components/listings/ListingTable";
 
 export default function ListingReview() {
-  const { data: listingsResponse, isLoading } = useGetListingsQuery();
+  const { data: listingsResponse } = useGetListingsQuery();
   const [reviewListing] = useReviewListingMutation();
   const [featureListing] = useFeatureListingMutation();
-  
-  const listings = listingsResponse?.data || [];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
@@ -26,6 +23,7 @@ export default function ListingReview() {
   };
 
   const mappedListings = useMemo(() => {
+    const listings = listingsResponse?.data || [];
     return listings.map(l => ({
       id: l._id,
       companyName: l.companyName,
@@ -37,7 +35,7 @@ export default function ListingReview() {
       quality: calculateQualityScore(l),
       isFeatured: l.isFeatured || false
     }));
-  }, [listings]);
+  }, [listingsResponse]);
 
   const filteredListings = mappedListings.filter(l =>
     l.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||

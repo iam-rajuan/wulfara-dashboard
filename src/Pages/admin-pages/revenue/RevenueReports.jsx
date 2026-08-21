@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { 
-  Banknote, RefreshCw, CreditCard, Tag, AlertCircle, Download, CreditCard as VisaIcon 
+import {
+  Banknote, RefreshCw, CreditCard, Tag, AlertCircle, Download
 } from 'lucide-react';
-import { Select, Table, Tag as AntTag, message } from 'antd';
+import { Select, Table, message } from 'antd';
 import { 
   BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
@@ -14,7 +14,7 @@ const RevenueReports = () => {
   const [timeframe, setTimeframe] = useState('Last 12 Months');
   const [isExporting, setIsExporting] = useState(false);
   const { data: paymentsResponse, isLoading: isPaymentsLoading } = useGetAllPaymentsQuery();
-  const { data: statsResponse, isLoading: isStatsLoading } = useGetDashboardStatsQuery();
+  const { data: statsResponse } = useGetDashboardStatsQuery();
   const payments = paymentsResponse?.data || [];
   const chartData = statsResponse?.data?.chartData || [];
 

@@ -22,6 +22,7 @@ import CategoryManagement from "../Pages/admin-pages/categories/CategoryManageme
 import CreateCategory from "../Pages/admin-pages/categories/CreateCategory";
 import EditCategory from "../Pages/admin-pages/categories/EditCategory";
 import SubscriptionManagement from "../Pages/admin-pages/subscriptions/SubscriptionManagement";
+import ActiveSubscriptions from "../Pages/admin-pages/subscriptions/ActiveSubscriptions";
 import EditSubscription from "../Pages/admin-pages/subscriptions/EditSubscription";
 import CreateSubscription from "../Pages/admin-pages/subscriptions/CreateSubscription";
 import RfqManagement from "../Pages/admin-pages/rfqs/RfqManagement";
@@ -83,6 +84,10 @@ export const router = createBrowserRouter([
     element: <ForgatePassword />,
   },
   {
+    path: "/forgot-password",
+    element: <ForgatePassword />,
+  },
+  {
     path: "/verify-code",
     element: <VerifyCode />,
   },
@@ -138,6 +143,10 @@ export const router = createBrowserRouter([
           {
             path: "subscriptions/edit/:id",
             element: <EditSubscription />
+          },
+          {
+            path: "subscriptions/active",
+            element: <ActiveSubscriptions />
           },
           {
             path: "subscriptions/create",

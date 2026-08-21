@@ -25,7 +25,6 @@ import {
   useUpdatePageMutation,
   useGetBannersQuery,
   useCreateBannerMutation,
-  useUpdateBannerMutation,
   useDeleteBannerMutation
 } from '../../../redux/features/cms/cmsApi';
 
@@ -42,7 +41,6 @@ const ContentManagement = () => {
   const [isPolicyModalVisible, setIsPolicyModalVisible] = useState(false);
   const [isHelpCenterModalVisible, setIsHelpCenterModalVisible] = useState(false);
   
-  const [form] = Form.useForm();
   const [faqForm] = Form.useForm();
   const [policyForm] = Form.useForm();
   const [helpCenterForm] = Form.useForm();
@@ -50,7 +48,6 @@ const ContentManagement = () => {
   // Banners
   const { data: bannersResponse } = useGetBannersQuery();
   const [createBanner] = useCreateBannerMutation();
-  const [updateBanner] = useUpdateBannerMutation();
   const [deleteBanner] = useDeleteBannerMutation();
   const [isBannerModalVisible, setIsBannerModalVisible] = useState(false);
   const [bannerForm] = Form.useForm();
@@ -60,7 +57,7 @@ const ContentManagement = () => {
       try {
         const parsed = JSON.parse(faqPage.htmlContent);
         faqForm.setFieldsValue({ faqs: parsed });
-      } catch (e) {
+      } catch {
         faqForm.setFieldsValue({ faqs: [] });
       }
     } else {
@@ -97,7 +94,7 @@ const ContentManagement = () => {
       try {
         const parsed = JSON.parse(policyPage.htmlContent);
         policyForm.setFieldsValue(parsed);
-      } catch (e) {
+      } catch {
         policyForm.resetFields();
       }
     } else {
@@ -134,7 +131,7 @@ const ContentManagement = () => {
       try {
         const parsed = JSON.parse(helpCenterPage.htmlContent);
         helpCenterForm.setFieldsValue({ articles: parsed });
-      } catch (e) {
+      } catch {
         helpCenterForm.setFieldsValue({ articles: [] });
       }
     } else {
@@ -191,7 +188,7 @@ const ContentManagement = () => {
     try {
       await deleteBanner(id).unwrap();
       message.success('Banner deleted');
-    } catch (err) {
+    } catch {
       message.error('Failed to delete banner');
     }
   };

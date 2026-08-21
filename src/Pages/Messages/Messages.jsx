@@ -14,9 +14,9 @@ export default function Messages() {
   const [selectedChat, setSelectedChat] = useState(newUserId ? `new-${newUserId}` : null);
 
   const { data: conversationsResponse, isLoading } = useGetConversationsQuery(undefined, { pollingInterval: 30000 });
-  const rawConversations = conversationsResponse?.data || [];
 
   const conversations = useMemo(() => {
+    const rawConversations = conversationsResponse?.data || [];
     let list = [...rawConversations];
 
     if (newUserId && newUserName) {
@@ -33,7 +33,7 @@ export default function Messages() {
     }
 
     return list;
-  }, [rawConversations, newUserId, newUserName]);
+  }, [conversationsResponse?.data, newUserId, newUserName]);
 
   const tabs = [
     { id: 'Inbox', label: 'Inbox' },

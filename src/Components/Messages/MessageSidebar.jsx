@@ -1,7 +1,7 @@
 import React from 'react';
 import { Filter } from 'lucide-react';
 
-export default function MessageSidebar({ conversations = [], isLoading, activeTab, selectedChat, setSelectedChat }) {
+export default function MessageSidebar({ conversations = [], activeTab, selectedChat, setSelectedChat }) {
   const allChats = conversations.map((conv, idx) => {
     // Determine the other participant
     const otherUser = conv.participants?.find(p => p.role !== 'admin' && p.role !== 'supplier') || conv.participants?.[0] || {};

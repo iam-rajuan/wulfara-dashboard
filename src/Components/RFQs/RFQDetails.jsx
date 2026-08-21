@@ -4,6 +4,7 @@ import { ChevronRight, Printer, X, FileText, Image as ImageIcon, File, Paperclip
 import { useSelector } from 'react-redux';
 import { useGetRfqQuery, useGetRfqMessagesQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation } from '../../redux/features/rfqs/rfqsApi';
 import { useCreateReviewMutation } from '../../redux/features/reviews/reviewsApi';
+import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '../../config/urls';
 
 export default function RFQDetails() {
   const { id } = useParams();
@@ -11,9 +12,9 @@ export default function RFQDetails() {
   const [attachedFile, setAttachedFile] = useState(null);
   const fileInputRef = useRef(null);
 
-  const { data: rfqResponse, isLoading: isRfqLoading } = useGetRfqQuery(id);
+  const { data: rfqResponse } = useGetRfqQuery(id);
   const { data: messagesResponse } = useGetRfqMessagesQuery(id);
-  const [replyToRfq, { isLoading: isReplying }] = useReplyToRfqMutation();
+  const [replyToRfq] = useReplyToRfqMutation();
   const [updateStatus] = useUpdateRfqStatusMutation();
   const [createReview, { isLoading: isReviewing }] = useCreateReviewMutation();
   
@@ -75,7 +76,7 @@ export default function RFQDetails() {
         setMessage('');
         setAttachedFile(null);
         alert("Reply sent successfully!");
-      } catch (error) {
+      } catch {
         alert("Failed to send reply");
       }
     }
@@ -93,7 +94,7 @@ export default function RFQDetails() {
         try {
           await updateStatus({ id: rfq.rawId, status: 'resolved' }).unwrap();
           alert("RFQ marked as completed.");
-        } catch (error) {
+        } catch {
           alert("Failed to complete RFQ");
         }
       }
@@ -125,7 +126,7 @@ export default function RFQDetails() {
         try {
           await updateStatus({ id: rfq.rawId, status: 'closed' }).unwrap();
           alert("RFQ declined.");
-        } catch (error) {
+        } catch {
           alert("Failed to decline RFQ");
         }
       }
@@ -424,9 +425,9 @@ export default function RFQDetails() {
       <div className="flex flex-col md:flex-row justify-between items-center text-[11px] font-bold text-gray-500 pt-6 mt-12 pb-4 border-t border-gray-200">
         <p>© 2024 WULFARA Industrial Marketplace. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0 text-gray-500">
-          <a href="#" className="hover:text-gray-900 transition">Support</a>
-          <a href="#" className="hover:text-gray-900 transition">Privacy Policy</a>
-          <a href="#" className="hover:text-gray-900 transition">Terms of Service</a>
+          <a href={SUPPORT_URL} className="hover:text-gray-900 transition">Support</a>
+          <a href={PRIVACY_URL} className="hover:text-gray-900 transition">Privacy Policy</a>
+          <a href={TERMS_URL} className="hover:text-gray-900 transition">Terms of Service</a>
         </div>
       </div>
     </div>

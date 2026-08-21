@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { Download, Plus, ChevronDown, Search, Filter } from "lucide-react";
 import { 
   useGetListingsQuery, 
@@ -9,28 +11,33 @@ import SupplierTable from "../../../Components/admin-components/supplier/Supplie
 import SupplierFormModal from "../../../Components/admin-components/supplier/SupplierFormModal";
 import SupplierDetailsModal from "../../../Components/admin-components/supplier/SupplierDetailsModal";
 import { Pagination } from "../../../Components/admin-components/buyer/BuyerTable"; // Reuse pagination
+import { hasAdminPermission } from "../../../utils/adminAccess";
 
 export default function SupplierManagement() {
-  const { data: listingsResponse, isLoading, error, refetch } = useGetListingsQuery(undefined, { refetchOnMountOrArgChange: true });
-  const suppliersData = listingsResponse?.data || [];
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  const { data: listingsResponse, isLoading, error } = useGetListingsQuery(undefined, { refetchOnMountOrArgChange: true });
   const [updateListing] = useUpdateListingMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
 
   // Filter only suppliers
   const suppliers = useMemo(() => {
+    const suppliersData = listingsResponse?.data || [];
     return suppliersData.map(sup => ({
       id: sup._id,
       icon: "Box", 
       name: sup.user?.name || sup.contactEmail || "Unknown",
       company: sup.companyName || "No Company Name",
       email: sup.contactEmail || sup.user?.email || "No Email",
-      plan: sup.subscriptionPlan === "premium" ? "Premium" : "Basic",
+      plan: sup.subscriptionPlan ? `${sup.subscriptionPlan.charAt(0).toUpperCase()}${sup.subscriptionPlan.slice(1)}` : "Free",
       verification: sup.isApproved ? "Verified" : (sup.listingStatus === 'Suspended' ? "Suspended" : "Pending"),
       listingStatus: sup.listingStatus || "Pending",
-      subscription: "Active"
+      subscription: sup.subscriptionStatus ? `${sup.subscriptionStatus.charAt(0).toUpperCase()}${sup.subscriptionStatus.slice(1)}` : "Inactive"
     }));
-  }, [suppliersData]);
+  }, [listingsResponse?.data]);
+
+  const suppliersData = listingsResponse?.data || [];
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -44,6 +51,7 @@ export default function SupplierManagement() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [bulkAction, setBulkAction] = useState("");
   const pageSize = 4; // Design shows 4 items per page
+  const canManageSuppliers = hasAdminPermission(user, "suppliers.manage");
 
   const handleSaveSupplier = async (savedSupplier) => {
     try {
@@ -120,8 +128,7 @@ export default function SupplierManagement() {
   };
 
   const openAddModal = () => {
-    setEditingSupplier(null);
-    setIsModalOpen(true);
+    navigate("/sign-up?mode=admin_assisted");
   };
 
   const openEditModal = (supplier) => {
@@ -219,6 +226,7 @@ export default function SupplierManagement() {
           </button>
           <button 
             onClick={openAddModal}
+            disabled={!canManageSuppliers}
             className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] border border-[#D4AF37] rounded-md text-[13px] font-bold text-[#0F172A] hover:bg-[#C2982B] transition-colors shadow-sm"
           >
             <Plus size={16} strokeWidth={3} />
@@ -317,7 +325,7 @@ export default function SupplierManagement() {
               <select 
                 value={bulkAction}
                 onChange={(e) => setBulkAction(e.target.value)}
-                disabled={!hasSelection || isLoading}
+                disabled={!canManageSuppliers || !hasSelection || isLoading}
                 className="appearance-none flex items-center justify-between gap-2 pl-3 pr-8 py-2 bg-white rounded-md text-[12px] font-bold text-gray-700 min-w-[160px] border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed outline-none cursor-pointer"
               >
                 <option value="" disabled>Select Action...</option>
@@ -330,7 +338,7 @@ export default function SupplierManagement() {
 
             <button
               onClick={handleApplyBulkAction}
-              disabled={!hasSelection || !bulkAction || isLoading}
+              disabled={!canManageSuppliers || !hasSelection || !bulkAction || isLoading}
               className="px-4 py-2 border border-gray-200 rounded-md text-[12px] font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               Apply
@@ -357,9 +365,9 @@ export default function SupplierManagement() {
             selectedIds={selectedIds}
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
-            onEdit={openEditModal}
-            onDelete={handleDeleteSupplier}
-            onApprove={handleApproveSupplier}
+            onEdit={canManageSuppliers ? openEditModal : undefined}
+            onDelete={canManageSuppliers ? handleDeleteSupplier : undefined}
+            onApprove={canManageSuppliers ? handleApproveSupplier : undefined}
             onView={openViewModal}
           />
         )}
@@ -376,12 +384,14 @@ export default function SupplierManagement() {
 
       </div>
 
-      <SupplierFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveSupplier}
-        supplier={editingSupplier}
-      />
+      {canManageSuppliers && (
+        <SupplierFormModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveSupplier}
+          supplier={editingSupplier}
+        />
+      )}
 
       <SupplierDetailsModal
         isOpen={isViewModalOpen}

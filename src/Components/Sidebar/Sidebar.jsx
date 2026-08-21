@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../redux/features/auth/authSlice";
+import { hasAdminPermission } from "../../utils/adminAccess";
 import brandlogo from "../../assets/image/logo.png";
 import {
   Package,
@@ -55,20 +56,22 @@ const Sidebar = ({ closeDrawer }) => {
 
   // admin route
   const adminMenuItems = [
-    { icon: <DashboardIcon />, label: "Dashboard", Link: "/" },
-    { icon: <BuyersIcon />, label: "Buyers", Link: "/buyer-management" },
-    { icon: <SuppliersIcon />, label: "Suppliers", Link: "/supplier-management" },
-    { icon: <ListingsIcon />, label: "Listings", Link: "/listings" },
-    { icon: <CategoriesIcon />, label: "Categories", Link: "/categories" },
-    { icon: <SubscriptionsIcon />, label: "Subscriptions", Link: "/subscriptions" },
-    { icon: <RFQsIcon />, label: "RFQs", Link: "/rfq-management" },
-    { icon: <ContentIcon />, label: "Content", Link: "/content" },
-    { icon: <SEOIcon />, label: "SEO", Link: "/seo" },
-    { icon: <RevenueIcon />, label: "Revenue", Link: "/revenue" },
-    { icon: <SettingsIcon />, label: "Settings", Link: "/settings" },
+    { icon: <DashboardIcon />, label: "Dashboard", Link: "/", permission: "dashboard.view" },
+    { icon: <BuyersIcon />, label: "Buyers", Link: "/buyer-management", permission: "users.read" },
+    { icon: <SuppliersIcon />, label: "Suppliers", Link: "/supplier-management", permission: "suppliers.read" },
+    { icon: <ListingsIcon />, label: "Listings", Link: "/listings", permission: "listings.manage" },
+    { icon: <CategoriesIcon />, label: "Categories", Link: "/categories", permission: "categories.manage" },
+    { icon: <SubscriptionsIcon />, label: "Subscriptions", Link: "/subscriptions", permission: "subscriptions.read" },
+    { icon: <RFQsIcon />, label: "RFQs", Link: "/rfq-management", permission: "rfqs.read" },
+    { icon: <ContentIcon />, label: "Content", Link: "/content", permission: "content.manage" },
+    { icon: <SEOIcon />, label: "SEO", Link: "/seo", permission: "seo.manage" },
+    { icon: <RevenueIcon />, label: "Revenue", Link: "/revenue", permission: "revenue.view" },
+    { icon: <SettingsIcon />, label: "Settings", Link: "/settings", permission: "settings.manage" },
   ];
 
-  const menuItems = role === "admin" ? adminMenuItems : supplierMenuItems;
+  const menuItems = role === "admin"
+    ? adminMenuItems.filter((item) => hasAdminPermission(user, item.permission))
+    : supplierMenuItems;
 
   return (
     <div className="w-full h-full min-h-screen bg-[#0E1726] flex flex-col text-[#8892A3]">
@@ -132,14 +135,14 @@ const Sidebar = ({ closeDrawer }) => {
               <User size={18} strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-medium text-white truncate">
-                {user?.name || "Admin User"}
-              </p>
-              <div className="flex items-center gap-1 text-[#D4AF37] text-[11px] mt-0.5">
-                <span className="font-medium">Admin</span>
+                <p className="text-[13px] font-medium text-white truncate">
+                  {user?.name || "Admin User"}
+                </p>
+                <div className="flex items-center gap-1 text-[#D4AF37] text-[11px] mt-0.5">
+                  <span className="font-medium">{user?.adminRole?.name || "Admin"}</span>
+                </div>
               </div>
             </div>
-          </div>
         ) : (
           <div className="bg-[#152136] rounded-xl p-3 flex items-center gap-3 mb-4 border border-[#1C273C]">
             <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center text-[13px]">

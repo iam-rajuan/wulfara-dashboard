@@ -1,13 +1,8 @@
 import React, { useState } from "react";
-import { 
-  ChevronRight, 
-  ChevronDown, 
-  Diamond, 
-  Settings2, 
-  Truck, 
-  Wrench, 
-  Briefcase, 
-  Beaker, 
+import {
+  ChevronRight,
+  ChevronDown,
+  Folder,
   Image as ImageIcon,
   MoreVertical,
   RotateCcw,
@@ -46,14 +41,6 @@ export default function CategoryHierarchyPanel({ categories, activeCategoryId, o
     const file = e.target.files[0];
     if (file && onUpdateCategory) {
       onUpdateCategory(activeCategory.id, { banner: URL.createObjectURL(file) });
-    }
-  };
-
-  const handleIconUpload = (e) => {
-    const file = e.target.files[0];
-    if (file && onUpdateCategory) {
-      const url = URL.createObjectURL(file);
-      onUpdateCategory(activeCategory.id, { icon: url });
     }
   };
 
