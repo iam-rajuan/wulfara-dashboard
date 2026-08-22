@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronRight, Printer, X, FileText, Image as ImageIcon, File, Paperclip, Send, MapPin, CheckCircle, Clock, Star } from 'lucide-react';
+import { ChevronRight, Printer, X, FileText, Image as ImageIcon, File, Paperclip, Send, MapPin, CheckCircle, Clock, Star, Download } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { useGetRfqQuery, useGetRfqMessagesQuery, useReplyToRfqMutation, useUpdateRfqStatusMutation, useGetRfqUploadUrlMutation, useLazyGetRfqAttachmentDownloadUrlQuery } from '../../redux/features/rfqs/rfqsApi';
@@ -24,9 +24,9 @@ export default function RFQDetails() {
   
   const { user } = useSelector((state) => state.auth);
 
-  const handleDownload = async (url) => {
+  const handleDownload = async (url, type = 'view') => {
     try {
-      const res = await triggerDownload(url).unwrap();
+      const res = await triggerDownload({ url, type }).unwrap();
       if (res?.downloadUrl) {
         window.open(res.downloadUrl, '_blank');
       }
@@ -281,17 +281,25 @@ export default function RFQDetails() {
               
               <div className="space-y-3">
                 {rfq.attachments.map((file, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => handleDownload(file.url)} 
-                    className="w-full flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition cursor-pointer text-left focus:outline-none"
-                  >
-                    {renderAttachmentIcon(file.type)}
-                    <div>
-                      <h4 className="text-[13px] font-bold text-[#0F172A] mb-0.5">{file.name}</h4>
-                      <p className="text-[11px] font-bold text-gray-500">Attachment</p>
+                  <div key={idx} className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition group">
+                    <div 
+                      onClick={() => handleDownload(file.url, 'view')} 
+                      className="flex-1 flex items-center gap-3 cursor-pointer"
+                    >
+                      {renderAttachmentIcon(file.type)}
+                      <div className="min-w-0">
+                        <h4 className="text-[13px] font-bold text-[#0F172A] mb-0.5 group-hover:text-[#D4AF37] transition-colors truncate">{file.name}</h4>
+                        <p className="text-[11px] font-bold text-gray-500">Attachment (Click to view)</p>
+                      </div>
                     </div>
-                  </button>
+                    <button 
+                      onClick={() => handleDownload(file.url, 'download')}
+                      title="Download attachment"
+                      className="text-gray-400 hover:text-[#D4AF37] transition-colors p-2 cursor-pointer focus:outline-none shrink-0"
+                    >
+                      <Download size={16} />
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
