@@ -236,7 +236,7 @@ const SeoSettings = () => {
     },
   ];
 
-  const previewOrigin = WEBSITE_ORIGIN || (typeof window !== 'undefined' ? 'http://localhost:3000' : 'https://wulfara.com');
+  const previewOrigin = WEBSITE_ORIGIN || (typeof window !== 'undefined' ? 'http://localhost:3000' : 'https://wulfara.space');
   const previewUrl = `${previewOrigin}/`;
   const accessibilityIssues = pageData.filter((item) => !item.indexed).length;
   const indexEnabled = true;
