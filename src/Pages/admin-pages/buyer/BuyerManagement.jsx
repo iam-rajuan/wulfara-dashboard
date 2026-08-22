@@ -21,19 +21,22 @@ export default function BuyerManagement() {
   // Filter only buyers
   const buyers = useMemo(() => {
     const users = usersResponse?.data || [];
-    return users.filter(user => user.role === 'buyer').map(user => ({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      status: user.status || "Active",
-      verification: user.isVerified ? "Verified" : "Unverified",
-      rfqs: 0, // Placeholder
-      favs: 0, // Placeholder
-      createdDate: new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) + ',',
-      createdYear: new Date(user.createdAt).getFullYear().toString(),
-      avatarColor: "bg-[#DBEAFE]", // default
-      initials: user.name ? user.name.substring(0, 2).toUpperCase() : "NA"
-    }));
+    return [...users]
+      .filter(user => user.role === 'buyer')
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .map(user => ({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        status: user.status || "Active",
+        verification: user.isVerified ? "Verified" : "Unverified",
+        rfqs: 0, // Placeholder
+        favs: 0, // Placeholder
+        createdDate: new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) + ',',
+        createdYear: new Date(user.createdAt).getFullYear().toString(),
+        avatarColor: "bg-[#DBEAFE]", // default
+        initials: user.name ? user.name.substring(0, 2).toUpperCase() : "NA"
+      }));
   }, [usersResponse?.data]);
 
   const [currentPage, setCurrentPage] = useState(1);
