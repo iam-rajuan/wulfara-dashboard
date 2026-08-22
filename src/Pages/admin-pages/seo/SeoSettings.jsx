@@ -36,6 +36,8 @@ const SeoSettings = () => {
   const [metaDesc, setMetaDesc] = useState('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
   const [keywords, setKeywords] = useState(['B2B', 'logistics', 'supplier marketplace', 'wholesale directory']);
   const [ogImage, setOgImage] = useState(null);
+  const [indexEnabled, setIndexEnabled] = useState(true);
+  const [followOutbound, setFollowOutbound] = useState(true);
 
   const seoSettings = seoResponse?.data || [];
   const seoSummary = seoSummaryResponse?.data || {};
@@ -46,6 +48,8 @@ const SeoSettings = () => {
     setSiteTitle(globalSeo.title || '');
     setMetaDesc(globalSeo.description || '');
     setKeywords(globalSeo.keywords?.length ? globalSeo.keywords : []);
+    setIndexEnabled(globalSeo.indexEnabled !== undefined ? globalSeo.indexEnabled : true);
+    setFollowOutbound(globalSeo.followOutbound !== undefined ? globalSeo.followOutbound : true);
   }, [globalSeo]);
 
   const pageData = useMemo(() => {
@@ -125,6 +129,8 @@ const SeoSettings = () => {
         description: metaDesc,
         keywords,
         ogImage: ogImageUrl,
+        indexEnabled,
+        followOutbound,
       }).unwrap();
 
       await refetch();
@@ -140,10 +146,14 @@ const SeoSettings = () => {
       setSiteTitle(globalSeo.title || '');
       setMetaDesc(globalSeo.description || '');
       setKeywords(globalSeo.keywords?.length ? globalSeo.keywords : []);
+      setIndexEnabled(globalSeo.indexEnabled !== undefined ? globalSeo.indexEnabled : true);
+      setFollowOutbound(globalSeo.followOutbound !== undefined ? globalSeo.followOutbound : true);
     } else {
       setSiteTitle('WULFARA | B2B Supplier Marketplace Directory');
       setMetaDesc('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
       setKeywords(['B2B', 'logistics', 'supplier marketplace', 'wholesale directory']);
+      setIndexEnabled(true);
+      setFollowOutbound(true);
     }
     setOgImage(null);
     message.info('Changes discarded.');
@@ -236,11 +246,9 @@ const SeoSettings = () => {
     },
   ];
 
-  const previewOrigin = WEBSITE_ORIGIN || (typeof window !== 'undefined' ? 'http://localhost:3000' : 'https://wulfara.space');
+  const previewOrigin = WEBSITE_ORIGIN || (typeof window !== 'undefined' ? 'https://wulfara.space' : 'https://wulfara.space');
   const previewUrl = `${previewOrigin}/`;
   const accessibilityIssues = pageData.filter((item) => !item.indexed).length;
-  const indexEnabled = true;
-  const followOutbound = true;
   const supplierCountLabel = seoSummary.supplierCount ? `${seoSummary.supplierCount.toLocaleString()}+` : '0';
   const reviewCountLabel = seoSummary.reviewCount ? seoSummary.reviewCount.toLocaleString() : '0';
   const averageRating = Number(seoSummary.averageRating || 0);
@@ -353,11 +361,19 @@ const SeoSettings = () => {
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700">Index this site</span>
-                      <Switch checked={indexEnabled} style={{ backgroundColor: '#dcb14b' }} />
+                      <Switch 
+                        checked={indexEnabled} 
+                        onChange={setIndexEnabled} 
+                        style={{ backgroundColor: indexEnabled ? '#dcb14b' : undefined }} 
+                      />
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700">Follow outbound links</span>
-                      <Switch checked={followOutbound} style={{ backgroundColor: '#dcb14b' }} />
+                      <Switch 
+                        checked={followOutbound} 
+                        onChange={setFollowOutbound} 
+                        style={{ backgroundColor: followOutbound ? '#dcb14b' : undefined }} 
+                      />
                     </div>
                   </div>
                 </div>
