@@ -81,6 +81,25 @@ const Header = ({ showDrawer }) => {
     }
   };
 
+  const clearAllNotifications = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/notifications/clear-all`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    } catch (err) {
+      console.error("Error clearing notifications:", err);
+    }
+  };
+
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem("token");
@@ -164,14 +183,24 @@ const Header = ({ showDrawer }) => {
       {/* =============================Notification Dropdown============================= */}
       {showNotifications && (
         <div className="absolute right-4 top-[72px] z-50 p-4 bg-white rounded-md shadow-xl w-72 sm:w-80">
-          <div className="flex items-center justify-between border-b pb-2">
-            <h2 className="text-lg font-semibold text-[#2c3e50]">
-              Notifications
-            </h2>
+          <div className="flex flex-col border-b pb-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-[#2c3e50]">
+                Notifications
+              </h2>
+              {notifications.length > 0 && (
+                <button 
+                  onClick={clearAllNotifications}
+                  className="text-xs text-red-600 hover:text-red-800 font-medium cursor-pointer"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
             {unreadCount > 0 && (
               <button 
                 onClick={markAllAsRead}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium text-left mt-1 cursor-pointer"
               >
                 Mark all as read
               </button>

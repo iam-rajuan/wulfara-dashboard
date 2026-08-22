@@ -1,27 +1,32 @@
 import React from "react";
 import { FileCheck, ShieldCheck, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export default function PriorityActions() {
-  const actions = [
-    {
-      id: 1,
-      title: "Review Pending Listings",
-      count: 37,
-      icon: <FileCheck className="text-[#D4AF37]" size={20} strokeWidth={2.5} />,
-    },
-    {
-      id: 2,
-      title: "Verify Supplier Accounts",
-      count: 12,
-      icon: <ShieldCheck className="text-gray-500" size={20} strokeWidth={2.5} />,
-      badgeColor: "bg-blue-100 text-blue-700",
-    },
-    {
-      id: 3,
-      title: "Support Tickets",
-      count: 0,
-      icon: <Mail className="text-gray-500" size={20} strokeWidth={2.5} />,
-    },
+const ACTION_ICON_MAP = {
+  "pending-listings": <FileCheck className="text-[#D4AF37]" size={20} strokeWidth={2.5} />,
+  "verify-suppliers": <ShieldCheck className="text-gray-500" size={20} strokeWidth={2.5} />,
+  "support-tickets": <Mail className="text-gray-500" size={20} strokeWidth={2.5} />,
+};
+
+const ACTION_TONE_CLASS = {
+  warning: "bg-[#FEF3C7] text-[#D4AF37]",
+  info: "bg-blue-100 text-blue-700",
+  danger: "bg-red-100 text-red-700",
+  muted: "bg-gray-100 text-gray-600",
+};
+
+const ACTION_LINK_MAP = {
+  "pending-listings": "/supplier-management",
+  "verify-suppliers": "/supplier-management",
+  "support-tickets": "/messages",
+};
+
+export default function PriorityActions({ actions = [], supportTicketsAvailable = false }) {
+  const displayActions = [
+    ...actions,
+    ...(!supportTicketsAvailable
+      ? []
+      : [{ key: "support-tickets", title: "Support Tickets", count: 0, tone: "muted" }]),
   ];
 
   return (
@@ -31,26 +36,29 @@ export default function PriorityActions() {
       </h3>
       
       <div className="space-y-4 flex-1">
-        {actions.map((action) => (
-          <button
-            key={action.id}
+        {displayActions.map((action) => (
+          <Link
+            key={action.key}
+            to={ACTION_LINK_MAP[action.key] || "/dashboard"}
             className="w-full flex items-center justify-between p-4 bg-white border border-gray-100 rounded-lg hover:border-gray-200 hover:shadow-sm transition-all group"
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
-                {action.icon}
+                {ACTION_ICON_MAP[action.key] || <Mail className="text-gray-500" size={20} strokeWidth={2.5} />}
               </div>
               <span className="text-[14px] font-semibold text-[#0F172A]">
                 {action.title}
               </span>
             </div>
             
-            {action.count > 0 && (
-              <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${action.badgeColor || "bg-[#FEF3C7] text-[#D4AF37]"}`}>
+            {action.count > 0 ? (
+              <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${ACTION_TONE_CLASS[action.tone] || ACTION_TONE_CLASS.warning}`}>
                 {action.count}
               </span>
-            )}
-          </button>
+            ) : action.key === "support-tickets" ? (
+              <span className="text-[11px] font-medium text-gray-400">Module disabled</span>
+            ) : null}
+          </Link>
         ))}
       </div>
     </div>

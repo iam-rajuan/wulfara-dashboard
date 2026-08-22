@@ -1,36 +1,14 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
-export default function RecentSupplierListings() {
-  const listings = [
-    {
-      company: "Apex Logistics",
-      category: "Freight Forwarding",
-      plan: "Enterprise",
-      status: "Pending",
-      statusColor: "bg-[#FEF3C7] text-[#D4AF37]",
-    },
-    {
-      company: "Global Parts Inc.",
-      category: "Manufacturing",
-      plan: "Pro",
-      status: "Active",
-      statusColor: "bg-green-100 text-green-700",
-    },
-    {
-      company: "NeoTech Supply",
-      category: "Electronics",
-      plan: "Basic",
-      status: "Active",
-      statusColor: "bg-green-100 text-green-700",
-    },
-    {
-      company: "Oceania Trade Co",
-      category: "Shipping",
-      plan: "Enterprise",
-      status: "Rejected",
-      statusColor: "bg-red-100 text-red-700",
-    },
-  ];
+const STATUS_TONE_CLASS = {
+  warning: "bg-[#FEF3C7] text-[#D4AF37]",
+  success: "bg-green-100 text-green-700",
+  danger: "bg-red-100 text-red-700",
+  muted: "bg-gray-100 text-gray-600",
+};
+
+export default function RecentSupplierListings({ listings = [] }) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-full overflow-hidden">
@@ -38,11 +16,16 @@ export default function RecentSupplierListings() {
         <h3 className="text-[12px] font-bold text-[#0F172A] uppercase tracking-wider">
           Recent Supplier Listings
         </h3>
-        <button className="text-[12px] font-bold text-[#D4AF37] hover:text-[#C2982B] transition-colors">
+        <Link to="/supplier-management" className="text-[12px] font-bold text-[#D4AF37] hover:text-[#C2982B] transition-colors">
           View All
-        </button>
+        </Link>
       </div>
 
+      {listings.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center rounded-lg border border-dashed border-gray-200 text-sm text-gray-500">
+          No supplier listings found in the database yet.
+        </div>
+      ) : (
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -66,7 +49,7 @@ export default function RecentSupplierListings() {
                   {listing.plan}
                 </td>
                 <td className="py-4 pl-4 text-right">
-                  <span className={`inline-flex items-center justify-center px-2 py-1 rounded-[4px] text-[11px] font-bold ${listing.statusColor}`}>
+                  <span className={`inline-flex items-center justify-center px-2 py-1 rounded-[4px] text-[11px] font-bold ${STATUS_TONE_CLASS[listing.statusTone] || STATUS_TONE_CLASS.warning}`}>
                     {listing.status}
                   </span>
                 </td>
@@ -75,6 +58,7 @@ export default function RecentSupplierListings() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

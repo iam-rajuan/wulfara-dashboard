@@ -11,6 +11,15 @@ import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from "../../../config/urls";
 export default function AdminDashboard() {
   const { data: statsResponse, isLoading } = useGetDashboardStatsQuery();
   const stats = statsResponse?.data || {};
+  const growthValue = isLoading
+    ? "..."
+    : `${stats.userGrowthDelta > 0 ? "+" : ""}${stats.userGrowthDelta || 0}`;
+  const growthTrend =
+    typeof stats.userGrowthPercent === "number"
+      ? `${stats.userGrowthPercent > 0 ? "+" : ""}${stats.userGrowthPercent}% vs previous 30 days`
+      : "Awaiting trend";
+  const growthTrendType =
+    stats.userGrowthDelta > 0 ? "positive" : stats.userGrowthDelta < 0 ? "negative" : "neutral";
 
   return (
     <div className="min-h-screen mt-16 p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans">
@@ -42,15 +51,15 @@ export default function AdminDashboard() {
         <AdminStatCard
           title="Pending Listings"
           icon={ClipboardList}
-          value="-"
-          trend="Needs review"
-          trendType="warning"
+          value={isLoading ? "..." : stats.pendingListings?.toLocaleString() ?? "0"}
+          trend={stats.pendingListings > 0 ? "Needs review" : "No pending listings"}
+          trendType={stats.pendingListings > 0 ? "warning" : "neutral"}
         />
         <AdminStatCard
           title="Active Subscriptions"
           icon={CreditCard}
-          value="-"
-          trend="Auto-syncing"
+          value={isLoading ? "..." : stats.activeSubscriptions?.toLocaleString() ?? "0"}
+          trend={stats.activeSubscriptions > 0 ? "Live subscriptions" : "No active subscriptions"}
           trendType="neutral"
         />
       </div>
@@ -74,10 +83,9 @@ export default function AdminDashboard() {
         <AdminStatCard
           title="User Growth"
           icon={LineChart}
-          value="+"
-          trend="Growing network"
-          trendType="positive"
-          trendLabel="↑"
+          value={growthValue}
+          trend={growthTrend}
+          trendType={growthTrendType}
         />
         {/* Empty 4th column to match screenshot layout */}
         <div className="hidden lg:block"></div>
@@ -86,13 +94,16 @@ export default function AdminDashboard() {
       {/* Middle Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <RevenueOverview chartData={stats.chartData} />
-        <PriorityActions />
+        <PriorityActions
+          actions={stats.priorityActions || []}
+          supportTicketsAvailable={stats.supportTicketsAvailable}
+        />
       </div>
 
       {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <RecentSupplierListings />
-        <RecentRFQs />
+        <RecentSupplierListings listings={stats.recentSupplierListings || []} />
+        <RecentRFQs rfqs={stats.recentRfqs || []} />
       </div>
 
       {/* Footer */}

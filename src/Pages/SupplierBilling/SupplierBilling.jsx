@@ -36,11 +36,11 @@ export default function SupplierBilling() {
                   )}
                 </div>
               </div>
-              <Link to="/subscription">
+              {/* <Link to="/subscription">
                 <button className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-[13px] font-bold py-2 px-4 rounded-md transition-colors shadow-sm">
                   Upgrade Plan
                 </button>
-              </Link>
+              </Link> */}
             </div>
             
             <p className="text-[13px] text-gray-600 mb-6">
