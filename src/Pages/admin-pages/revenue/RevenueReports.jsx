@@ -16,17 +16,21 @@ const RevenueReports = () => {
   const { data: paymentsResponse, isLoading: isPaymentsLoading } = useGetAllPaymentsQuery();
   const { data: statsResponse } = useGetDashboardStatsQuery();
   const payments = paymentsResponse?.data || [];
-  const chartData = statsResponse?.data?.chartData || [];
+  const dashboardStats = statsResponse?.data || {};
+  const chartData = dashboardStats.chartData || [];
+  const totalRevenue = dashboardStats.totalRevenue ?? payments
+    .filter((payment) => payment.status === 'paid')
+    .reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const paidPayments = payments.filter((payment) => payment.status === 'paid');
 
-  const totalRevenue = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
   const formattedRevenue = totalRevenue >= 1000 ? (totalRevenue / 1000).toFixed(2) + 'K' : totalRevenue.toString();
-  const paidSuppliersCount = new Set(payments.map(p => p.supplier?._id).filter(Boolean)).size;
+  const paidSuppliersCount = new Set(paidPayments.map((p) => p.supplier?._id).filter(Boolean)).size;
 
   // Stat Card Data
   const stats = [
     { title: 'TOTAL REVENUE', value: `$${formattedRevenue}`, icon: <Banknote size={18} />, color: 'text-gray-700', sub: null },
     { title: 'MRR', value: `$${(totalRevenue / 12).toFixed(2)}`, icon: <RefreshCw size={18} />, color: 'text-gray-700', sub: null },
-    { title: 'PAYMENTS', value: payments.length.toString(), icon: <CreditCard size={18} />, color: 'text-gray-700', sub: 'Total count' },
+    { title: 'PAYMENTS', value: paidPayments.length.toString(), icon: <CreditCard size={18} />, color: 'text-gray-700', sub: 'Paid count' },
     { title: 'PAID SUPPLIERS', value: paidSuppliersCount.toString(), icon: <Tag size={18} />, color: 'text-gray-700', sub: null },
   ];
 
@@ -85,7 +89,7 @@ const RevenueReports = () => {
       color: 'bg-[#0E1726] text-white' 
     },
     plan: p.supplier?.subscriptionPlan?.toUpperCase() || 'PREMIUM',
-    amount: `$${p.amount.toFixed(2)}`,
+    amount: `$${Number(p.amount || 0).toFixed(2)}`,
     method: { type: 'Visa', last4: '****' },
     date: new Date(p.createdAt).toLocaleDateString(),
     status: p.status === 'paid' ? 'PAID' : 'FAILED',
@@ -159,11 +163,77 @@ const RevenueReports = () => {
   ];
 
   const handleExport = () => {
+    if (payments.length === 0) {
+      message.error("No payment data available to export.");
+      return;
+    }
+
     setIsExporting(true);
-    setTimeout(() => {
+    try {
+      const rows = [];
+      const formatCSVCell = (val) => {
+        if (val === null || val === undefined) return '""';
+        const str = String(val);
+        if (/[",\n\r]/.test(str)) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return `"${str}"`;
+      };
+
+      // Header info
+      rows.push(["WULFARA ADMIN PORTAL - REVENUE REPORT"]);
+      rows.push(["Generated On:", new Date().toLocaleString()]);
+      rows.push(["Timeframe:", timeframe]);
+      rows.push([]);
+
+      // Section 1: Overview
+      rows.push(["REVENUE OVERVIEW"]);
+      rows.push(["Total Revenue", `$${totalRevenue.toFixed(2)}`]);
+      rows.push(["MRR", `$${(totalRevenue / 12).toFixed(2)}`]);
+      rows.push(["Total Paid Payments", paidPayments.length]);
+      rows.push(["Paid Suppliers", paidSuppliersCount]);
+      rows.push([]);
+
+      // Section 2: Detailed Payment Rows
+      rows.push(["PAYMENT DETAILS"]);
+      rows.push(["Payment ID", "Supplier Name", "Subscription Plan", "Amount", "Method", "Date", "Status"]);
+
+      tableData.forEach(item => {
+        rows.push([
+          item.paymentId || "-",
+          item.supplier?.name || "Unknown",
+          item.plan || "-",
+          item.amount || "-",
+          item.method?.type ? `${item.method.type} ${item.method.last4 || ""}` : "-",
+          item.date || "-",
+          item.status || "PENDING"
+        ]);
+      });
+
+      const BOM = "\uFEFF";
+      const csvString = BOM + rows.map(row => row.map(formatCSVCell).join(",")).join("\n");
+
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `wulfara_revenue_report_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.style.visibility = "hidden";
+
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setIsExporting(false);
+        message.success("Revenue report downloaded successfully!");
+      }, 100);
+    } catch (error) {
+      console.error("Failed to export revenue report:", error);
       setIsExporting(false);
-      message.success('Report exported successfully! Check your downloads.');
-    }, 1200);
+      message.error("Failed to generate report. Please try again.");
+    }
   };
 
   return (
@@ -228,7 +298,7 @@ const RevenueReports = () => {
             <div className="text-red-500 bg-red-50 p-1 rounded-full"><AlertCircle size={16} /></div>
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-black text-red-600">{payments.filter(p => p.status === 'failed').length}</span>
+            <span className="text-3xl font-black text-red-600">{payments.filter((p) => p.status === 'failed').length}</span>
             <span className="text-[10px] text-gray-500 font-medium mb-1 leading-tight w-16">Past 30 days</span>
           </div>
         </div>

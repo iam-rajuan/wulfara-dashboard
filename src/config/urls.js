@@ -6,6 +6,7 @@ const websiteOrigin = (import.meta.env.VITE_WEBSITE_URL || defaultWebsiteOrigin)
 
 export const API_BASE_URL = backendOrigin ? `${backendOrigin}/api/v1` : '/api/v1';
 export const SOCKET_BASE_URL = backendOrigin;
+export const WEBSITE_ORIGIN = websiteOrigin;
 export const POLICIES_URL = websiteOrigin ? `${websiteOrigin}/policies` : '/policies';
 export const SUPPORT_URL = websiteOrigin ? `${websiteOrigin}/help-center` : '/help-center';
 export const PRIVACY_URL = websiteOrigin ? `${websiteOrigin}/privacy` : '/privacy';

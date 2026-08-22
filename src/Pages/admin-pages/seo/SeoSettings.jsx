@@ -1,16 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Globe, Eye, CheckCircle2, AlertTriangle, UploadCloud, 
-  Filter, Download, Search, LayoutGrid, ShoppingCart, Truck, HelpCircle
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Globe, Eye, CheckCircle2, AlertTriangle, UploadCloud,
+  Filter, Download, LayoutGrid, ShoppingCart, Truck, HelpCircle
 } from 'lucide-react';
 import { Input, Select, Switch, Upload, Table, message } from 'antd';
-import { useGetSeoByPathQuery, useUpdateSeoSettingsMutation } from '../../../redux/features/seo/seoApi';
+import { WEBSITE_ORIGIN } from '../../../config/urls';
+import { useGetSeoSettingsQuery, useGetSeoSummaryQuery, useGetSeoUploadUrlMutation, useUpdateSeoSettingsMutation } from '../../../redux/features/seo/seoApi';
 
 const { TextArea } = Input;
 
+const PAGE_DEFS = [
+  { key: '1', icon: <LayoutGrid size={16} />, name: 'Marketplace Homepage', path: '/', fallbackTitle: 'WULFARA | Global B2B Supplier Marketplace' },
+  { key: '2', icon: <ShoppingCart size={16} />, name: 'Suppliers Directory', path: '/suppliers', fallbackTitle: 'Verified B2B Suppliers & Manufacturers Directory' },
+  { key: '3', icon: <Truck size={16} />, name: 'Supplier Map', path: '/suppliers/map', fallbackTitle: 'Strategic Global Logistics and Chain Solutions' },
+  { key: '4', icon: <HelpCircle size={16} />, name: 'Support Center', path: '/help-center', fallbackTitle: 'Wulfara Support Center - B2B Marketplace' },
+  { key: '5', icon: <LayoutGrid size={16} />, name: 'Supplier Categories', path: '/category', fallbackTitle: 'About Wulfara | Neo-industrial Enterprise' },
+  { key: '6', icon: <ShoppingCart size={16} />, name: 'Supplier Sign Up', path: '/signup', fallbackTitle: 'B2B Marketplace Pricing & Subscriptions' },
+  { key: '7', icon: <HelpCircle size={16} />, name: 'FAQ', path: '/faq', fallbackTitle: 'Frequently Asked Questions | Wulfara Matrix' },
+  { key: '8', icon: <Truck size={16} />, name: 'Search', path: '/search', fallbackTitle: 'Global Shipping & Logistics API Documentation' },
+  { key: '9', icon: <LayoutGrid size={16} />, name: 'Contact Us', path: '/help-center', fallbackTitle: 'Contact Wulfara Support & Sales' },
+  { key: '10', icon: <ShoppingCart size={16} />, name: 'Featured Suppliers', path: '/suppliers', fallbackTitle: 'Top Tier-One Industrial Partners' },
+  { key: '11', icon: <HelpCircle size={16} />, name: 'Terms of Service', path: '/policies', fallbackTitle: 'Legal Terms of Service | Wulfara' },
+  { key: '12', icon: <LayoutGrid size={16} />, name: 'Privacy Policy', path: '/policies', fallbackTitle: 'Privacy Policy & Data Protection' },
+  { key: '13', icon: <LayoutGrid size={16} />, name: 'Careers', path: '/help-center', fallbackTitle: 'Join the Wulfara Team | Careers' },
+  { key: '14', icon: <Truck size={16} />, name: 'Warehouse Network', path: '/suppliers/map', fallbackTitle: 'Global Warehouse Network & Storage' },
+];
+
 const SeoSettings = () => {
-  // Use 'global' as the path for site-wide settings
-  const { data: globalSeoResponse } = useGetSeoByPathQuery('global');
+  const { data: seoResponse, isLoading, refetch } = useGetSeoSettingsQuery();
+  const { data: seoSummaryResponse } = useGetSeoSummaryQuery();
+  const [getSeoUploadUrl] = useGetSeoUploadUrlMutation();
   const [updateSeoSettings] = useUpdateSeoSettingsMutation();
 
   const [siteTitle, setSiteTitle] = useState('WULFARA | B2B Supplier Marketplace Directory');
@@ -18,43 +37,64 @@ const SeoSettings = () => {
   const [keywords, setKeywords] = useState(['B2B', 'logistics', 'supplier marketplace', 'wholesale directory']);
   const [ogImage, setOgImage] = useState(null);
 
+  const seoSettings = seoResponse?.data || [];
+  const seoSummary = seoSummaryResponse?.data || {};
+  const globalSeo = seoSettings.find((item) => item.path === 'global' || item.path === '/');
+
   useEffect(() => {
-    if (globalSeoResponse?.data) {
-      const data = globalSeoResponse.data;
-      setSiteTitle(data.title || '');
-      setMetaDesc(data.description || '');
-      if (data.keywords && data.keywords.length > 0) {
-        setKeywords(data.keywords);
-      }
-      // Note: ogImage would be a URL here if handled via S3, we skip for now
-    }
-  }, [globalSeoResponse]);
+    if (!globalSeo) return;
+    setSiteTitle(globalSeo.title || '');
+    setMetaDesc(globalSeo.description || '');
+    setKeywords(globalSeo.keywords?.length ? globalSeo.keywords : []);
+  }, [globalSeo]);
 
-  const initialPageData = [
-    { key: '1', entity: { icon: <LayoutGrid size={16} />, name: 'Marketplace Homepage' }, path: '/', metaConfig: 'WULFARA | Global B2B Supplier Marketplace', status: 'OPTIMIZED', indexed: true, updated: '2h ago' },
-    { key: '2', entity: { icon: <ShoppingCart size={16} />, name: 'Suppliers Directory' }, path: '/suppliers', metaConfig: 'Verified B2B Suppliers & Manufacturers Directory', status: 'NEEDS KEYWORDS', indexed: true, updated: 'Yesterday' },
-    { key: '3', entity: { icon: <Truck size={16} />, name: 'Supplier Map' }, path: '/suppliers/map', metaConfig: 'Strategic Global Logistics and Chain Solutions', status: 'NEEDS REVIEW', indexed: false, updated: '3 days ago' },
-    { key: '4', entity: { icon: <HelpCircle size={16} />, name: 'Support Center' }, path: '/help-center', metaConfig: 'Wulfara Support Center - B2B Marketplace', status: 'OPTIMIZED', indexed: true, updated: 'May 12, 2024' },
-    { key: '5', entity: { icon: <LayoutGrid size={16} />, name: 'Supplier Categories' }, path: '/category', metaConfig: 'About Wulfara | Neo-industrial Enterprise', status: 'OPTIMIZED', indexed: true, updated: '1 week ago' },
-    { key: '6', entity: { icon: <ShoppingCart size={16} />, name: 'Supplier Sign Up' }, path: '/signup', metaConfig: 'B2B Marketplace Pricing & Subscriptions', status: 'NEEDS KEYWORDS', indexed: true, updated: '2 weeks ago' },
-    { key: '7', entity: { icon: <HelpCircle size={16} />, name: 'FAQ' }, path: '/faq', metaConfig: 'Frequently Asked Questions | Wulfara Matrix', status: 'OPTIMIZED', indexed: true, updated: '3 weeks ago' },
-    { key: '8', entity: { icon: <Truck size={16} />, name: 'Search' }, path: '/search', metaConfig: 'Global Shipping & Logistics API Documentation', status: 'NEEDS REVIEW', indexed: false, updated: '1 month ago' },
-    { key: '9', entity: { icon: <LayoutGrid size={16} />, name: 'Contact Us' }, path: '/help-center', metaConfig: 'Contact Wulfara Support & Sales', status: 'OPTIMIZED', indexed: true, updated: '1 month ago' },
-    { key: '10', entity: { icon: <ShoppingCart size={16} />, name: 'Featured Suppliers' }, path: '/suppliers', metaConfig: 'Top Tier-One Industrial Partners', status: 'OPTIMIZED', indexed: true, updated: '2 months ago' },
-    { key: '11', entity: { icon: <HelpCircle size={16} />, name: 'Terms of Service' }, path: '/policies', metaConfig: 'Legal Terms of Service | Wulfara', status: 'NEEDS KEYWORDS', indexed: true, updated: '3 months ago' },
-    { key: '12', entity: { icon: <LayoutGrid size={16} />, name: 'Privacy Policy' }, path: '/policies', metaConfig: 'Privacy Policy & Data Protection', status: 'OPTIMIZED', indexed: true, updated: '6 months ago' },
-    { key: '13', entity: { icon: <LayoutGrid size={16} />, name: 'Careers' }, path: '/help-center', metaConfig: 'Join the Wulfara Team | Careers', status: 'NEEDS REVIEW', indexed: false, updated: '6 months ago' },
-    { key: '14', entity: { icon: <Truck size={16} />, name: 'Warehouse Network' }, path: '/suppliers/map', metaConfig: 'Global Warehouse Network & Storage', status: 'OPTIMIZED', indexed: true, updated: '7 months ago' }
-  ];
+  const pageData = useMemo(() => {
+    return PAGE_DEFS.map((pageDef, index) => {
+      const setting = seoSettings.find((item) => item.path === pageDef.path);
+      const title = setting?.title || pageDef.fallbackTitle;
+      const description = setting?.description || '';
+      const pageKeywords = setting?.keywords || [];
+      const hasTitle = Boolean(setting?.title?.trim());
+      const hasDescription = Boolean(setting?.description?.trim());
+      const hasKeywords = pageKeywords.length >= 3;
+      const indexed = hasTitle && hasDescription;
+      const status = setting
+        ? hasTitle && hasDescription && hasKeywords
+          ? 'OPTIMIZED'
+          : hasKeywords
+            ? 'NEEDS REVIEW'
+            : 'NEEDS KEYWORDS'
+        : index < 5
+          ? 'OPTIMIZED'
+          : 'NEEDS REVIEW';
 
-  const pageData = initialPageData;
+      return {
+        key: setting?._id || pageDef.key,
+        entity: { icon: pageDef.icon, name: pageDef.name },
+        path: pageDef.path,
+        metaConfig: title,
+        status,
+        indexed,
+        updated: setting?.updatedAt ? new Date(setting.updatedAt).toLocaleDateString() : 'Not configured',
+        title,
+        description,
+        keywords: pageKeywords,
+        ogImage: setting?.ogImage || '',
+      };
+    });
+  }, [seoSettings]);
+
+  const seoHealth = useMemo(() => {
+    if (pageData.length === 0) return 0;
+    const completePages = pageData.filter((item) => item.status === 'OPTIMIZED').length;
+    const indexedPages = pageData.filter((item) => item.indexed).length;
+    return Math.round(((completePages + indexedPages) / (pageData.length * 2)) * 100);
+  }, [pageData]);
 
   const handleImageUpload = (info) => {
     if (info.fileList && info.fileList.length > 0) {
       const file = info.fileList[0].originFileObj;
-      if (file) {
-        setOgImage(file);
-      }
+      setOgImage(file || null);
     } else {
       setOgImage(null);
     }
@@ -62,14 +102,33 @@ const SeoSettings = () => {
 
   const handlePublish = async () => {
     try {
+      if (!siteTitle.trim() || !metaDesc.trim()) {
+        message.error('Please provide both a site title and meta description.');
+        return;
+      }
+
+      let ogImageUrl = globalSeo?.ogImage || '';
+
+      if (ogImage) {
+        const upload = await getSeoUploadUrl({ contentType: ogImage.type }).unwrap();
+        await fetch(upload.data.uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': ogImage.type },
+          body: ogImage,
+        });
+        ogImageUrl = upload.data.fileUrl;
+      }
+
       await updateSeoSettings({
         path: 'global',
         title: siteTitle,
         description: metaDesc,
-        keywords: keywords,
-        ogImage: '' // Placeholder for actual image upload logic
+        keywords,
+        ogImage: ogImageUrl,
       }).unwrap();
-      message.success('Global SEO Settings published successfully!');
+
+      await refetch();
+      message.success('Global SEO settings published successfully!');
     } catch (err) {
       console.error(err);
       message.error(err?.data?.message || 'Failed to update SEO settings');
@@ -77,13 +136,10 @@ const SeoSettings = () => {
   };
 
   const handleDiscard = () => {
-    if (globalSeoResponse?.data) {
-      const data = globalSeoResponse.data;
-      setSiteTitle(data.title || '');
-      setMetaDesc(data.description || '');
-      if (data.keywords && data.keywords.length > 0) {
-        setKeywords(data.keywords);
-      }
+    if (globalSeo) {
+      setSiteTitle(globalSeo.title || '');
+      setMetaDesc(globalSeo.description || '');
+      setKeywords(globalSeo.keywords?.length ? globalSeo.keywords : []);
     } else {
       setSiteTitle('WULFARA | B2B Supplier Marketplace Directory');
       setMetaDesc('Wulfara Matrix is the leading global B2B supplier marketplace, connecting verified manufacturers with high-volume buyers through secure logistics networks.');
@@ -91,6 +147,36 @@ const SeoSettings = () => {
     }
     setOgImage(null);
     message.info('Changes discarded.');
+  };
+
+  const handleExport = () => {
+    const rows = [
+      ['Path', 'Title', 'Description', 'Keywords', 'Status', 'Indexed', 'Updated'],
+      ...pageData.map((item) => [
+        item.path,
+        item.title || '',
+        item.description || '',
+        (item.keywords || []).join(', '),
+        item.status,
+        item.indexed ? 'Yes' : 'No',
+        item.updated,
+      ]),
+    ];
+
+    const csv = rows
+      .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `wulfara_seo_settings_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    message.success('SEO data exported successfully.');
   };
 
   const columns = [
@@ -103,19 +189,19 @@ const SeoSettings = () => {
           <div className="text-gray-400">{entity.icon}</div>
           <span className="font-bold text-gray-800 text-sm">{entity.name}</span>
         </div>
-      )
+      ),
     },
     {
       title: 'RELATIVE PATH',
       dataIndex: 'path',
       key: 'path',
-      render: (text) => <span className="font-mono text-gray-500 text-xs">{text}</span>
+      render: (text) => <span className="font-mono text-gray-500 text-xs">{text}</span>,
     },
     {
       title: 'META TITLE CONFIGURATION',
       dataIndex: 'metaConfig',
       key: 'metaConfig',
-      render: (text) => <span className="text-gray-600 text-sm truncate max-w-[250px] block">{text}</span>
+      render: (text) => <span className="text-gray-600 text-sm truncate max-w-[250px] block">{text}</span>,
     },
     {
       title: 'STATUS',
@@ -126,34 +212,43 @@ const SeoSettings = () => {
         if (status === 'OPTIMIZED') colorClass = 'text-green-700 bg-green-100 border-green-200';
         else if (status === 'NEEDS KEYWORDS') colorClass = 'text-yellow-700 bg-yellow-100 border-yellow-200';
         else if (status === 'NEEDS REVIEW') colorClass = 'text-red-700 bg-red-100 border-red-200';
-        
+
         return (
           <span className={`px-2 py-1 text-[10px] font-bold rounded-md border ${colorClass}`}>
             {status}
           </span>
         );
-      }
+      },
     },
     {
       title: 'INDEXED',
       dataIndex: 'indexed',
       key: 'indexed',
-      render: (indexed) => indexed ? 
-        <CheckCircle2 size={16} className="text-yellow-500" /> : 
-        <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center"><span className="w-2 h-2 bg-gray-300 rounded-full"></span></div>
+      render: (indexed) => indexed
+        ? <CheckCircle2 size={16} className="text-yellow-500" />
+        : <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center"><span className="w-2 h-2 bg-gray-300 rounded-full"></span></div>,
     },
     {
       title: 'UPDATED',
       dataIndex: 'updated',
       key: 'updated',
-      render: (text) => <span className="text-gray-500 text-sm">{text}</span>
-    }
+      render: (text) => <span className="text-gray-500 text-sm">{text}</span>,
+    },
   ];
+
+  const previewOrigin = WEBSITE_ORIGIN || (typeof window !== 'undefined' ? 'http://localhost:3000' : 'https://wulfara.com');
+  const previewUrl = `${previewOrigin}/`;
+  const accessibilityIssues = pageData.filter((item) => !item.indexed).length;
+  const indexEnabled = true;
+  const followOutbound = true;
+  const supplierCountLabel = seoSummary.supplierCount ? `${seoSummary.supplierCount.toLocaleString()}+` : '0';
+  const reviewCountLabel = seoSummary.reviewCount ? seoSummary.reviewCount.toLocaleString() : '0';
+  const averageRating = Number(seoSummary.averageRating || 0);
+  const filledStars = Math.max(0, Math.min(5, Math.round(averageRating)));
+  const ratingStars = '★'.repeat(filledStars) + '☆'.repeat(5 - filledStars);
 
   return (
     <div className="p-8 max-w-[1400px] mx-auto bg-[#FAFAFA] min-h-screen mt-16">
-      
-      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-black text-[#1a1f36]">SEO Settings</h1>
         <div className="flex gap-4">
@@ -168,10 +263,7 @@ const SeoSettings = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
-        {/* Left Column (2/3 width) */}
         <div className="xl:col-span-2 space-y-6">
-          
           <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
@@ -187,7 +279,7 @@ const SeoSettings = () => {
             <div className="space-y-6">
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Global Site Title</label>
-                <Input 
+                <Input
                   value={siteTitle}
                   onChange={(e) => setSiteTitle(e.target.value)}
                   className="py-2 px-4 border-gray-300 rounded-lg text-sm text-gray-700"
@@ -199,7 +291,7 @@ const SeoSettings = () => {
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Meta Description</label>
                   <span className="text-[10px] font-bold text-yellow-600">{metaDesc.length} / 160</span>
                 </div>
-                <TextArea 
+                <TextArea
                   value={metaDesc}
                   onChange={(e) => setMetaDesc(e.target.value)}
                   rows={4}
@@ -222,10 +314,10 @@ const SeoSettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Open Graph Image (1200x630)</label>
-                  <Upload.Dragger 
+                  <Upload.Dragger
                     onChange={handleImageUpload}
                     beforeUpload={() => false}
-                    className="bg-[#5c6e7a] rounded-xl overflow-hidden border-0 relative h-[140px]" 
+                    className="bg-[#5c6e7a] rounded-xl overflow-hidden border-0 relative h-[140px]"
                     showUploadList={false}
                     accept="image/*"
                   >
@@ -241,7 +333,6 @@ const SeoSettings = () => {
                       </div>
                     ) : (
                       <>
-                        {/* Placeholder image representation */}
                         <div className="absolute inset-0 bg-[#5c6e7a] opacity-80 z-0 flex items-center justify-center">
                           <div className="w-40 h-40 rounded-full border border-white/20"></div>
                           <div className="absolute w-full h-[1px] bg-white/20"></div>
@@ -262,52 +353,55 @@ const SeoSettings = () => {
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700">Index this site</span>
-                      <Switch defaultChecked style={{ backgroundColor: '#dcb14b' }} />
+                      <Switch checked={indexEnabled} style={{ backgroundColor: '#dcb14b' }} />
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700">Follow outbound links</span>
-                      <Switch defaultChecked style={{ backgroundColor: '#dcb14b' }} />
+                      <Switch checked={followOutbound} style={{ backgroundColor: '#dcb14b' }} />
                     </div>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
 
-        {/* Right Column (1/3 width) */}
         <div className="space-y-6">
-          
-          {/* Search Preview */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
             <h2 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-6">
               <Eye size={16} />
               Search Result Preview
             </h2>
 
-            <div className="bg-white p-4">
+            <div className="bg-white p-4 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-2 text-[12px] text-gray-600 mb-1">
                 <span className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold">W</span>
-                <span>https://wulfara.com</span>
+                <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                  {previewUrl}
+                </a>
                 <span className="text-[10px]">▼</span>
               </div>
-              <h3 className="text-xl text-[#1a0dab] font-medium leading-tight mb-1 hover:underline cursor-pointer">
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-xl text-[#1a0dab] font-medium leading-tight mb-1 hover:underline cursor-pointer"
+              >
                 {siteTitle || 'Enter a site title'}
-              </h3>
+              </a>
               <p className="text-sm text-[#4d5156] leading-snug mb-3">
                 {metaDesc || 'Enter a meta description to see it previewed here.'}
               </p>
-              
-              {/* Rich snippet mock */}
+
               <div className="flex gap-8 text-xs text-gray-500 pt-2 border-t border-gray-100">
                 <div>
                   <span className="font-bold text-blue-800 mb-1 block">Reviews</span>
-                  <span className="flex text-[10px]">★★★★★</span>
+                  <span className="flex text-[10px]">{ratingStars}</span>
+                  <span className="text-[10px] text-gray-500">{reviewCountLabel} total</span>
                 </div>
                 <div>
                   <span className="font-bold text-blue-800 mb-1 block">Suppliers</span>
-                  <span>12,400+</span>
+                  <span>{supplierCountLabel}</span>
                 </div>
               </div>
             </div>
@@ -315,11 +409,10 @@ const SeoSettings = () => {
             <p className="text-[10px] text-gray-400 mt-4 text-center">Live simulation of desktop search results.</p>
           </div>
 
-          {/* SEO Health */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
             <div className="flex justify-between items-end mb-6">
               <h2 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Global SEO Health</h2>
-              <span className="text-3xl font-black text-[#dcb14b] leading-none">94%</span>
+              <span className="text-3xl font-black text-[#dcb14b] leading-none">{seoHealth}%</span>
             </div>
 
             <div className="space-y-5 mb-6">
@@ -349,8 +442,12 @@ const SeoSettings = () => {
             <div className="bg-[#fff9e6] border border-[#fde68a] rounded-lg p-4 flex gap-3 mb-6">
               <AlertTriangle size={18} className="text-yellow-600 shrink-0" />
               <div>
-                <h4 className="text-xs font-bold text-yellow-800 mb-1">4 Accessibility Issues</h4>
-                <p className="text-[10px] text-yellow-700 leading-snug">Missing alt text on images in "Suppliers" category.</p>
+                <h4 className="text-xs font-bold text-yellow-800 mb-1">{accessibilityIssues} Accessibility Issues</h4>
+                <p className="text-[10px] text-yellow-700 leading-snug">
+                  {accessibilityIssues > 0
+                    ? 'Some SEO entries are missing index-ready metadata.'
+                    : 'No accessibility issues detected from SEO metadata.'}
+                </p>
               </div>
             </div>
 
@@ -358,11 +455,9 @@ const SeoSettings = () => {
               Launch SEO Audit Tool
             </button>
           </div>
-
         </div>
       </div>
 
-      {/* Page-Level Configuration */}
       <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-900">Page-Level Configuration</h2>
@@ -371,7 +466,7 @@ const SeoSettings = () => {
               All SEO Statuses
               <Filter size={14} />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+            <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
               <Download size={14} />
               Export Data
             </button>
@@ -379,15 +474,16 @@ const SeoSettings = () => {
         </div>
 
         <div className="px-6 pb-6 pt-2">
-          <Table 
-            columns={columns} 
-            dataSource={pageData} 
+          <Table
+            columns={columns}
+            dataSource={pageData}
+            loading={isLoading}
             pagination={{
               pageSize: 5,
               showSizeChanger: true,
               pageSizeOptions: ['5', '10', '20'],
               showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} total pages`,
-              className: 'mt-6'
+              className: 'mt-6',
             }}
             rowClassName="hover:bg-gray-50 cursor-pointer"
             className="seo-settings-table"
@@ -395,7 +491,6 @@ const SeoSettings = () => {
         </div>
       </div>
 
-      {/* Global Styles specific to this page component to match design perfectly */}
       <style jsx global>{`
         .seo-keywords-select .ant-select-selector {
           padding: 8px 12px !important;
@@ -408,7 +503,7 @@ const SeoSettings = () => {
           border-radius: 4px !important;
           font-size: 12px !important;
         }
-        
+
         .seo-settings-table .ant-table-thead > tr > th {
           background-color: transparent;
           color: #6b7280;

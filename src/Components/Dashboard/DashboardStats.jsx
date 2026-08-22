@@ -5,8 +5,10 @@ import { FileTextIcon, ActivityIcon } from '../../svglogos/SvgIcons';
 export default function DashboardStats({ stats }) {
   const total = stats?.totalRfqs || 0;
   const pending = stats?.pendingRfqs || 0;
-  const responded = total - pending;
+  const responded = stats?.respondedRfqs ?? (total - pending);
   const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
+  const totalViews = stats?.totalViews || 0;
+  const currentMonthViews = stats?.currentMonthViews || 0;
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -21,8 +23,8 @@ export default function DashboardStats({ stats }) {
         </div>
         <div>
           <p className="text-gray-500 text-sm mb-1">Listing Views</p>
-          <h3 className="text-2xl font-bold">2,430</h3>
-          <p className="text-gray-400 text-[13px] mt-2">Last 30 days</p>
+          <h3 className="text-2xl font-bold">{totalViews.toLocaleString()}</h3>
+          <p className="text-gray-400 text-[13px] mt-2">All time views</p>
         </div>
       </div>
 
@@ -55,7 +57,7 @@ export default function DashboardStats({ stats }) {
             </p>
           ) : (
             <p className="text-[13px] mt-2 text-green-600 flex items-center gap-1">
-              <span className="text-[10px]">✅</span> Excellent response rate
+              <span className="text-[10px]">✅</span> {currentMonthViews > 0 ? `Views this month: ${currentMonthViews}` : 'Excellent response rate'}
             </p>
           )}
         </div>

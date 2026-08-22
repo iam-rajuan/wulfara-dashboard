@@ -6,6 +6,10 @@ export const seoApi = apiSlice.injectEndpoints({
       query: () => '/seo',
       providesTags: ['Seo'],
     }),
+    getSeoSummary: builder.query({
+      query: () => '/seo/summary',
+      providesTags: ['Seo'],
+    }),
     getSeoByPath: builder.query({
       query: (path) => `/seo/${encodeURIComponent(path)}`,
       providesTags: (result, error, path) => [{ type: 'Seo', id: path }],
@@ -18,11 +22,20 @@ export const seoApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Seo'],
     }),
+    getSeoUploadUrl: builder.mutation({
+      query: (data) => ({
+        url: '/seo/upload-url',
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 });
 
 export const {
   useGetSeoSettingsQuery,
+  useGetSeoSummaryQuery,
   useGetSeoByPathQuery,
   useUpdateSeoSettingsMutation,
+  useGetSeoUploadUrlMutation,
 } = seoApi;

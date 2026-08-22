@@ -57,7 +57,7 @@ const Sidebar = ({ closeDrawer }) => {
     { icon: <CompanyProfileIcon />, label: "Company Profile", Link: "/profile" },
     { icon: <ProductsIcon />, label: "Products & Services", Link: "/products" },
     { icon: <ImageIcon size={18} />, label: "Gallery", Link: "/gallery" },
-    { icon: <RFQsIcon />, label: "RFQs", Link: "/rfqs", badge: "12" },
+    { icon: <RFQsIcon />, label: "RFQs", Link: "/rfqs" },
     { icon: <MessageSquare size={18} />, label: "Messages", Link: "/messages" },
     { icon: <CreditCard size={18} />, label: "Subscription", Link: "/billing" },
     { icon: <SettingsIcon />, label: "Settings", Link: "/settings" },

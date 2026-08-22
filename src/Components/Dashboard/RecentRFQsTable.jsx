@@ -1,13 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
-const recentRFQs = [
-  { id: 'RFQ-1048', buyer: 'David Carter', avatar: 'DC', product: 'Steel sheets', qty: '500 units', deadline: 'May 24', status: 'New', statusColor: 'bg-blue-100 text-blue-800', dot: 'bg-blue-600', action: 'View', actionStyle: 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50' },
-  { id: 'RFQ-1047', buyer: 'Nova Build LLC', avatar: 'NB', product: 'Metal pipes', qty: '1,200 units', deadline: 'May 28', status: 'Responded', statusColor: 'bg-blue-600 text-white', dot: 'bg-white', action: 'View', actionStyle: 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50' },
-  { id: 'RFQ-1046', buyer: 'Apex Industrial', avatar: 'AI', product: 'Raw materials', qty: '3 tons', deadline: 'June 02', status: 'Pending', statusColor: 'bg-gray-200 text-gray-800', dot: 'bg-gray-500', action: 'Reply', actionStyle: 'text-[#0F172A] bg-[#D4AF37] hover:bg-[#C29F31] border border-transparent' },
-];
-
-export default function RecentRFQsTable() {
+export default function RecentRFQsTable({ rfqs = [] }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
       <div className="flex justify-between items-center p-6 border-b border-gray-100">
@@ -20,6 +13,9 @@ export default function RecentRFQsTable() {
         </Link>
       </div>
       <div className="overflow-x-auto">
+        {rfqs.length === 0 ? (
+          <div className="p-6 text-sm text-gray-500">No RFQs have been received yet.</div>
+        ) : (
         <table className="w-full text-left text-[13px]">
           <thead className="bg-[#F8F9FB] text-gray-500 text-[11px] uppercase font-bold tracking-wider">
             <tr>
@@ -33,13 +29,18 @@ export default function RecentRFQsTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {recentRFQs.map((rfq, idx) => (
+            {rfqs.map((rfq, idx) => (
               <tr key={idx} className="hover:bg-gray-50 transition">
-                <td className="px-6 py-5 font-bold text-[#0F172A]">{rfq.id}</td>
+                <td className="px-6 py-5 font-bold text-[#0F172A]">{rfq.rfqId}</td>
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-[4px] bg-[#4B5563] text-white flex items-center justify-center text-[10px] font-bold">
-                      {rfq.avatar}
+                    <div className="w-7 h-7 rounded-[4px] bg-[#4B5563] text-white flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                      {rfq.buyerAvatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={rfq.buyerAvatar} alt={rfq.buyer} className="w-full h-full object-cover" />
+                      ) : (
+                        rfq.buyerInitials
+                      )}
                     </div>
                     <span className="font-medium text-gray-600">{rfq.buyer}</span>
                   </div>
@@ -48,15 +49,31 @@ export default function RecentRFQsTable() {
                 <td className="px-6 py-5 text-gray-600">{rfq.qty}</td>
                 <td className="px-6 py-5 text-gray-600">{rfq.deadline}</td>
                 <td className="px-6 py-5">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-bold ${rfq.statusColor}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${rfq.dot}`}></span>
-                    {rfq.status}
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-bold ${
+                    rfq.status === 'pending'
+                      ? 'bg-blue-100 text-blue-800'
+                      : rfq.status === 'responded'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-800'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      rfq.status === 'pending'
+                        ? 'bg-blue-600'
+                        : rfq.status === 'responded'
+                          ? 'bg-white'
+                          : 'bg-gray-500'
+                    }`}></span>
+                    {rfq.statusLabel}
                   </span>
                 </td>
                 <td className="px-6 py-5">
-                  <Link to={rfq.action === 'Reply' ? `/rfqs/${rfq.id}/reply` : `/rfqs/${rfq.id}`}>
-                    <button className={`px-4 py-1.5 rounded-[4px] text-[12px] font-bold transition ${rfq.actionStyle}`}>
-                      {rfq.action}
+                  <Link to={rfq.status === 'pending' ? `/rfqs/${rfq.id}/reply` : `/rfqs/${rfq.id}`}>
+                    <button className={`px-4 py-1.5 rounded-[4px] text-[12px] font-bold transition ${
+                      rfq.status === 'pending'
+                        ? 'text-[#0F172A] bg-[#D4AF37] hover:bg-[#C29F31] border border-transparent'
+                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                    }`}>
+                      {rfq.status === 'pending' ? 'Reply' : 'View'}
                     </button>
                   </Link>
                 </td>
@@ -64,6 +81,7 @@ export default function RecentRFQsTable() {
             ))}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );

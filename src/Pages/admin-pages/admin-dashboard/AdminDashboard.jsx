@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Users, Building2, ClipboardList, CreditCard, DollarSign, FileText, LineChart } from "lucide-react";
 import AdminStatCard from "../../../Components/admin-components/Dashboard/AdminStatCard";
 import RevenueOverview from "../../../Components/admin-components/Dashboard/RevenueOverview";
@@ -6,10 +6,11 @@ import PriorityActions from "../../../Components/admin-components/Dashboard/Prio
 import RecentSupplierListings from "../../../Components/admin-components/Dashboard/RecentSupplierListings";
 import RecentRFQs from "../../../Components/admin-components/Dashboard/RecentRFQs";
 import { useGetDashboardStatsQuery } from "../../../redux/features/reports/reportsApi";
-import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from "../../../config/urls";
+import { SUPPORT_URL, PRIVACY_URL, TERMS_URL, API_BASE_URL } from "../../../config/urls";
 
 export default function AdminDashboard() {
   const { data: statsResponse, isLoading } = useGetDashboardStatsQuery();
+  const [isExporting, setIsExporting] = useState(false);
   const stats = statsResponse?.data || {};
   const growthValue = isLoading
     ? "..."
@@ -21,6 +22,32 @@ export default function AdminDashboard() {
   const growthTrendType =
     stats.userGrowthDelta > 0 ? "positive" : stats.userGrowthDelta < 0 ? "negative" : "neutral";
 
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/reports/dashboard/export`, {
+        headers: token ? { authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export dashboard report');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `wulfara_admin_report_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen mt-16 p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans">
       <div className="mb-8">
@@ -30,6 +57,13 @@ export default function AdminDashboard() {
         <p className="text-[14px] text-gray-500 font-medium">
           Monitor WULFARA platform activity, review pending tasks, and analyze growth metrics.
         </p>
+        <button
+          onClick={handleExport}
+          disabled={isExporting}
+          className="ml-auto mt-4 md:mt-0 inline-flex items-center gap-2 bg-white border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition disabled:opacity-50"
+        >
+          {isExporting ? 'Exporting...' : 'Export Report'}
+        </button>
       </div>
 
       {/* Top Stats - Row 1 */}
