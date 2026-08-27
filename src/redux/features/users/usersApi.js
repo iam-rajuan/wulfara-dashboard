@@ -37,7 +37,7 @@ export const usersApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['User', 'Listing'],
     }),
-    getUploadUrl: builder.mutation({
+    getUserUploadUrl: builder.mutation({
       query: (contentType) => ({
         url: '/users/upload-url',
         method: 'POST',
@@ -53,5 +53,5 @@ export const {
   useUpdateUserMutation,
   useUpdateMeMutation,
   useDeleteUserMutation,
-  useGetUploadUrlMutation,
+  useGetUserUploadUrlMutation,
 } = usersApi;

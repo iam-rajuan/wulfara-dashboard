@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useGetCategoriesQuery, useCreateCategoryMutation, useGetUploadUrlMutation } from "../../../redux/features/categories/categoryApi";
+import { useGetCategoriesQuery, useCreateCategoryMutation, useGetCategoryUploadUrlMutation } from "../../../redux/features/categories/categoryApi";
 import axios from "axios";
 import { 
   Info, 
@@ -17,7 +17,7 @@ export default function CreateCategory() {
   const { data: categoriesResponse } = useGetCategoriesQuery();
   const categories = categoriesResponse?.data || [];
   const [createCategory, { isLoading: isCreating, isError, isSuccess, error }] = useCreateCategoryMutation();
-  const [getUploadUrl] = useGetUploadUrlMutation();
+  const [getUploadUrl] = useGetCategoryUploadUrlMutation();
 
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState("");

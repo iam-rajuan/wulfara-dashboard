@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  User, Building2, Shield, Bell, Plus, Download, Trash2, Save, Banknote, Mail, BadgeCheck, KeyRound, Camera,
+  User, Building2, Shield, Bell, Plus, Download, Trash2, Save, Banknote, KeyRound, Camera,
 } from 'lucide-react';
-import { Input, Select, Switch, Checkbox, Tag, Modal, Form, message, Spin } from 'antd';
+import { Input, Select, Switch, Tag, Modal, Form, message, Spin } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
+import BusinessProfileForm from '../../Components/CompanyProfile/BusinessProfileForm';
+import ProfileCompletionCard from '../../Components/CompanyProfile/ProfileCompletionCard';
+import ListingPreviewCard from '../../Components/CompanyProfile/ListingPreviewCard';
 import {
   useAssignAdminRoleMutation,
   useCreateAdminRoleMutation,
@@ -15,77 +18,303 @@ import {
   useGetAdminUsersQuery,
   useUpdateAdminRoleMutation,
 } from '../../redux/features/adminRoles/adminRolesApi';
-import { useDeleteUserMutation, useUpdateMeMutation, useGetUploadUrlMutation } from '../../redux/features/users/usersApi';
+import { useDeleteUserMutation, useUpdateMeMutation, useGetUserUploadUrlMutation } from '../../redux/features/users/usersApi';
+import { useGetSupplierDashboardQuery, useGetSupplierUploadUrlMutation, useUpdateListingMutation } from '../../redux/features/listings/listingsApi';
+import {
+  useClearAllNotificationsMutation,
+  useGetNotificationsQuery,
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+} from '../../redux/features/notifications/notificationsApi';
 import { updateUser } from '../../redux/features/auth/authSlice';
 import { hasAdminPermission } from '../../utils/adminAccess';
 
-const SupplierGeneralConfiguration = () => (
-  <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-    <div className="px-8 py-6 border-b border-gray-100">
-      <h2 className="text-xl font-bold text-gray-900">General Configuration</h2>
-    </div>
+const MAX_AVATAR_SIZE_BYTES = 10 * 1024 * 1024;
 
-    <div className="p-8 space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Platform Name</label>
-          <Input defaultValue="WULFARA B2B Marketplace" className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium" />
-        </div>
-        <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Primary URL</label>
-          <Input defaultValue="https://app.wulfara.com" className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium" />
-        </div>
-        <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Support Email Address</label>
-          <Input defaultValue="support@wulfara.com" className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium" />
-        </div>
-        <div>
-          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Default Language</label>
-          <Select
-            defaultValue="English (US)"
-            className="w-full h-[42px]"
-            options={[{ value: 'English (US)', label: 'English (US)' }]}
-          />
+const formatNotificationDate = (value) => {
+  if (!value) {
+    return 'N/A';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'N/A';
+  }
+
+  return date.toLocaleString();
+};
+
+const SupplierCompanyDetails = () => {
+  const { data: dashboardData, isLoading: isFetching, refetch } = useGetSupplierDashboardQuery();
+  const [updateListing, { isLoading: isSaving }] = useUpdateListingMutation();
+  const [getUploadUrl] = useGetSupplierUploadUrlMutation();
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  const [profileData, setProfileData] = useState({
+    logo: null,
+    companyName: '',
+    description: '',
+    coreProducts: [],
+    moq: { value: '', unit: 'Units' },
+    businessHours: {
+      weekdays: { start: '08:00', end: '18:00' },
+      weekends: 'Closed',
+    },
+    certifications: [],
+    serviceAreas: [],
+    shippingOptions: { fob: true, cif: true, exw: false },
+    address: '',
+    supplierType: 'Manufacturer',
+    avgResponseTime: '~24 Hours',
+    establishedYear: '',
+    employeeCount: '',
+    annualTurnover: '',
+  });
+
+  const [previewData, setPreviewData] = useState({
+    name: 'Company Name',
+    location: 'Location',
+    description: 'Company description...',
+    tags: [],
+    logo: '',
+  });
+
+  useEffect(() => {
+    if (!dashboardData?.data?.profile) {
+      return;
+    }
+
+    const profile = dashboardData.data.profile;
+    setProfileData((prev) => ({
+      ...prev,
+      companyName: profile.companyName || '',
+      description: profile.description || '',
+      logo: profile.logo && profile.logo !== 'no-logo.jpg' ? profile.logo : '',
+      coreProducts: profile.coreProducts || [],
+      certifications: profile.certifications || [],
+      serviceAreas: profile.serviceAreas || [],
+      address: profile.location?.formattedAddress || '',
+      supplierType: profile.supplierType || 'Manufacturer',
+      avgResponseTime: profile.avgResponseTime || '~24 Hours',
+      establishedYear: profile.establishedYear || '',
+      employeeCount: profile.employeeCount || '',
+      annualTurnover: profile.annualTurnover || '',
+      moq: profile.moq || { value: '', unit: 'Units' },
+      businessHours: profile.businessHours || {
+        weekdays: { start: '08:00', end: '18:00' },
+        weekends: 'Closed',
+      },
+      shippingOptions: profile.shippingOptions || { fob: true, cif: true, exw: false },
+    }));
+    setPreviewData({
+      name: profile.companyName || 'Company Name',
+      location: profile.location?.formattedAddress || 'Location',
+      description: profile.description ? `${profile.description.slice(0, 100)}...` : 'No description provided...',
+      tags: profile.certifications?.slice(0, 2) || [],
+      logo: profile.logo && profile.logo !== 'no-logo.jpg' ? profile.logo : '',
+    });
+  }, [dashboardData]);
+
+  const completionData = {
+    percentage: dashboardData?.data?.stats?.profileCompletion
+      ? parseInt(dashboardData.data.stats.profileCompletion, 10)
+      : 0,
+    tasks: [
+      { id: 1, label: 'Basic Business Info', completed: !!profileData.companyName && !!profileData.description },
+      { id: 2, label: 'Upload Company Logo', completed: !!profileData.logo && profileData.logo !== 'no-logo.jpg' },
+      { id: 3, label: 'Add Core Products', completed: profileData.coreProducts.length > 0 },
+    ],
+  };
+
+  const handleSave = async () => {
+    if (!dashboardData?.data?.profile?._id) {
+      return;
+    }
+
+    try {
+      await updateListing({
+        id: dashboardData.data.profile._id,
+        data: {
+          companyName: profileData.companyName,
+          description: profileData.description,
+          logo: profileData.logo || 'no-logo.jpg',
+          coreProducts: profileData.coreProducts,
+          certifications: profileData.certifications,
+          serviceAreas: profileData.serviceAreas,
+          address: profileData.address,
+          supplierType: profileData.supplierType,
+          avgResponseTime: profileData.avgResponseTime,
+          establishedYear: profileData.establishedYear,
+          employeeCount: profileData.employeeCount,
+          annualTurnover: profileData.annualTurnover,
+          moq: profileData.moq,
+          businessHours: profileData.businessHours,
+          shippingOptions: profileData.shippingOptions,
+        },
+      }).unwrap();
+
+      message.success('Company details updated successfully');
+      refetch();
+    } catch (error) {
+      message.error(error?.data?.message || 'Failed to update company details');
+    }
+  };
+
+  const handlePreview = () => {
+    setPreviewData({
+      name: profileData.companyName || 'Company Name',
+      location: profileData.address || 'Location',
+      description: profileData.description ? `${profileData.description.slice(0, 100)}...` : 'No description...',
+      tags: profileData.certifications?.slice(0, 2) || [],
+      logo: profileData.logo && profileData.logo !== 'no-logo.jpg' ? profileData.logo : '',
+    });
+    message.success('Preview refreshed with your latest company details');
+  };
+
+  const handleLogoUpload = async (file) => {
+    try {
+      setIsUploadingLogo(true);
+
+      if (!dashboardData?.data?.profile?._id) {
+        throw new Error('Supplier profile not found');
+      }
+
+      const response = await getUploadUrl({ folder: 'logos', contentType: file.type }).unwrap();
+      const { uploadUrl, fileUrl } = response.data;
+
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      await updateListing({
+        id: dashboardData.data.profile._id,
+        data: { logo: fileUrl },
+      }).unwrap();
+
+      setProfileData((prev) => ({ ...prev, logo: fileUrl }));
+      setPreviewData((prev) => ({ ...prev, logo: fileUrl }));
+      message.success('Logo uploaded successfully');
+      refetch();
+    } catch (error) {
+      message.error(error?.data?.message || error?.message || 'Failed to upload logo');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  if (isFetching && !dashboardData) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-10 flex justify-center">
+        <Spin />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <BusinessProfileForm
+          data={profileData}
+          onChange={setProfileData}
+          onLogoUpload={handleLogoUpload}
+          isUploadingLogo={isUploadingLogo}
+        />
+        <div className="space-y-6">
+          <ProfileCompletionCard completionData={completionData} />
+          <ListingPreviewCard previewData={previewData} />
         </div>
       </div>
 
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-4">Platform Access Controls</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-gray-50/50">
-            <div>
-              <h4 className="text-[13px] font-bold text-gray-900">Enable Public Browsing</h4>
-              <p className="text-[12px] text-gray-500">Allow non-authenticated users to view the supplier directory.</p>
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={handlePreview}
+          className="px-4 py-2.5 rounded-lg border border-gray-200 text-[13px] font-bold text-gray-700 hover:bg-gray-50"
+        >
+          Refresh Preview
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-6 py-2.5 bg-[#dcb14b] hover:bg-[#c99f3b] text-gray-900 font-bold rounded-lg transition-colors shadow-sm disabled:opacity-60"
+        >
+          <Save size={16} />
+          {isSaving ? 'Saving...' : 'Save Company Details'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const AdminGeneralConfiguration = () => {
+  const { user } = useSelector((state) => state.auth);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-8 py-6 border-b border-gray-100">
+          <h2 className="text-[20px] font-black text-gray-900">Company Details</h2>
+          <p className="text-sm text-gray-500 mt-1">Administrative workspace information for this portal.</p>
+        </div>
+
+        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-[12px] font-bold tracking-[0.12em] text-gray-400 uppercase mb-2">
+              Workspace Role
+            </label>
+            <div className="h-12 rounded-xl border border-gray-200 px-4 flex items-center text-sm font-semibold text-gray-800 bg-gray-50">
+              {user?.role || 'Admin'}
             </div>
-            <Switch defaultChecked className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" />
           </div>
 
-          <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-gray-50/50">
-            <div>
-              <h4 className="text-[13px] font-bold text-gray-900">Allow Guest RFQ Submission</h4>
-              <p className="text-[12px] text-gray-500">Guests can submit Request for Quotes without an account.</p>
+          <div>
+            <label className="block text-[12px] font-bold tracking-[0.12em] text-gray-400 uppercase mb-2">
+              Access Scope
+            </label>
+            <div className="h-12 rounded-xl border border-gray-200 px-4 flex items-center text-sm font-semibold text-gray-800 bg-gray-50">
+              Platform Administration
             </div>
-            <Switch className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" />
           </div>
 
-          <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-gray-50/50">
-            <div>
-              <h4 className="text-[13px] font-bold text-gray-900">Open Supplier Registration</h4>
-              <p className="text-[12px] text-gray-500">Suppliers can sign up autonomously via the platform.</p>
+          <div>
+            <label className="block text-[12px] font-bold tracking-[0.12em] text-gray-400 uppercase mb-2">
+              Account Email
+            </label>
+            <div className="h-12 rounded-xl border border-gray-200 px-4 flex items-center text-sm font-semibold text-gray-800 bg-gray-50">
+              {user?.email || 'Not available'}
             </div>
-            <Switch defaultChecked className="bg-gray-200 [&.ant-switch-checked]:bg-[#dcb14b]" />
+          </div>
+
+          <div>
+            <label className="block text-[12px] font-bold tracking-[0.12em] text-gray-400 uppercase mb-2">
+              System Status
+            </label>
+            <div className="h-12 rounded-xl border border-emerald-100 px-4 flex items-center text-sm font-semibold text-emerald-700 bg-emerald-50">
+              Active
+            </div>
           </div>
         </div>
       </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <h3 className="text-lg font-black text-gray-900 mb-2">Admin Note</h3>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Supplier listing data is managed from the supplier profile and supplier verification views. This page now
+          remains functional for admins without altering the existing settings navigation flow.
+        </p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const UserProfile = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [updateMe, { isLoading }] = useUpdateMeMutation();
-  const [getUploadUrl] = useGetUploadUrlMutation();
+  const [getUserUploadUrl] = useGetUserUploadUrlMutation();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -102,14 +331,26 @@ const UserProfile = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      message.error('Avatar size must be less than 2MB');
+    const resetInput = () => {
+      e.target.value = '';
+    };
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      message.error('Please upload a JPG, PNG, or WebP image');
+      resetInput();
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      message.error('Avatar size must be less than 10MB');
+      resetInput();
       return;
     }
 
     setAvatarLoading(true);
     try {
-      const presignResponse = await getUploadUrl(file.type).unwrap();
+      const presignResponse = await getUserUploadUrl(file.type).unwrap();
       if (!presignResponse.success || !presignResponse.data) {
         throw new Error('Failed to get upload URL');
       }
@@ -122,13 +363,22 @@ const UserProfile = () => {
         }
       });
 
+      const updateResponse = await updateMe({ avatar: fileUrl }).unwrap();
+      if (!updateResponse?.success) {
+        throw new Error(updateResponse?.message || 'Failed to save avatar');
+      }
+
       setAvatarUrl(fileUrl);
-      message.success('Avatar uploaded successfully!');
+      setName(updateResponse.data?.name || name);
+      setEmail(updateResponse.data?.email || email);
+      dispatch(updateUser(updateResponse.data));
+      message.success('Profile photo uploaded successfully!');
     } catch (err) {
       console.error(err);
       message.error('Failed to upload avatar. Please try again.');
     } finally {
       setAvatarLoading(false);
+      resetInput();
     }
   };
 
@@ -167,28 +417,37 @@ const UserProfile = () => {
             accept="image/jpeg,image/png,image/webp"
             onChange={handleAvatarChange}
           />
-          <div
-            onClick={() => document.getElementById('avatar-input').click()}
-            className="w-20 h-20 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center text-2xl font-black shadow-sm relative group overflow-hidden cursor-pointer shrink-0"
-          >
-            {avatarLoading ? (
-              <Spin size="small" />
-            ) : avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[#D4AF37] text-white">
-                {(name || 'US')
-                  .split(' ')
-                  .slice(0, 2)
-                  .map((part) => part[0] || '')
-                  .join('')
-                  .toUpperCase()}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <label
+              htmlFor="avatar-input"
+              className="w-20 h-20 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center text-2xl font-black shadow-sm relative group overflow-hidden cursor-pointer shrink-0"
+            >
+              {avatarLoading ? (
+                <Spin size="small" />
+              ) : avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-[#D4AF37] text-white">
+                  {(name || 'US')
+                    .split(' ')
+                    .slice(0, 2)
+                    .map((part) => part[0] || '')
+                    .join('')
+                    .toUpperCase()}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera size={16} className="text-white mb-1" />
+                <span className="text-[9px] text-white font-bold uppercase tracking-wider">Upload</span>
               </div>
-            )}
-            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <Camera size={16} className="text-white mb-1" />
-              <span className="text-[9px] text-white font-bold uppercase tracking-wider">Upload</span>
-            </div>
+            </label>
+            <label
+              htmlFor="avatar-input"
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-[13px] font-bold text-gray-700 bg-white ${avatarLoading ? 'cursor-wait opacity-60' : 'cursor-pointer hover:bg-gray-50'}`}
+            >
+              <Camera size={16} />
+              {avatarLoading ? 'Uploading...' : 'Change Photo'}
+            </label>
           </div>
           <div>
             <h3 className="text-2xl font-black text-gray-900">{name || 'User'}</h3>
@@ -711,41 +970,136 @@ const RolesAndPermissions = () => {
   );
 };
 
-const NotificationsSettings = () => (
-  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-    <div className="p-6 border-b border-gray-100">
-      <h2 className="text-xl font-bold text-gray-900 mb-1">Notifications Settings</h2>
-      <p className="text-[13px] text-gray-500 font-medium">Configure how and when your team is alerted for platform events.</p>
-    </div>
+const NotificationsSettings = () => {
+  const {
+    data: notificationsResponse,
+    isLoading,
+    refetch,
+  } = useGetNotificationsQuery({ page: 1, limit: 50 }, {
+    refetchOnMountOrArgChange: true,
+  });
+  const [markNotificationRead, { isLoading: isMarkingRead }] = useMarkNotificationReadMutation();
+  const [markAllNotificationsRead, { isLoading: isMarkingAllRead }] = useMarkAllNotificationsReadMutation();
+  const [clearAllNotifications, { isLoading: isClearingAll }] = useClearAllNotificationsMutation();
 
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-[#fcfcfc] border-b border-gray-100">
-          <tr>
-            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest w-[40%]">Event Category / Type</th>
-            <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">In-App</th>
-            <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Email</th>
-            <th className="px-4 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Critical Alert</th>
-            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Recipients</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr className="bg-white"><td colSpan={5} className="px-6 py-4 text-[12px] font-bold text-gray-900 border-b border-gray-50">Supplier Management</td></tr>
-          <tr className="border-b border-gray-50">
-            <td className="px-6 py-4">
-              <div className="font-bold text-[13px] text-gray-800">New Supplier Signup</div>
-              <div className="text-[11px] text-gray-500 mt-1">When a new supplier registers on the platform.</div>
-            </td>
-            <td className="px-4 py-4 text-center"><Checkbox defaultChecked /></td>
-            <td className="px-4 py-4 text-center"><Checkbox /></td>
-            <td className="px-4 py-4 text-center"><Checkbox /></td>
-            <td className="px-6 py-4"><Tag className="text-[10px] font-bold bg-gray-100 text-gray-600 border-gray-200">Procurement Team</Tag></td>
-          </tr>
-        </tbody>
-      </table>
+  const notifications = notificationsResponse?.data || [];
+  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
+
+  const handleMarkRead = async (id) => {
+    try {
+      await markNotificationRead(id).unwrap();
+      message.success('Notification marked as read');
+    } catch (error) {
+      message.error(error?.data?.message || 'Failed to mark notification as read');
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsRead().unwrap();
+      message.success('All notifications marked as read');
+    } catch (error) {
+      message.error(error?.data?.message || 'Failed to mark all notifications as read');
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await clearAllNotifications().unwrap();
+      message.success('All notifications cleared');
+    } catch (error) {
+      message.error(error?.data?.message || 'Failed to clear notifications');
+    }
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-1">Notifications</h2>
+          <p className="text-[13px] text-gray-500 font-medium">
+            Review your live in-app notifications and manage read state from one place.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Tag className="m-0 bg-blue-50 text-blue-700 border-blue-100 font-semibold">
+            {unreadCount} unread
+          </Tag>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="px-4 py-2 text-[13px] font-bold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+          >
+            Refresh
+          </button>
+          <button
+            type="button"
+            onClick={handleMarkAllRead}
+            disabled={isMarkingAllRead || unreadCount === 0}
+            className="px-4 py-2 text-[13px] font-bold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-60"
+          >
+            Mark All Read
+          </button>
+          <button
+            type="button"
+            onClick={handleClearAll}
+            disabled={isClearingAll || notifications.length === 0}
+            className="px-4 py-2 text-[13px] font-bold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-60"
+          >
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="p-10 flex justify-center">
+          <Spin />
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="p-10 text-center text-sm text-gray-500">
+          No notifications yet.
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-100">
+          {notifications.map((notification) => (
+            <div
+              key={notification._id}
+              className={`p-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4 ${notification.isRead ? 'bg-white' : 'bg-blue-50/30'}`}
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-[14px] font-bold text-gray-900">{notification.title}</h3>
+                  {!notification.isRead && (
+                    <Tag className="m-0 bg-amber-50 text-amber-700 border-amber-100 font-semibold">
+                      New
+                    </Tag>
+                  )}
+                </div>
+                <p className="text-[13px] text-gray-600 leading-relaxed">{notification.message}</p>
+                <p className="text-[11px] text-gray-400 mt-2">{formatNotificationDate(notification.createdAt)}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Tag className={`m-0 font-semibold ${notification.isRead ? 'bg-gray-100 text-gray-600 border-gray-200' : 'bg-emerald-50 text-emerald-700 border-emerald-100'}`}>
+                  {notification.isRead ? 'Read' : 'Unread'}
+                </Tag>
+                {!notification.isRead && (
+                  <button
+                    type="button"
+                    onClick={() => handleMarkRead(notification._id)}
+                    disabled={isMarkingRead}
+                    className="px-4 py-2 text-[13px] font-bold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    Mark Read
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 const Settings = () => {
   const location = useLocation();
@@ -798,7 +1152,7 @@ const Settings = () => {
 
           <div className="flex-1">
             {activeTab === 'My Profile' && <UserProfile />}
-            {activeTab === 'Company Details' && <SupplierGeneralConfiguration />}
+            {activeTab === 'Company Details' && (isAdmin ? <AdminGeneralConfiguration /> : <SupplierCompanyDetails />)}
             {activeTab === 'Roles & Permissions' && <RolesAndPermissions />}
             {activeTab === 'Notifications' && <NotificationsSettings />}
           </div>

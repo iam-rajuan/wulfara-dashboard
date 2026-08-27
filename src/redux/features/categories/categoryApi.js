@@ -33,7 +33,7 @@ export const categoryApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Category'],
     }),
-    getUploadUrl: builder.mutation({
+    getCategoryUploadUrl: builder.mutation({
       query: (contentType) => ({
         url: '/categories/upload-url',
         method: 'POST',
@@ -49,5 +49,5 @@ export const {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
-  useGetUploadUrlMutation,
+  useGetCategoryUploadUrlMutation,
 } = categoryApi;

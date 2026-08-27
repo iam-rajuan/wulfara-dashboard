@@ -5,7 +5,7 @@ import {
   useGetCategoryQuery, 
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
-  useGetUploadUrlMutation 
+  useGetCategoryUploadUrlMutation 
 } from "../../../redux/features/categories/categoryApi";
 import axios from "axios";
 import { 
@@ -24,7 +24,7 @@ export default function EditCategory() {
   const { data: categoryResponse, isLoading: isLoadingCategory } = useGetCategoryQuery(id);
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [deleteCategory] = useDeleteCategoryMutation();
-  const [getUploadUrl] = useGetUploadUrlMutation();
+  const [getUploadUrl] = useGetCategoryUploadUrlMutation();
   
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState("");

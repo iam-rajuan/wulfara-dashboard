@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Smile, Paperclip, Send, FileText, Image as ImageIcon, File, X } from 'lucide-react';
-import { io } from 'socket.io-client';
 import { useGetMessagesQuery, useSendMessageMutation } from '../../redux/features/messages/messagesApi';
 import { useLazyGetRfqAttachmentDownloadUrlQuery } from '../../redux/features/rfqs/rfqsApi';
 import { useSelector } from 'react-redux';
-import { SOCKET_BASE_URL } from '../../config/urls';
+import { createAppSocket } from '../../utils/socket';
 
 export default function MessageActiveChat({ chatId }) {
   const { user } = useSelector(state => state.auth || { user: { _id: "admin" } });
@@ -34,15 +33,29 @@ export default function MessageActiveChat({ chatId }) {
   
   // Connect to socket when chat opens
   useEffect(() => {
-    socketRef.current = io(SOCKET_BASE_URL);
-    socketRef.current.emit('join_room', chatId);
+    if (!chatId) {
+      return undefined;
+    }
 
-    socketRef.current.on('receive_message', (newMsg) => {
+    const socket = createAppSocket();
+    if (!socket) {
+      return undefined;
+    }
+
+    socketRef.current = socket;
+    socket.connect();
+
+    socket.on('connect', () => {
+      socket.emit('join_room', chatId);
+    });
+
+    socket.on('receive_message', (newMsg) => {
       setSocketMessages(prev => [...prev, newMsg]);
     });
 
     return () => {
-      socketRef.current.disconnect();
+      socket.disconnect();
+      socketRef.current = null;
     };
   }, [chatId]);
 
@@ -117,7 +130,7 @@ export default function MessageActiveChat({ chatId }) {
       const savedMsg = res.data;
 
       // Broadcast to socket
-      socketRef.current.emit('send_message', { roomId: savedMsg.conversation || chatId, message: savedMsg });
+      socketRef.current?.emit('send_message', { roomId: savedMsg.conversation || chatId, message: savedMsg });
 
       // Add to local real-time state instantly
       setSocketMessages(prev => [...prev, savedMsg]);

@@ -18,6 +18,14 @@ export const listingsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Listing', id }, 'Listing'],
     }),
+    updateSupplierVerification: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/suppliers/${id}/verification`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: 'Listing', id }, 'Listing'],
+    }),
     getSupplierDashboard: builder.query({
       query: () => '/suppliers/dashboard',
       providesTags: ['Listing'],
@@ -88,6 +96,7 @@ export const {
   useGetListingsQuery,
   useGetListingQuery,
   useReviewListingMutation,
+  useUpdateSupplierVerificationMutation,
   useGetSupplierDashboardQuery,
   useGetOnboardingStatusQuery,
   useSaveOnboardingIndustryMutation,

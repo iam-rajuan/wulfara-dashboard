@@ -4,9 +4,13 @@ import { useSelector } from "react-redux";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { IoMdNotifications } from "react-icons/io";
 import { Bell } from "lucide-react";
-import { io } from "socket.io-client";
 import { useGetSupplierDashboardQuery } from "../../redux/features/listings/listingsApi";
-import { API_BASE_URL, SOCKET_BASE_URL } from "../../config/urls";
+import {
+  useClearAllNotificationsMutation,
+  useGetNotificationsQuery,
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+} from "../../redux/features/notifications/notificationsApi";
 
 const Header = ({ showDrawer }) => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -20,62 +24,32 @@ const Header = ({ showDrawer }) => {
   const supplierProfile = dashboardResponse?.data?.profile;
   const supplierLogo = supplierProfile?.logo && supplierProfile.logo !== "no-logo.jpg" ? supplierProfile.logo : "";
 
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const {
+    data: notificationsResponse,
+    refetch: refetchNotifications,
+  } = useGetNotificationsQuery(undefined, {
+    skip: !userId,
+    pollingInterval: 30000,
+    refetchOnFocus: true,
+  });
+  const [markNotificationReadApi] = useMarkNotificationReadMutation();
+  const [markAllNotificationsReadApi] = useMarkAllNotificationsReadMutation();
+  const [clearAllNotificationsApi] = useClearAllNotificationsMutation();
+
+  const notifications = notificationsResponse?.data || [];
+  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
 
   useEffect(() => {
-    if (!userId) return;
-    
-    // Fetch initial notifications
-    const fetchNotifications = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${API_BASE_URL}/notifications`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const data = await res.json();
-        if (data.success) {
-          setNotifications(data.data);
-          setUnreadCount(data.data.filter(n => !n.isRead).length);
-        }
-      } catch (err) {
-        console.error("Error fetching notifications:", err);
-      }
-    };
-    
-    fetchNotifications();
+    if (!showNotifications || !userId) {
+      return;
+    }
 
-    // Socket.io connection
-    const socket = io(SOCKET_BASE_URL);
-    
-    socket.emit("join_room", userId);
-    
-    socket.on("new_notification", (newNotification) => {
-      setNotifications(prev => [newNotification, ...prev]);
-      setUnreadCount(prev => prev + 1);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [userId]);
+    refetchNotifications();
+  }, [refetchNotifications, showNotifications, userId]);
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/notifications/read-all`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-        setUnreadCount(0);
-      }
+      await markAllNotificationsReadApi().unwrap();
     } catch (err) {
       console.error("Error marking all as read:", err);
     }
@@ -83,18 +57,7 @@ const Header = ({ showDrawer }) => {
 
   const clearAllNotifications = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/notifications/clear-all`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setNotifications([]);
-        setUnreadCount(0);
-      }
+      await clearAllNotificationsApi().unwrap();
     } catch (err) {
       console.error("Error clearing notifications:", err);
     }
@@ -102,18 +65,7 @@ const Header = ({ showDrawer }) => {
 
   const markAsRead = async (id) => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
+      await markNotificationReadApi(id).unwrap();
     } catch (err) {
       console.error("Error marking as read:", err);
     }
