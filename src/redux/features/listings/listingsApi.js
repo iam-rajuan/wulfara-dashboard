@@ -16,6 +16,24 @@ export const listingsApi = apiSlice.injectEndpoints({
         method: 'PUT',
         body: { listingStatus },
       }),
+      async onQueryStarted({ id, listingStatus }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData('getListing', id, (draft) => {
+            if (!draft?.data) {
+              return;
+            }
+
+            draft.data.listingStatus = listingStatus;
+            draft.data.isApproved = listingStatus === 'Approved';
+          })
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (result, error, { id }) => [{ type: 'Listing', id }, 'Listing'],
     }),
     updateSupplierVerification: builder.mutation({
@@ -24,6 +42,45 @@ export const listingsApi = apiSlice.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
+      async onQueryStarted({ id, data }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData('getListing', id, (draft) => {
+            if (!draft?.data) {
+              return;
+            }
+
+            if (data?.checklist && typeof data.checklist === 'object') {
+              draft.data.verificationChecklist = {
+                ...(draft.data.verificationChecklist || {}),
+                ...data.checklist,
+                updatedAt: new Date().toISOString(),
+              };
+            }
+
+            if (Array.isArray(data?.documents) && Array.isArray(draft.data.verificationDocuments)) {
+              data.documents.forEach((documentUpdate) => {
+                const document = draft.data.verificationDocuments.find(
+                  (item) => item.id === documentUpdate.id
+                );
+
+                if (document) {
+                  document.reviewStatus = documentUpdate.reviewStatus;
+                  document.reviewedAt = new Date().toISOString();
+                  if (typeof documentUpdate.reviewNote === 'string') {
+                    document.reviewNote = documentUpdate.reviewNote;
+                  }
+                }
+              });
+            }
+          })
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (result, error, { id }) => [{ type: 'Listing', id }, 'Listing'],
     }),
     getSupplierDashboard: builder.query({

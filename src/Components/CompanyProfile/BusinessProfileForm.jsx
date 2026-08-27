@@ -138,7 +138,30 @@ export default function BusinessProfileForm({ data, onChange, onLogoUpload, isUp
           </div>
         </div>
 
-        {/* General Details: Address, Type, Response Time */}
+        {/* General Details: Contact, Address, Type, Response Time */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Business Contact Email</label>
+            <input
+              type="email"
+              value={data.contactEmail || ''}
+              onChange={(e) => onChange({ ...data, contactEmail: e.target.value })}
+              placeholder="e.g. sales@company.com"
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-[13px] bg-[#F9FAFB] focus:bg-white focus:outline-none focus:border-gray-300 transition"
+            />
+          </div>
+          <div>
+            <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Business Contact Phone</label>
+            <input
+              type="text"
+              value={data.contactPhone || ''}
+              onChange={(e) => onChange({ ...data, contactPhone: e.target.value })}
+              placeholder="e.g. +1 555 123 4567"
+              className="w-full p-2.5 border border-gray-200 rounded-lg text-[13px] bg-[#F9FAFB] focus:bg-white focus:outline-none focus:border-gray-300 transition"
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-[13px] font-bold text-[#0F172A] mb-2">Physical Address</label>

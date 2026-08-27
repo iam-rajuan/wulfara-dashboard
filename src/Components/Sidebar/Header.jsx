@@ -14,7 +14,7 @@ import {
 
 const Header = ({ showDrawer }) => {
   const [showNotifications, setShowNotifications] = useState(false);
-  const { user } = useSelector((state) => state.auth);
+  const { user, token } = useSelector((state) => state.auth);
 
   const userId = user?._id;
   const role = user?.role || "supplier";
@@ -26,11 +26,12 @@ const Header = ({ showDrawer }) => {
 
   const {
     data: notificationsResponse,
+    error: notificationsError,
+    isFetching: isNotificationsFetching,
     refetch: refetchNotifications,
   } = useGetNotificationsQuery(undefined, {
-    skip: !userId,
-    pollingInterval: 30000,
-    refetchOnFocus: true,
+    skip: !userId || !token || !showNotifications,
+    refetchOnFocus: showNotifications,
   });
   const [markNotificationReadApi] = useMarkNotificationReadMutation();
   const [markAllNotificationsReadApi] = useMarkAllNotificationsReadMutation();
@@ -98,7 +99,7 @@ const Header = ({ showDrawer }) => {
             onClick={() => setShowNotifications((prev) => !prev)}
           >
             <IoMdNotifications className="text-xl" />
-            {unreadCount > 0 && (
+            {unreadCount > 0 && showNotifications && (
               <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] flex items-center justify-center font-bold h-[14px] min-w-[14px] px-1 rounded-full border border-white">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
@@ -160,7 +161,13 @@ const Header = ({ showDrawer }) => {
           </div>
 
           <div className="mt-4 space-y-4 max-h-[350px] overflow-y-auto pr-1">
-            {notifications.length === 0 ? (
+            {notificationsError ? (
+              <p className="text-sm text-red-500 text-center py-4">
+                Notifications are unavailable right now. Please make sure the backend is running.
+              </p>
+            ) : isNotificationsFetching ? (
+              <p className="text-sm text-gray-500 text-center py-4">Loading notifications...</p>
+            ) : notifications.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">No notifications yet.</p>
             ) : (
               notifications.map((item) => (

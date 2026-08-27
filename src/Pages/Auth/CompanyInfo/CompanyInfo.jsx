@@ -54,13 +54,17 @@ const CompanyInfo = () => {
       return;
     }
 
+    // Since contactPhone is required to save this form, its absence indicates the user has never 
+    // saved company info yet (first-time onboarding). In this case, we keep all text fields blank.
+    const hasSavedBefore = Boolean(supplier.contactPhone);
+
     setFormData({
-      companyName: supplier.companyName || '',
+      companyName: hasSavedBefore ? (supplier.companyName || '') : '',
       address: supplier.location?.formattedAddress || '',
       supplierType: supplier.supplierType || 'Manufacturer',
       coreProducts: (supplier.coreProducts || []).join(', '),
       contactPhone: supplier.contactPhone || '',
-      contactEmail: supplier.contactEmail || '',
+      contactEmail: hasSavedBefore ? (supplier.contactEmail || '') : '',
       website: supplier.website || '',
       description:
         supplier.description === 'Profile pending details. Please update your company description in settings.' ||
@@ -101,7 +105,7 @@ const CompanyInfo = () => {
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Company Contact Information</h1>
         <p className="text-[15px] text-gray-500 mb-10">Add your company details so customers can contact you and send RFQs.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
           <div className="bg-[#FAFAFA] p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
             <h2 className="text-[20px] font-bold text-gray-900 mb-6">Company Details</h2>
 
@@ -117,6 +121,7 @@ const CompanyInfo = () => {
                     value={formData.companyName}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] focus:outline-none focus:border-[#D1A635] focus:ring-1 focus:ring-[#D1A635] transition-colors"
                   />
                 </div>
@@ -194,6 +199,7 @@ const CompanyInfo = () => {
                       value={formData.contactEmail}
                       onChange={handleChange}
                       required
+                      autoComplete="new-password"
                       className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-md text-[14px] focus:outline-none focus:border-[#D1A635] focus:ring-1 focus:ring-[#D1A635] transition-colors"
                     />
                   </div>

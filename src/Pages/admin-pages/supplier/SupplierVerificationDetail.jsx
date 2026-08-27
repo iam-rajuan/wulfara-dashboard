@@ -219,9 +219,7 @@ export default function SupplierVerificationDetail() {
   const paymentHistory = supplier?.paymentSummary?.history || [];
   const listingSummary = supplier?.listingSummary || {};
   const profileImage =
-    (supplier?.logo && supplier.logo !== "no-logo.jpg" && supplier.logo) ||
-    (supplier?.user?.avatar && supplier.user.avatar !== "default-avatar.png" && supplier.user.avatar) ||
-    "";
+    (supplier?.logo && supplier.logo !== "no-logo.jpg" && supplier.logo) || "";
   const displayLocation =
     supplier?.location?.formattedAddress ||
     supplier?.contactInfo?.address ||

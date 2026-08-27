@@ -18,7 +18,13 @@ import {
   useGetAdminUsersQuery,
   useUpdateAdminRoleMutation,
 } from '../../redux/features/adminRoles/adminRolesApi';
-import { useDeleteUserMutation, useUpdateMeMutation, useGetUserUploadUrlMutation } from '../../redux/features/users/usersApi';
+import {
+  useDeleteUserMutation,
+  useGetUserUploadUrlMutation,
+  useRequestEmailChangeOtpMutation,
+  useUpdateMeMutation,
+  useVerifyEmailChangeOtpMutation,
+} from '../../redux/features/users/usersApi';
 import { useGetSupplierDashboardQuery, useGetSupplierUploadUrlMutation, useUpdateListingMutation } from '../../redux/features/listings/listingsApi';
 import {
   useClearAllNotificationsMutation,
@@ -54,6 +60,8 @@ const SupplierCompanyDetails = () => {
     logo: null,
     companyName: '',
     description: '',
+    contactEmail: '',
+    contactPhone: '',
     coreProducts: [],
     moq: { value: '', unit: 'Units' },
     businessHours: {
@@ -89,6 +97,8 @@ const SupplierCompanyDetails = () => {
       ...prev,
       companyName: profile.companyName || '',
       description: profile.description || '',
+      contactEmail: profile.contactEmail || '',
+      contactPhone: profile.contactPhone || '',
       logo: profile.logo && profile.logo !== 'no-logo.jpg' ? profile.logo : '',
       coreProducts: profile.coreProducts || [],
       certifications: profile.certifications || [],
@@ -137,6 +147,8 @@ const SupplierCompanyDetails = () => {
         data: {
           companyName: profileData.companyName,
           description: profileData.description,
+          contactEmail: profileData.contactEmail,
+          contactPhone: profileData.contactPhone,
           logo: profileData.logo || 'no-logo.jpg',
           coreProducts: profileData.coreProducts,
           certifications: profileData.certifications,
@@ -315,11 +327,17 @@ const UserProfile = () => {
   const { user } = useSelector((state) => state.auth);
   const [updateMe, { isLoading }] = useUpdateMeMutation();
   const [getUserUploadUrl] = useGetUserUploadUrlMutation();
+  const [requestEmailChangeOtp, { isLoading: isRequestingEmailOtp }] = useRequestEmailChangeOtpMutation();
+  const [verifyEmailChangeOtp, { isLoading: isVerifyingEmailOtp }] = useVerifyEmailChangeOtpMutation();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar || '');
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [otpSentTo, setOtpSentTo] = useState('');
 
   useEffect(() => {
     setName(user?.name || '');
@@ -384,20 +402,64 @@ const UserProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) {
-      message.error('Name and email are required');
+    if (!name.trim()) {
+      message.error('Name is required');
       return;
     }
     try {
-      const response = await updateMe({ name, email, avatar: avatarUrl }).unwrap();
+      const response = await updateMe({ name, avatar: avatarUrl }).unwrap();
       if (response.success) {
         dispatch(updateUser(response.data));
+        setEmail(response.data?.email || email);
         message.success('Profile updated successfully!');
       } else {
         message.error(response.message || 'Failed to update profile');
       }
     } catch (err) {
       message.error(err.data?.message || 'An error occurred while updating profile');
+    }
+  };
+
+  const resetEmailChangeState = () => {
+    setPendingEmail('');
+    setEmailOtp('');
+    setOtpSentTo('');
+    setIsEmailModalOpen(false);
+  };
+
+  const handleRequestEmailOtp = async () => {
+    const normalizedEmail = pendingEmail.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      message.error('Please enter the new email address');
+      return;
+    }
+
+    try {
+      const response = await requestEmailChangeOtp({ email: normalizedEmail }).unwrap();
+      setOtpSentTo(response?.data?.email || normalizedEmail);
+      message.success(response?.message || 'Verification code sent');
+    } catch (err) {
+      message.error(err?.data?.message || 'Failed to send verification code');
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    if (!emailOtp.trim()) {
+      message.error('Please enter the OTP code');
+      return;
+    }
+
+    try {
+      const response = await verifyEmailChangeOtp({ otp: emailOtp.trim() }).unwrap();
+      if (response?.success) {
+        setEmail(response.data?.email || email);
+        dispatch(updateUser(response.data));
+        message.success(response?.message || 'Email address updated successfully');
+        resetEmailChangeState();
+      }
+    } catch (err) {
+      message.error(err?.data?.message || 'Failed to verify email change');
     }
   };
 
@@ -480,12 +542,21 @@ const UserProfile = () => {
 
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Email Address</label>
-            <Input
-              value={email}
-              type="email"
-              onChange={(e) => setEmail(e.target.value)}
-              className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium focus:border-[#dcb14b] focus:ring-1 focus:ring-[#dcb14b]"
-            />
+            <div className="space-y-2">
+              <Input
+                value={email}
+                type="email"
+                readOnly
+                className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium bg-gray-50 text-gray-500 cursor-not-allowed"
+              />
+              <button
+                type="button"
+                onClick={() => setIsEmailModalOpen(true)}
+                className="text-[12px] font-bold text-[#2563EB] hover:text-[#1D4ED8]"
+              >
+                Change email with OTP verification
+              </button>
+            </div>
           </div>
 
           <div>
@@ -532,6 +603,67 @@ const UserProfile = () => {
           </button>
         </div>
       </form>
+
+      <Modal
+        title="Change Email Address"
+        open={isEmailModalOpen}
+        onCancel={resetEmailChangeState}
+        footer={null}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+              New Email Address
+            </label>
+            <Input
+              value={pendingEmail}
+              type="email"
+              onChange={(e) => setPendingEmail(e.target.value)}
+              placeholder="name@example.com"
+              className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleRequestEmailOtp}
+            disabled={isRequestingEmailOtp}
+            className="w-full px-4 py-2.5 rounded-lg bg-[#dcb14b] hover:bg-[#c99f3b] text-gray-900 font-bold disabled:opacity-60"
+          >
+            {isRequestingEmailOtp ? 'Sending OTP...' : 'Send OTP'}
+          </button>
+
+          {otpSentTo && (
+            <>
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-700">
+                OTP sent to {otpSentTo}. Enter the code below to confirm the change.
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+                  Verification Code
+                </label>
+                <Input
+                  value={emailOtp}
+                  onChange={(e) => setEmailOtp(e.target.value)}
+                  placeholder="6-digit OTP"
+                  maxLength={6}
+                  className="px-4 py-2.5 rounded-md border-gray-200 text-sm font-medium"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleVerifyEmailOtp}
+                disabled={isVerifyingEmailOtp}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-gray-800 font-bold hover:bg-gray-50 disabled:opacity-60"
+              >
+                {isVerifyingEmailOtp ? 'Verifying...' : 'Verify and Update Email'}
+              </button>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

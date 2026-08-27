@@ -17,6 +17,8 @@ export default function CompanyProfile() {
     logo: null,
     companyName: "",
     description: "",
+    contactEmail: "",
+    contactPhone: "",
     coreProducts: [],
     moq: { value: "", unit: "Units" },
     businessHours: {
@@ -47,6 +49,8 @@ export default function CompanyProfile() {
         ...prev,
         companyName: p.companyName || "",
         description: p.description || "",
+        contactEmail: p.contactEmail || "",
+        contactPhone: p.contactPhone || "",
         logo: p.logo && p.logo !== 'no-logo.jpg' ? p.logo : "",
         coreProducts: p.coreProducts || [],
         certifications: p.certifications || [],
@@ -91,6 +95,8 @@ export default function CompanyProfile() {
       const payload = {
         companyName: profileData.companyName,
         description: profileData.description,
+        contactEmail: profileData.contactEmail,
+        contactPhone: profileData.contactPhone,
         logo: profileData.logo || 'no-logo.jpg',
         coreProducts: profileData.coreProducts,
         certifications: profileData.certifications,

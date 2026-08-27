@@ -30,6 +30,21 @@ export const usersApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
+    requestEmailChangeOtp: builder.mutation({
+      query: (payload) => ({
+        url: '/users/me/email-change/request',
+        method: 'POST',
+        body: payload,
+      }),
+    }),
+    verifyEmailChangeOtp: builder.mutation({
+      query: (payload) => ({
+        url: '/users/me/email-change/verify',
+        method: 'POST',
+        body: payload,
+      }),
+      invalidatesTags: ['User'],
+    }),
     deleteUser: builder.mutation({
       query: (id) => ({
         url: `/users/${id}`,
@@ -52,6 +67,8 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useUpdateMeMutation,
+  useRequestEmailChangeOtpMutation,
+  useVerifyEmailChangeOtpMutation,
   useDeleteUserMutation,
   useGetUserUploadUrlMutation,
 } = usersApi;

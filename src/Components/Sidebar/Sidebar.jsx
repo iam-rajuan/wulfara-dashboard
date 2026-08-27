@@ -140,8 +140,12 @@ const Sidebar = ({ closeDrawer }) => {
       <div className="px-4 pb-6 pt-4 border-t border-[#1C273C] mt-auto">
         {role === "admin" ? (
           <div className="bg-[#0E1726] rounded-xl p-3 flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center">
-              <User size={18} strokeWidth={2.5} />
+            <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center overflow-hidden">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user?.name || "Admin"} className="w-full h-full object-cover" />
+              ) : (
+                <User size={18} strokeWidth={2.5} />
+              )}
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-medium text-white truncate">
@@ -157,6 +161,8 @@ const Sidebar = ({ closeDrawer }) => {
             <div className="w-9 h-9 rounded-[10px] bg-[#D4AF37] text-[#0E1726] font-bold flex items-center justify-center text-[13px] overflow-hidden">
               {supplierLogo ? (
                 <img src={supplierLogo} alt={supplierProfile?.companyName || user?.name || "Supplier"} className="w-full h-full object-cover" />
+              ) : user?.avatar ? (
+                <img src={user.avatar} alt={user?.name || "Supplier"} className="w-full h-full object-cover" />
               ) : (
                 <span>{user?.name ? user.name.substring(0, 2).toUpperCase() : "SP"}</span>
               )}
