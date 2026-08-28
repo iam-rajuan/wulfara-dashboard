@@ -227,9 +227,9 @@ const Subscription = () => {
       )}
 
       {/* Main Grid: Height Constrained on Desktop */}
-      <div className="flex-1 w-full max-w-[1250px] mx-auto px-4 md:px-8 pb-6 lg:pb-8 overflow-y-auto lg:overflow-hidden relative z-10 flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch">
+      <div className="flex-1 w-full max-w-[1250px] mx-auto px-4 md:px-8 pb-6 lg:pb-8 min-h-0 lg:min-h-0 overflow-y-auto lg:overflow-hidden relative z-10 flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch">
         {/* Left Column: Toggles, Plans, Add-ons */}
-        <div className="flex-1 flex flex-col justify-between gap-4 lg:overflow-hidden min-w-0">
+        <div className="flex-1 flex flex-col justify-between gap-4 lg:overflow-hidden min-w-0 min-h-0">
           {isLoadingPlans || isLoadingOnboarding ? (
             <div className="flex-1 flex flex-col items-center justify-center py-16 text-slate-500 gap-3 font-medium">
               <span className="w-6 h-6 border-2 border-slate-200 border-t-[#D1A635] rounded-full animate-spin" />
@@ -281,7 +281,11 @@ const Subscription = () => {
                     No {billingFilter} pricing plans are available right now.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5 py-2">
+                  <div className={`grid grid-cols-1 gap-5 py-2 ${
+                    filteredPlans.length === 1
+                      ? 'md:grid-cols-1 max-w-md'
+                      : 'md:grid-cols-2'
+                  }`}>
                     {filteredPlans.map((plan) => {
                       const isSelected = currentPlanId === plan._id;
                       const planListingPeriod = deriveListingPeriod(plan.billingCycle);
@@ -293,15 +297,22 @@ const Subscription = () => {
                           key={plan._id}
                           type="button"
                           onClick={() => setCurrentPlanId(plan._id)}
-                          className={`w-full bg-white rounded-2xl p-5 flex flex-col text-left transition-all duration-300 relative group cursor-pointer ${
+                          className={`w-full bg-white rounded-2xl p-4 sm:p-5 flex flex-col text-left transition-all duration-300 relative group cursor-pointer hover:-translate-y-0.5 ${
                             isSelected
-                              ? 'border-2 shadow-[0_12px_30px_rgba(209,166,53,0.08)] scale-[1.01] z-10'
+                              ? 'border-2 z-10'
                               : 'border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#D1A635]/30'
                           }`}
-                          style={isSelected ? { borderColor: accentColor } : undefined}
+                          style={
+                            isSelected
+                              ? {
+                                  borderColor: accentColor,
+                                  boxShadow: `0 12px 30px ${accentColor}1A`,
+                                }
+                              : undefined
+                          }
                         >
                           {/* Upper Label Row */}
-                          <div className="flex items-start justify-between mb-3 w-full">
+                          <div className="flex items-center justify-between mb-2.5 w-full gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                               <SubscriptionIcon iconKey={plan.iconKey} className="w-8 h-8 rounded-lg border shrink-0" iconSize={14} />
                               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 group-hover:text-[#D1A635] transition-colors truncate">
@@ -309,7 +320,7 @@ const Subscription = () => {
                               </span>
                             </div>
                             {(plan.badgeText || isSelected) && (
-                              <span className={`text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full border ${
+                              <span className={`text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full border shrink-0 whitespace-nowrap ${
                                 isSelected 
                                   ? 'bg-white' 
                                   : 'bg-slate-100 border-slate-200 text-slate-500'
@@ -322,27 +333,30 @@ const Subscription = () => {
 
                           {/* Title & Description */}
                           <h2 className="text-lg font-black text-slate-800 tracking-tight leading-tight mb-1">{plan.name}</h2>
-                          <p className="text-[11px] text-slate-400 leading-normal min-h-[34px] line-clamp-2 mb-3">
+                          <p className="text-[11px] text-slate-400 leading-normal min-h-[34px] line-clamp-2 mb-2.5">
                             {plan.description || 'Supplier listing plan'}
                           </p>
 
                           {/* Price Details */}
-                          <div className="border-t border-slate-100 pt-3 mb-3 w-full flex items-baseline gap-1">
+                          <div className="border-t border-slate-100 pt-3 mb-2.5 w-full flex items-baseline gap-1">
                             <span className="text-3xl font-black text-slate-900 tracking-tight">${plan.price}</span>
                             <span className="text-[11px] text-slate-400 font-semibold">{priceLabel}</span>
                           </div>
                           {planListingPeriod && (
-                            <p className="text-[10px] text-slate-500 font-bold mb-4">
+                            <p className="text-[10px] text-slate-500 font-bold mb-3">
                               Listing period: {planListingPeriod}
                             </p>
                           )}
 
                           {/* Feature List */}
-                          <div className="space-y-2 flex-1 mb-4 w-full">
+                          <div className="space-y-2 flex-1 mb-3 w-full">
                             {(plan.features || []).length > 0 ? (
                               (plan.features || []).slice(0, 4).map((feature) => (
                                 <div key={feature} className="flex items-start gap-2">
-                                  <div className={`rounded-full p-0.5 shrink-0 mt-0.5 ${isSelected ? 'bg-[#D1A635]/15' : 'bg-slate-100'}`}>
+                                  <div 
+                                    className="rounded-full p-0.5 shrink-0 mt-0.5"
+                                    style={isSelected ? { backgroundColor: `${accentColor}1A` } : { backgroundColor: '#f1f5f9' }}
+                                  >
                                     <Check className={`w-3 h-3 ${isSelected ? '' : 'text-slate-500'}`} strokeWidth={3} style={isSelected ? { color: accentColor } : undefined} />
                                   </div>
                                   <span className={`text-xs leading-tight ${isSelected ? 'text-slate-800 font-bold' : 'text-slate-500'}`}>
