@@ -9,6 +9,7 @@ import {
   useSaveOnboardingSubscriptionMutation,
 } from '../../../redux/features/listings/listingsApi';
 import { appendOnboardingContext, buildOnboardingQueryString } from '../../../utils/onboarding';
+import { SubscriptionIcon } from '../../../Components/admin-components/subscriptions/subscriptionIconOptions';
 
 const BILLING_FILTERS = {
   ALL: 'all',
@@ -81,7 +82,9 @@ const Subscription = () => {
   const supplierId = user?.role === 'admin' ? searchParams.get('supplierId') : undefined;
   const isCancelled = searchParams.get('cancelled') === '1';
 
-  const { data: plansResponse, isLoading: isLoadingPlans } = useGetPlansQuery();
+  const { data: plansResponse, isLoading: isLoadingPlans } = useGetPlansQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
   const { data: onboardingResponse, isLoading: isLoadingOnboarding } = useGetOnboardingStatusQuery(supplierId, { skip: !user });
   const [saveSubscription, { isLoading: isSaving }] = useSaveOnboardingSubscriptionMutation();
   const [createCheckoutSession, { isLoading: isCheckingOut }] = useCreateCheckoutSessionMutation();
@@ -283,6 +286,7 @@ const Subscription = () => {
                       const isSelected = currentPlanId === plan._id;
                       const planListingPeriod = deriveListingPeriod(plan.billingCycle);
                       const priceLabel = getPriceLabel(plan.billingCycle);
+                      const accentColor = plan.accentColor || '#D1A635';
 
                       return (
                         <button
@@ -291,21 +295,26 @@ const Subscription = () => {
                           onClick={() => setCurrentPlanId(plan._id)}
                           className={`w-full bg-white rounded-2xl p-5 flex flex-col text-left transition-all duration-300 relative group cursor-pointer ${
                             isSelected
-                              ? 'border-2 border-[#D1A635] shadow-[0_12px_30px_rgba(209,166,53,0.08)] scale-[1.01] z-10'
+                              ? 'border-2 shadow-[0_12px_30px_rgba(209,166,53,0.08)] scale-[1.01] z-10'
                               : 'border border-slate-200/60 shadow-sm hover:shadow-md hover:border-[#D1A635]/30'
                           }`}
+                          style={isSelected ? { borderColor: accentColor } : undefined}
                         >
                           {/* Upper Label Row */}
                           <div className="flex items-start justify-between mb-3 w-full">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 group-hover:text-[#D1A635] transition-colors">
-                              {plan.billingCycle || 'Plan'}
-                            </span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <SubscriptionIcon iconKey={plan.iconKey} className="w-8 h-8 rounded-lg border shrink-0" iconSize={14} />
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 group-hover:text-[#D1A635] transition-colors truncate">
+                                {plan.billingCycle || 'Plan'}
+                              </span>
+                            </div>
                             {(plan.badgeText || isSelected) && (
                               <span className={`text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full border ${
                                 isSelected 
-                                  ? 'bg-[#D1A635]/10 border-[#D1A635] text-[#D1A635]' 
+                                  ? 'bg-white' 
                                   : 'bg-slate-100 border-slate-200 text-slate-500'
-                              }`}>
+                              }`}
+                              style={isSelected ? { borderColor: accentColor, color: accentColor } : undefined}>
                                 {plan.badgeText || 'Selected'}
                               </span>
                             )}
@@ -334,7 +343,7 @@ const Subscription = () => {
                               (plan.features || []).slice(0, 4).map((feature) => (
                                 <div key={feature} className="flex items-start gap-2">
                                   <div className={`rounded-full p-0.5 shrink-0 mt-0.5 ${isSelected ? 'bg-[#D1A635]/15' : 'bg-slate-100'}`}>
-                                    <Check className={`w-3 h-3 ${isSelected ? 'text-[#D1A635]' : 'text-slate-500'}`} strokeWidth={3} />
+                                    <Check className={`w-3 h-3 ${isSelected ? '' : 'text-slate-500'}`} strokeWidth={3} style={isSelected ? { color: accentColor } : undefined} />
                                   </div>
                                   <span className={`text-xs leading-tight ${isSelected ? 'text-slate-800 font-bold' : 'text-slate-500'}`}>
                                     {feature}
@@ -349,9 +358,10 @@ const Subscription = () => {
                           {/* Interactive Pill */}
                           <div className={`w-full py-2 px-3 rounded-xl text-center text-[10px] font-bold tracking-wider uppercase transition-all duration-200 mt-auto ${
                             isSelected 
-                              ? 'bg-[#D1A635] text-white shadow-sm shadow-[#D1A635]/10' 
+                              ? 'text-white shadow-sm shadow-[#D1A635]/10' 
                               : 'bg-slate-50 text-slate-500 group-hover:bg-slate-100 border border-slate-200/40'
-                          }`}>
+                          }`}
+                          style={isSelected ? { backgroundColor: accentColor } : undefined}>
                             {isSelected ? 'Active Plan' : 'Choose Plan'}
                           </div>
                         </button>

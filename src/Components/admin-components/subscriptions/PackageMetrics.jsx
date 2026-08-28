@@ -1,19 +1,18 @@
 import React from "react";
 import { Package, Users, TrendingUp, Activity } from "lucide-react";
-import { useGetPlansQuery, useGetAllPaymentsQuery } from "../../../redux/features/subscriptions/subscriptionsApi";
 
-export default function PackageMetrics() {
-  const { data: plansResponse } = useGetPlansQuery();
-  const { data: paymentsResponse } = useGetAllPaymentsQuery();
+const formatCurrencyCompact = (value) => {
+  const amount = Number(value || 0);
+  if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}K`;
+  return `$${amount.toFixed(0)}`;
+};
 
-  const plans = plansResponse?.data || [];
-  const payments = paymentsResponse?.data || [];
-
-  const activePlansCount = plans.filter(p => p.isActive).length;
-  const paidSuppliersCount = new Set(payments.map(p => p.supplier?._id).filter(Boolean)).size;
-  
-  const totalRevenue = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-  const formattedRevenue = totalRevenue >= 1000 ? (totalRevenue / 1000).toFixed(1) + 'K' : totalRevenue.toString();
+export default function PackageMetrics({ metrics }) {
+  const activePlansCount = metrics?.activePackages || 0;
+  const paidSuppliersCount = metrics?.paidSuppliers || 0;
+  const formattedRevenue = formatCurrencyCompact(metrics?.monthlyRevenue || 0);
+  const packageConversion = Number(metrics?.packageConversion || 0);
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       
@@ -37,9 +36,8 @@ export default function PackageMetrics() {
           </div>
         </div>
         <h3 className="text-3xl font-extrabold text-[#0F172A] mb-1">{paidSuppliersCount}</h3>
-        <p className="text-[12px] font-bold text-[#D97706] flex items-center gap-1">
-          <TrendingUp size={12} />
-          +12% this month
+        <p className="text-[12px] font-medium text-gray-500">
+          Currently active paid suppliers
         </p>
       </div>
 
@@ -52,9 +50,8 @@ export default function PackageMetrics() {
           </div>
         </div>
         <h3 className="text-3xl font-extrabold text-[#0F172A] mb-1">{formattedRevenue}</h3>
-        <p className="text-[12px] font-bold text-[#D97706] flex items-center gap-1">
-          <TrendingUp size={12} />
-          +5.2% this month
+        <p className="text-[12px] font-medium text-gray-500">
+          Paid revenue recorded this month
         </p>
       </div>
 
@@ -66,9 +63,9 @@ export default function PackageMetrics() {
             <TrendingUp size={16} />
           </div>
         </div>
-        <h3 className="text-3xl font-extrabold text-[#0F172A] mb-1">38%</h3>
+        <h3 className="text-3xl font-extrabold text-[#0F172A] mb-1">{packageConversion}%</h3>
         <p className="text-[12px] font-medium text-gray-500">
-          Free to Paid ratio
+          Paid suppliers vs all suppliers
         </p>
       </div>
 

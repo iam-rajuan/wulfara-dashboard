@@ -1,10 +1,22 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Plus, Users, LayoutGrid } from "lucide-react";
+import { useState } from "react";
 import PackageMetrics from "../../../Components/admin-components/subscriptions/PackageMetrics";
 import PackageTable from "../../../Components/admin-components/subscriptions/PackageTable";
+import { useGetAdminSubscriptionOverviewQuery } from "../../../redux/features/subscriptions/subscriptionsApi";
 
 export default function SubscriptionManagement() {
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { data, isLoading, error } = useGetAdminSubscriptionOverviewQuery(
+    { status: statusFilter },
+    { refetchOnMountOrArgChange: true }
+  );
+
+  const overview = data?.data;
+  const plans = overview?.plans || [];
+  const metrics = overview?.metrics || {};
+
   return (
     <div className="min-h-screen p-6 mt-16 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans pt-24 pb-32">
       
@@ -20,7 +32,12 @@ export default function SubscriptionManagement() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+          <button
+            type="button"
+            disabled
+            title="Add-on management is not implemented on this screen yet."
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-[13px] font-bold text-gray-400 cursor-not-allowed shadow-sm"
+          >
             <LayoutGrid size={14} />
             Manage Add-ons
           </button>
@@ -38,8 +55,24 @@ export default function SubscriptionManagement() {
         </div>
       </div>
 
-      <PackageMetrics />
-      <PackageTable />
+      {isLoading ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-gray-500 font-medium">
+          Loading subscription package data...
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-10 text-center text-red-700 font-medium">
+          Failed to load subscription package data from the backend.
+        </div>
+      ) : (
+        <>
+          <PackageMetrics metrics={metrics} />
+          <PackageTable
+            plans={plans}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+          />
+        </>
+      )}
 
     </div>
   );
