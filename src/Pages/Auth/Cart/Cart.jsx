@@ -5,6 +5,80 @@ import { Award, Info, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useGetOnboardingStatusQuery } from '../../../redux/features/listings/listingsApi';
 import { appendOnboardingContext, buildOnboardingQueryString } from '../../../utils/onboarding';
 
+const formatListingPeriodLabel = (durationMonths) => {
+  const duration = Number(durationMonths);
+
+  if (!Number.isInteger(duration) || duration <= 0) {
+    return '';
+  }
+
+  return `${duration} ${duration === 1 ? 'Month' : 'Months'}`;
+};
+
+const normalizeListingPeriodLabel = (value = '') =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ');
+
+const getPlanListingPeriodOptions = (plan) =>
+  (Array.isArray(plan?.listingPeriods) ? plan.listingPeriods : [])
+    .filter(
+      (period) =>
+        period?.isActive !== false &&
+        Number.isInteger(Number(period?.durationMonths)) &&
+        Number(period?.durationMonths) > 0
+    )
+    .map((period) => ({
+      label: formatListingPeriodLabel(period.durationMonths),
+      durationMonths: Number(period.durationMonths),
+      discountPercent: Number(period.discountPercent || 0),
+    }))
+    .sort((a, b) => a.durationMonths - b.durationMonths);
+
+const resolvePlanListingPeriodOption = (plan, preferredValue = '') => {
+  const options = getPlanListingPeriodOptions(plan);
+
+  if (options.length > 0) {
+    const normalizedPreferred = normalizeListingPeriodLabel(preferredValue);
+    const matchedOption = options.find((option) => {
+      const canonical = normalizeListingPeriodLabel(option.label);
+      const singular = normalizeListingPeriodLabel(`${option.durationMonths} month`);
+      const plural = normalizeListingPeriodLabel(`${option.durationMonths} months`);
+
+      return normalizedPreferred && (
+        normalizedPreferred === canonical ||
+        normalizedPreferred === singular ||
+        normalizedPreferred === plural
+      );
+    });
+
+    return matchedOption || options[0];
+  }
+
+  return {
+    label: preferredValue || '',
+    durationMonths: null,
+    discountPercent: 0,
+  };
+};
+
+const calculateDiscountedPlanPrice = (basePrice, discountPercent = 0) => {
+  const base = Number(basePrice || 0);
+  const discount = Number(discountPercent || 0);
+
+  if (Number.isNaN(base) || base <= 0) {
+    return 0;
+  }
+
+  if (Number.isNaN(discount) || discount <= 0) {
+    return Math.round(base * 100) / 100;
+  }
+
+  return Math.round((base * (1 - discount / 100)) * 100) / 100;
+};
+
 const Cart = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -13,7 +87,16 @@ const Cart = () => {
   const { data: onboardingResponse, isLoading } = useGetOnboardingStatusQuery(supplierId, { skip: !user });
   const supplier = onboardingResponse?.data?.supplier;
   const selectedPlan = supplier?.selectedPlan;
-  const basePrice = selectedPlan?.price || 0;
+  const selectedListingPeriodOption = resolvePlanListingPeriodOption(
+    selectedPlan,
+    supplier?.selectedListingPeriod
+  );
+  const resolvedListingPeriod =
+    selectedListingPeriodOption.label || supplier?.selectedListingPeriod || 'Included in selected plan';
+  const basePrice = calculateDiscountedPlanPrice(
+    selectedPlan?.price || 0,
+    selectedListingPeriodOption.discountPercent
+  );
   const total = basePrice;
 
   useEffect(() => {
@@ -50,6 +133,7 @@ const Cart = () => {
                     <div>
                       <h2 className="text-xl font-bold text-gray-900 mb-1">{selectedPlan.name}</h2>
                       <p className="text-[13px] text-gray-500">{supplier?.selectedBillingCycle || selectedPlan.billingCycle || 'Supplier Listing'}</p>
+                      <p className="text-[12px] text-gray-400 mt-1">{resolvedListingPeriod}</p>
                     </div>
                   </div>
                   <button
@@ -102,6 +186,16 @@ const Cart = () => {
                 <span className="text-gray-600">{selectedPlan?.name || 'Selected Plan'}</span>
                 <span className="font-bold text-gray-900">${basePrice.toFixed(2)}</span>
               </div>
+              <div className="flex justify-between items-center text-[14px]">
+                <span className="text-gray-600">Listing Duration</span>
+                <span className="font-bold text-gray-900">{resolvedListingPeriod}</span>
+              </div>
+              {Number(selectedListingPeriodOption.discountPercent || 0) > 0 && (
+                <div className="flex justify-between items-center text-[14px]">
+                  <span className="text-gray-600">Discount</span>
+                  <span className="font-bold text-emerald-600">{selectedListingPeriodOption.discountPercent}%</span>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-gray-100 pt-6 mb-6">

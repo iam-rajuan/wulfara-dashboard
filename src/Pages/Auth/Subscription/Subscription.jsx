@@ -17,30 +17,103 @@ const BILLING_FILTERS = {
   YEARLY: 'yearly',
 };
 
-const deriveListingPeriod = (billingCycle = '') => {
-  const normalizedBillingCycle = String(billingCycle || '').trim().toLowerCase();
+const formatListingPeriodLabel = (durationMonths) => {
+  const duration = Number(durationMonths);
 
-  if (!normalizedBillingCycle) {
+  if (!Number.isInteger(duration) || duration <= 0) {
     return '';
   }
 
-  if (normalizedBillingCycle.includes('month')) {
-    return '1 Month';
+  return `${duration} ${duration === 1 ? 'Month' : 'Months'}`;
+};
+
+const getPlanListingPeriodOptions = (plan) =>
+  (Array.isArray(plan?.listingPeriods) ? plan.listingPeriods : [])
+    .filter(
+      (period) =>
+        period?.isActive !== false &&
+        Number.isInteger(Number(period?.durationMonths)) &&
+        Number(period?.durationMonths) > 0
+    )
+    .map((period) => ({
+      durationMonths: Number(period.durationMonths),
+      label: formatListingPeriodLabel(period.durationMonths),
+      discountPercent: Number(period.discountPercent || 0),
+      customLabel: typeof period?.customLabel === 'string' ? period.customLabel.trim() : '',
+    }))
+    .sort((a, b) => a.durationMonths - b.durationMonths);
+
+const calculateDiscountedPlanPrice = (basePrice, discountPercent = 0) => {
+  const base = Number(basePrice || 0);
+  const discount = Number(discountPercent || 0);
+
+  if (Number.isNaN(base) || base <= 0) {
+    return 0;
   }
 
-  if (normalizedBillingCycle.includes('quarter')) {
-    return '3 Months';
+  if (Number.isNaN(discount) || discount <= 0) {
+    return Math.round(base * 100) / 100;
   }
 
-  if (normalizedBillingCycle.includes('semi') || normalizedBillingCycle.includes('6')) {
-    return '6 Months';
+  return Math.round((base * (1 - discount / 100)) * 100) / 100;
+};
+
+const normalizeListingPeriodLabel = (value = '') =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ');
+
+const resolvePlanListingPeriod = (plan, preferredValue = '') => {
+  const options = getPlanListingPeriodOptions(plan);
+
+  if (options.length > 0) {
+    const normalizedPreferred = normalizeListingPeriodLabel(preferredValue);
+    const matchedOption = options.find((option) => {
+      const canonical = normalizeListingPeriodLabel(option.label);
+      const singular = normalizeListingPeriodLabel(`${option.durationMonths} month`);
+      const plural = normalizeListingPeriodLabel(`${option.durationMonths} months`);
+
+      return normalizedPreferred && (
+        normalizedPreferred === canonical ||
+        normalizedPreferred === singular ||
+        normalizedPreferred === plural
+      );
+    });
+
+    return matchedOption?.label || options[0].label;
   }
 
-  if (normalizedBillingCycle.includes('annual') || normalizedBillingCycle.includes('year') || normalizedBillingCycle.includes('12')) {
-    return '12 Months';
+  return preferredValue || '';
+};
+
+const resolvePlanListingPeriodOption = (plan, preferredValue = '') => {
+  const options = getPlanListingPeriodOptions(plan);
+
+  if (options.length > 0) {
+    const normalizedPreferred = normalizeListingPeriodLabel(preferredValue);
+    const matchedOption = options.find((option) => {
+      const canonical = normalizeListingPeriodLabel(option.label);
+      const singular = normalizeListingPeriodLabel(`${option.durationMonths} month`);
+      const plural = normalizeListingPeriodLabel(`${option.durationMonths} months`);
+
+      return normalizedPreferred && (
+        normalizedPreferred === canonical ||
+        normalizedPreferred === singular ||
+        normalizedPreferred === plural
+      );
+    });
+
+    return matchedOption || options[0];
   }
 
-  return billingCycle;
+  return {
+    durationMonths: null,
+    label: preferredValue || '',
+    discountPercent: 0,
+    customLabel: '',
+  };
 };
 
 const classifyBillingCycle = (billingCycle = '') => {
@@ -156,9 +229,18 @@ const Subscription = () => {
 
   const resolvedBillingCycle =
     currentPlan?.billingCycle || supplier?.selectedBillingCycle || 'One-time payment';
+  const resolvedListingPeriodOption = resolvePlanListingPeriodOption(
+    currentPlan,
+    supplier?.selectedListingPeriod
+  );
   const resolvedListingPeriod =
-    supplier?.selectedListingPeriod || deriveListingPeriod(resolvedBillingCycle) || 'Included in selected plan';
-  const basePlanPrice = Number(currentPlan?.price || 0);
+    resolvedListingPeriodOption.label ||
+    supplier?.selectedListingPeriod ||
+    'Included in selected plan';
+  const basePlanPrice = calculateDiscountedPlanPrice(
+    currentPlan?.price || 0,
+    resolvedListingPeriodOption.discountPercent
+  );
   const addonTotal = hasFeaturedHeroPlacementSelected ? Number(featuredHeroAddon?.price || 0) : 0;
   const totalDueToday = basePlanPrice + addonTotal;
   const selectedPlanBillingGroup = classifyBillingCycle(currentPlan?.billingCycle);
@@ -181,6 +263,7 @@ const Subscription = () => {
     const payload = {
       supplierId,
       planId: currentPlanId,
+      listingPeriod: resolvedListingPeriod,
       addons: selectedAddonCodes,
     };
 
@@ -288,7 +371,15 @@ const Subscription = () => {
                   }`}>
                     {filteredPlans.map((plan) => {
                       const isSelected = currentPlanId === plan._id;
-                      const planListingPeriod = deriveListingPeriod(plan.billingCycle);
+                      const planListingPeriodOption = resolvePlanListingPeriodOption(
+                        plan,
+                        plan._id === currentPlanId ? supplier?.selectedListingPeriod : ''
+                      );
+                      const planListingPeriod = planListingPeriodOption.label;
+                      const planPrice = calculateDiscountedPlanPrice(
+                        plan.price,
+                        planListingPeriodOption.discountPercent
+                      );
                       const priceLabel = getPriceLabel(plan.billingCycle);
                       const accentColor = plan.accentColor || '#D1A635';
 
@@ -339,12 +430,17 @@ const Subscription = () => {
 
                           {/* Price Details */}
                           <div className="border-t border-slate-100 pt-3 mb-2.5 w-full flex items-baseline gap-1">
-                            <span className="text-3xl font-black text-slate-900 tracking-tight">${plan.price}</span>
+                            <span className="text-3xl font-black text-slate-900 tracking-tight">${planPrice}</span>
                             <span className="text-[11px] text-slate-400 font-semibold">{priceLabel}</span>
                           </div>
                           {planListingPeriod && (
                             <p className="text-[10px] text-slate-500 font-bold mb-3">
                               Listing period: {planListingPeriod}
+                            </p>
+                          )}
+                          {Number(planListingPeriodOption.discountPercent || 0) > 0 && (
+                            <p className="text-[10px] text-emerald-600 font-semibold mb-3 -mt-1">
+                              {planListingPeriodOption.discountPercent}% discount applied
                             </p>
                           )}
 

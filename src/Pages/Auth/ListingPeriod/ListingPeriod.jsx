@@ -7,12 +7,80 @@ import { useGetOnboardingStatusQuery } from '../../../redux/features/listings/li
 import { toast } from 'react-toastify';
 import { appendOnboardingContext, buildOnboardingQueryString } from '../../../utils/onboarding';
 
-const periods = [
-  { id: '16 Months', badge: 'STARTER COMMITMENT', badgeColor: 'bg-[#E8F0FE] text-blue-700', desc: 'Standard listing duration for new suppliers.' },
-  { id: '25 Months', badge: 'BETTER SAVINGS', badgeColor: 'bg-[#E8F0FE] text-blue-700', desc: 'Extended visibility with moderate savings.' },
-  { id: '30 Months', badge: 'GROWTH OPTION', badgeColor: 'bg-[#E8F0FE] text-blue-700', desc: 'Ideal for establishing long-term market presence.' },
-  { id: '49 Months', badge: 'BEST VALUE', badgeColor: 'bg-blue-700 text-white', desc: 'Maximum return on investment and sustained priority ranking.' },
-];
+const formatListingPeriodLabel = (durationMonths) => {
+  const duration = Number(durationMonths);
+
+  if (!Number.isInteger(duration) || duration <= 0) {
+    return '';
+  }
+
+  return `${duration} ${duration === 1 ? 'Month' : 'Months'}`;
+};
+
+const normalizeListingPeriodLabel = (value = '') =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ');
+
+const getPlanListingPeriodOptions = (plan) =>
+  (Array.isArray(plan?.listingPeriods) ? plan.listingPeriods : [])
+    .filter(
+      (period) =>
+        period?.isActive !== false &&
+        Number.isInteger(Number(period?.durationMonths)) &&
+        Number(period?.durationMonths) > 0
+    )
+    .map((period) => ({
+      id: formatListingPeriodLabel(period.durationMonths),
+      durationMonths: Number(period.durationMonths),
+      discountPercent: Number(period.discountPercent || 0),
+      customLabel: typeof period?.customLabel === 'string' ? period.customLabel.trim() : '',
+    }))
+    .sort((a, b) => a.durationMonths - b.durationMonths);
+
+const calculateDiscountedPlanPrice = (basePrice, discountPercent = 0) => {
+  const base = Number(basePrice || 0);
+  const discount = Number(discountPercent || 0);
+
+  if (Number.isNaN(base) || base <= 0) {
+    return 0;
+  }
+
+  if (Number.isNaN(discount) || discount <= 0) {
+    return Math.round(base * 100) / 100;
+  }
+
+  return Math.round((base * (1 - discount / 100)) * 100) / 100;
+};
+
+const resolveDefaultListingPeriod = (plan, preferredValue = '') => {
+  const options = getPlanListingPeriodOptions(plan);
+
+  if (options.length === 0) {
+    return preferredValue || '';
+  }
+
+  const normalizedPreferred = normalizeListingPeriodLabel(preferredValue);
+  const matchedOption = options.find(
+    (option) => normalizeListingPeriodLabel(option.id) === normalizedPreferred
+  );
+
+  return matchedOption?.id || options[0].id;
+};
+
+const buildPeriodBadge = (index, total) => {
+  if (index === 0) {
+    return { label: 'STARTER COMMITMENT', className: 'bg-[#E8F0FE] text-blue-700' };
+  }
+
+  if (index === total - 1) {
+    return { label: 'BEST VALUE', className: 'bg-blue-700 text-white' };
+  }
+
+  return { label: 'FLEXIBLE TERM', className: 'bg-[#E8F0FE] text-blue-700' };
+};
 
 const ListingPeriod = () => {
   const navigate = useNavigate();
@@ -21,9 +89,17 @@ const ListingPeriod = () => {
   const supplierId = user?.role === 'admin' ? searchParams.get('supplierId') : undefined;
   const { data: onboardingResponse, isLoading: isLoadingOnboarding } = useGetOnboardingStatusQuery(supplierId, { skip: !user });
   const [createCheckoutSession, { isLoading }] = useCreateCheckoutSessionMutation();
-  const [selectedPeriod, setSelectedPeriod] = useState('16 Months');
+  const [selectedPeriod, setSelectedPeriod] = useState('');
   const supplier = onboardingResponse?.data?.supplier;
   const selectedPlan = supplier?.selectedPlan;
+  const periods = getPlanListingPeriodOptions(selectedPlan);
+  const selectedPeriodOption =
+    periods.find((period) => normalizeListingPeriodLabel(period.id) === normalizeListingPeriodLabel(selectedPeriod)) ||
+    null;
+  const selectedPeriodPrice = calculateDiscountedPlanPrice(
+    selectedPlan?.price || 0,
+    selectedPeriodOption?.discountPercent || 0
+  );
 
   useEffect(() => {
     if (!user) {
@@ -32,10 +108,11 @@ const ListingPeriod = () => {
   }, [navigate, searchParams, user]);
 
   useEffect(() => {
-    if (supplier?.selectedListingPeriod) {
-      setSelectedPeriod(supplier.selectedListingPeriod);
+    const nextPeriod = resolveDefaultListingPeriod(selectedPlan, supplier?.selectedListingPeriod);
+    if (nextPeriod) {
+      setSelectedPeriod(nextPeriod);
     }
-  }, [supplier]);
+  }, [selectedPlan, supplier?.selectedListingPeriod]);
 
   const handleCheckout = async () => {
     if (!selectedPlan?._id) {
@@ -77,10 +154,15 @@ const ListingPeriod = () => {
         <div className="w-full lg:w-[65%] space-y-6">
           {isLoadingOnboarding ? (
             <div className="py-12 text-center text-gray-500">Loading your onboarding progress...</div>
+          ) : periods.length === 0 ? (
+            <div className="py-12 text-center text-gray-500">
+              No listing periods are configured for the selected plan yet.
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {periods.map((period) => {
+              {periods.map((period, index) => {
                 const isSelected = selectedPeriod === period.id;
+                const badge = buildPeriodBadge(index, periods.length);
 
                 return (
                   <button
@@ -97,13 +179,20 @@ const ListingPeriod = () => {
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-[#D1A635]' : 'border-gray-300'}`}>
                         {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#D1A635]"></div>}
                       </div>
-                      <span className={`text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider ${period.badgeColor}`}>
-                        {period.badge}
+                      <span className={`text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-wider ${badge.className}`}>
+                        {badge.label}
                       </span>
                     </div>
 
                     <h3 className="text-xl font-bold text-gray-900 mb-2">{period.id}</h3>
-                    <p className="text-[13px] text-gray-500 leading-relaxed min-h-[40px]">{period.desc}</p>
+                    <p className="text-2xl font-black text-gray-900 mb-2">${calculateDiscountedPlanPrice(selectedPlan?.price || 0, period.discountPercent)}</p>
+                    <p className="text-[13px] text-gray-500 leading-relaxed min-h-[40px]">
+                      {period.customLabel || (
+                        period.discountPercent > 0
+                          ? `${period.discountPercent}% discount applied for this listing duration.`
+                          : 'Standard listing duration for this subscription plan.'
+                      )}
+                    </p>
                   </button>
                 );
               })}
@@ -134,6 +223,10 @@ const ListingPeriod = () => {
                 <CheckCircle2 className="w-4 h-4 text-[#D1A635]" />
                 <span className="text-[13.5px] font-medium text-gray-900">{selectedPeriod}</span>
               </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-4 h-4 text-[#D1A635]" />
+                <span className="text-[13.5px] font-medium text-gray-900">${selectedPeriodPrice.toFixed(2)}</span>
+              </div>
             </div>
 
             <div className="h-px bg-gray-100 w-full mb-6"></div>
@@ -151,7 +244,7 @@ const ListingPeriod = () => {
               <button
                 type="button"
                 onClick={handleCheckout}
-                disabled={isLoading || !selectedPlan}
+                disabled={isLoading || !selectedPlan || !selectedPeriod}
                 className="w-full bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[14px] py-3.5 px-4 rounded-md transition-colors shadow-sm disabled:opacity-70"
               >
                 {isLoading ? 'Processing...' : 'Continue'}
