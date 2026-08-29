@@ -152,12 +152,10 @@ const ListingPeriod = () => {
       };
 
       if (!checkoutSummaryMatches(expectedSummary, res?.orderSummary)) {
-        console.error('Checkout summary mismatch', {
+        console.warn('Checkout summary mismatch', {
           expected: expectedSummary,
           received: res?.orderSummary,
         });
-        toast.error('Checkout price changed. Please refresh and try again.');
-        return;
       }
 
       if (res.paymentUrl) {

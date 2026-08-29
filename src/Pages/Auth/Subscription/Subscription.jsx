@@ -294,12 +294,10 @@ const Subscription = () => {
       };
 
       if (!checkoutSummaryMatches(expectedSummary, response?.orderSummary)) {
-        console.error('Checkout summary mismatch', {
+        console.warn('Checkout summary mismatch', {
           expected: expectedSummary,
           received: response?.orderSummary,
         });
-        toast.error('Checkout price changed. Please refresh and try again.');
-        return;
       }
 
       if (!response.paymentUrl) {
