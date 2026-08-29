@@ -65,6 +65,21 @@ const normalizeListingPeriodLabel = (value = '') =>
     .replace(/[-_]+/g, ' ')
     .replace(/\s+/g, ' ');
 
+const toMoneyCents = (value = 0) => Math.round(Number(value || 0) * 100);
+
+const checkoutSummaryMatches = (expected, actual) => {
+  if (!actual) {
+    return false;
+  }
+
+  return (
+    toMoneyCents(actual.basePrice) === toMoneyCents(expected.basePrice) &&
+    toMoneyCents(actual.totalDueToday) === toMoneyCents(expected.totalDueToday) &&
+    normalizeListingPeriodLabel(actual.listingPeriod) ===
+      normalizeListingPeriodLabel(expected.listingPeriod)
+  );
+};
+
 const resolvePlanListingPeriod = (plan, preferredValue = '') => {
   const options = getPlanListingPeriodOptions(plan);
 
@@ -270,6 +285,22 @@ const Subscription = () => {
     try {
       await saveSubscription(payload).unwrap();
       const response = await createCheckoutSession(payload).unwrap();
+
+      const expectedSummary = {
+        planId: currentPlanId,
+        listingPeriod: resolvedListingPeriod,
+        basePrice: basePlanPrice,
+        totalDueToday,
+      };
+
+      if (!checkoutSummaryMatches(expectedSummary, response?.orderSummary)) {
+        console.error('Checkout summary mismatch', {
+          expected: expectedSummary,
+          received: response?.orderSummary,
+        });
+        toast.error('Checkout price changed. Please refresh and try again.');
+        return;
+      }
 
       if (!response.paymentUrl) {
         throw new Error('Stripe checkout URL was not returned');

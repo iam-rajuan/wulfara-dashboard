@@ -24,6 +24,21 @@ const normalizeListingPeriodLabel = (value = '') =>
     .replace(/[-_]+/g, ' ')
     .replace(/\s+/g, ' ');
 
+const toMoneyCents = (value = 0) => Math.round(Number(value || 0) * 100);
+
+const checkoutSummaryMatches = (expected, actual) => {
+  if (!actual) {
+    return false;
+  }
+
+  return (
+    toMoneyCents(actual.basePrice) === toMoneyCents(expected.basePrice) &&
+    toMoneyCents(actual.totalDueToday) === toMoneyCents(expected.totalDueToday) &&
+    normalizeListingPeriodLabel(actual.listingPeriod) ===
+      normalizeListingPeriodLabel(expected.listingPeriod)
+  );
+};
+
 const getPlanListingPeriodOptions = (plan) =>
   (Array.isArray(plan?.listingPeriods) ? plan.listingPeriods : [])
     .filter(
@@ -128,6 +143,22 @@ const ListingPeriod = () => {
         billingCycle: supplier?.selectedBillingCycle || 'Annual (Paid Upfront)',
         listingPeriod: selectedPeriod,
       }).unwrap();
+
+      const expectedSummary = {
+        planId: selectedPlan._id,
+        listingPeriod: selectedPeriod,
+        basePrice: selectedPeriodPrice,
+        totalDueToday: selectedPeriodPrice,
+      };
+
+      if (!checkoutSummaryMatches(expectedSummary, res?.orderSummary)) {
+        console.error('Checkout summary mismatch', {
+          expected: expectedSummary,
+          received: res?.orderSummary,
+        });
+        toast.error('Checkout price changed. Please refresh and try again.');
+        return;
+      }
 
       if (res.paymentUrl) {
         window.location.href = res.paymentUrl;
