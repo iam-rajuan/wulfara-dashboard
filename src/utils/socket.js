@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 import { SOCKET_BASE_URL } from "../config/urls";
 
 export const createAppSocket = () => {
-  if (typeof window === "undefined" || !SOCKET_BASE_URL) {
+  if (typeof window === "undefined") {
     return null;
   }
 

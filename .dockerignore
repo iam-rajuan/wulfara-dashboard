@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+.git
+.env
+.env.*
+!.env.example
+npm-debug.log*
+coverage
+.vscode
+.idea
+.DS_Store
+*.log
+lint-report.json
+lint-output.txt
+build-output.txt
