@@ -7,7 +7,6 @@ import { appendOnboardingContext, buildOnboardingQueryString } from '../../../ut
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 15;
-const REDIRECT_DELAY_MS = 1800;
 
 const Listed = () => {
   const navigate = useNavigate();
@@ -33,20 +32,17 @@ const Listed = () => {
   }, [navigate, searchParams, user]);
 
   useEffect(() => {
-    if (!sessionId || !user) {
+    if (!user) {
       return;
     }
 
     if (onboarding?.isComplete) {
       setStatus('success');
-      const redirectTimer = window.setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, REDIRECT_DELAY_MS);
-
-      return () => window.clearTimeout(redirectTimer);
+      navigate('/dashboard', { replace: true });
+      return;
     }
 
-    if (shouldKeepPolling) {
+    if (sessionId && shouldKeepPolling) {
       setStatus('processing');
       const pollTimer = window.setTimeout(() => {
         setPollAttempts((current) => current + 1);
@@ -56,7 +52,7 @@ const Listed = () => {
       return () => window.clearTimeout(pollTimer);
     }
 
-    if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+    if (sessionId && pollAttempts >= MAX_POLL_ATTEMPTS) {
       setStatus('timeout');
     }
   }, [navigate, onboarding?.isComplete, pollAttempts, refetch, sessionId, shouldKeepPolling, user]);
@@ -116,24 +112,7 @@ const Listed = () => {
               {isTimeout && 'We could not confirm the listing yet. Please refresh this page or contact support if this continues.'}
             </p>
 
-            <div className="w-full h-px bg-gray-100 mb-10"></div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="flex-1 w-full max-w-[220px] mx-auto sm:mx-0 py-3 px-6 bg-[#D1A635] hover:bg-[#C2982B] text-black font-bold text-[13px] rounded-md transition-colors shadow-sm"
-              >
-                {isSuccess ? 'Open Supplier Dashboard' : 'Go to Dashboard'}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/profile')}
-                className="flex-1 w-full max-w-[220px] mx-auto sm:mx-0 py-3 px-6 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-bold text-[13px] rounded-md transition-colors shadow-sm"
-              >
-                View Listing
-              </button>
-            </div>
+            <div className="w-full h-px bg-gray-100 mb-8"></div>
           </div>
         </div>
 
