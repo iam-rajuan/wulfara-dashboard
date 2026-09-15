@@ -1,9 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Check, CreditCard, HeadphonesIcon, Lock } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, Check, CreditCard, HeadphonesIcon, Lock, RefreshCw } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { useGetPlansQuery, useCreateCheckoutSessionMutation } from '../../../redux/features/subscriptions/subscriptionsApi';
+import {
+  useGetPlansQuery,
+  useCreateCheckoutSessionMutation,
+  useLazyGetCheckoutStatusQuery,
+} from '../../../redux/features/subscriptions/subscriptionsApi';
 import {
   useGetOnboardingStatusQuery,
   useSaveOnboardingSubscriptionMutation,
@@ -80,6 +84,9 @@ const checkoutSummaryMatches = (expected, actual) => {
   );
 };
 
+const isActivePaidRecord = (record) =>
+  record?.paymentStatus === 'paid' && record?.subscriptionStatus === 'active';
+
 const resolvePlanListingPeriodOption = (plan, preferredValue = '') => {
   const options = getPlanListingPeriodOptions(plan);
 
@@ -150,16 +157,21 @@ const Subscription = () => {
   const { data: plansResponse, isLoading: isLoadingPlans } = useGetPlansQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
-  const { data: onboardingResponse, isLoading: isLoadingOnboarding } = useGetOnboardingStatusQuery(supplierId, {
+  const {
+    data: onboardingResponse,
+    isLoading: isLoadingOnboarding,
+    refetch: refetchOnboardingStatus,
+  } = useGetOnboardingStatusQuery(supplierId, {
     skip: !user,
     refetchOnMountOrArgChange: true,
   });
   const [saveSubscription, { isLoading: isSaving }] = useSaveOnboardingSubscriptionMutation();
   const [createCheckoutSession, { isLoading: isCheckingOut }] = useCreateCheckoutSessionMutation();
+  const [checkCheckoutStatus, { isFetching: isRecoveringCheckout }] = useLazyGetCheckoutStatusQuery();
+  const checkoutRecoveryRequestedRef = useRef(false);
 
   const supplier = onboardingResponse?.data?.supplier;
-  const hasActivePaidSubscription =
-    supplier?.paymentStatus === 'paid' && supplier?.subscriptionStatus === 'active';
+  const hasActivePaidSubscription = isActivePaidRecord(supplier);
   const selectedPlanId = supplier?.selectedPlan?._id || supplier?.selectedPlan || '';
   const plans = useMemo(() => plansResponse?.data || [], [plansResponse?.data]);
   const availableAddons = useMemo(() => plansResponse?.addons || [], [plansResponse?.addons]);
@@ -180,6 +192,38 @@ const Subscription = () => {
 
     navigate('/dashboard', { replace: true });
   }, [hasActivePaidSubscription, navigate, user]);
+
+  useEffect(() => {
+    checkoutRecoveryRequestedRef.current = false;
+  }, [supplierId, user?._id]);
+
+  useEffect(() => {
+    if (!user || hasActivePaidSubscription || checkoutRecoveryRequestedRef.current) {
+      return;
+    }
+
+    checkoutRecoveryRequestedRef.current = true;
+    checkCheckoutStatus({ supplierId })
+      .unwrap()
+      .then(async (response) => {
+        if (isActivePaidRecord(response)) {
+          const onboardingResult = await refetchOnboardingStatus();
+          if (isActivePaidRecord(onboardingResult?.data?.data?.supplier)) {
+            navigate('/dashboard', { replace: true });
+          }
+        }
+      })
+      .catch(() => {
+        checkoutRecoveryRequestedRef.current = false;
+      });
+  }, [
+    checkCheckoutStatus,
+    hasActivePaidSubscription,
+    navigate,
+    refetchOnboardingStatus,
+    supplierId,
+    user,
+  ]);
 
   useEffect(() => {
     if (selectedPlanId) {
@@ -250,6 +294,8 @@ const Subscription = () => {
   const totalDueToday = basePlanPrice + addonTotal;
   const selectedPlanBillingGroup = classifyBillingCycle(currentPlan?.billingCycle);
   const isSubmitting = isSaving || isCheckingOut;
+  const isSyncingSubscription = isRecoveringCheckout;
+  const isPaymentActionDisabled = isSubmitting || isSyncingSubscription;
 
   const toggleAddon = (addonCode) => {
     setSelectedAddonCodes((currentCodes) =>
@@ -297,6 +343,38 @@ const Subscription = () => {
       window.location.href = response.paymentUrl;
     } catch (error) {
       toast.error(error?.data?.message || error?.message || 'Failed to initialize checkout');
+    }
+  };
+
+  const handleSyncSubscription = async () => {
+    try {
+      const onboardingResult = await refetchOnboardingStatus();
+      const refreshedSupplier = onboardingResult?.data?.data?.supplier;
+
+      if (isActivePaidRecord(refreshedSupplier)) {
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+
+      const response = await checkCheckoutStatus({ supplierId }).unwrap();
+
+      if (isActivePaidRecord(response)) {
+        const syncedOnboardingResult = await refetchOnboardingStatus();
+        const syncedSupplier = syncedOnboardingResult?.data?.data?.supplier;
+
+        if (!isActivePaidRecord(syncedSupplier)) {
+          toast.info('Subscription was found, but the dashboard is still refreshing. Try sync again in a moment.');
+          return;
+        }
+
+        toast.success('Subscription synced successfully');
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+
+      toast.info(response?.message || 'No active paid subscription was found yet');
+    } catch (error) {
+      toast.error(error?.data?.message || error?.message || 'Unable to sync subscription right now');
     }
   };
 
@@ -594,7 +672,7 @@ const Subscription = () => {
               <button
                 type="button"
                 onClick={handleContinueToPayment}
-                disabled={isSubmitting || !currentPlan}
+                disabled={isPaymentActionDisabled || !currentPlan}
                 className="w-full bg-gradient-to-r from-[#D1A635] to-[#B08620] hover:from-[#C2982B] hover:to-[#A0761B] text-white font-bold text-xs py-3 px-4 rounded-xl transition-all duration-200 shadow-md shadow-[#D1A635]/10 flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
               >
                 {isSubmitting ? (
@@ -603,6 +681,16 @@ const Subscription = () => {
                   <CreditCard className="w-3.5 h-3.5" />
                 )}
                 {isSubmitting ? 'Preparing Checkout...' : 'Continue to Payment'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSyncSubscription}
+                disabled={isPaymentActionDisabled}
+                className="w-full bg-white hover:bg-slate-50 border border-amber-200 text-[#9A7418] font-bold text-xs py-3 px-4 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSubscription ? 'animate-spin' : ''}`} />
+                {isSyncingSubscription ? 'Syncing Subscription...' : 'Sync Subscription'}
               </button>
 
               <button
