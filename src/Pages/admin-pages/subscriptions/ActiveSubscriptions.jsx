@@ -2,6 +2,22 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useGetActiveSubscriptionsQuery } from "../../../redux/features/subscriptions/subscriptionsApi";
 
+const formatDate = (value) => {
+  if (!value) {
+    return "N/A";
+  }
+
+  return new Date(value).toLocaleDateString();
+};
+
+const formatNextRenewal = (subscription) => {
+  if (subscription?.billingCycleType === "monthly" && subscription?.subscriptionEndDate && !subscription?.nextPaymentDate) {
+    return "No further automatic payments";
+  }
+
+  return formatDate(subscription?.nextPaymentDate);
+};
+
 export default function ActiveSubscriptions() {
   const { data, isLoading, error } = useGetActiveSubscriptionsQuery();
   const subscriptions = data?.data || [];
@@ -43,33 +59,43 @@ export default function ActiveSubscriptions() {
                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500">Subscription</th>
                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500">Payment</th>
                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500">Billing Cycle</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500">Stripe Status</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500">Next Renewal</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500">Term Ends</th>
                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500">Updated</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {subscriptions.map((supplier) => (
-                  <tr key={supplier._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-gray-900">{supplier.companyName}</div>
-                      <div className="text-[12px] text-gray-500">{supplier.user?.email || supplier.contactEmail}</div>
-                    </td>
-                    <td className="px-6 py-4 text-[13px] font-medium text-gray-700">
-                      {supplier.selectedPlan?.name || supplier.subscriptionPlan}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700">
-                        {supplier.subscriptionStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700">
-                        {supplier.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-[13px] text-gray-600">{supplier.selectedBillingCycle || "N/A"}</td>
-                    <td className="px-6 py-4 text-[13px] text-gray-600">{new Date(supplier.updatedAt).toLocaleDateString()}</td>
-                  </tr>
-                ))}
+                {subscriptions.map((supplier) => {
+                  const currentSubscription = supplier.currentSubscription;
+
+                  return (
+                    <tr key={supplier._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-gray-900">{supplier.companyName}</div>
+                        <div className="text-[12px] text-gray-500">{supplier.user?.email || supplier.contactEmail}</div>
+                      </td>
+                      <td className="px-6 py-4 text-[13px] font-medium text-gray-700">
+                        {supplier.selectedPlan?.name || currentSubscription?.planName || supplier.subscriptionPlan}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700">
+                          {supplier.subscriptionStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700">
+                          {supplier.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-[13px] text-gray-600">{supplier.selectedBillingCycle || currentSubscription?.billingCycle || "N/A"}</td>
+                      <td className="px-6 py-4 text-[13px] text-gray-600 capitalize">{currentSubscription?.status?.replace(/_/g, " ") || "Legacy"}</td>
+                      <td className="px-6 py-4 text-[13px] text-gray-600">{formatNextRenewal(currentSubscription)}</td>
+                      <td className="px-6 py-4 text-[13px] text-gray-600">{formatDate(currentSubscription?.subscriptionEndDate)}</td>
+                      <td className="px-6 py-4 text-[13px] text-gray-600">{new Date(supplier.updatedAt).toLocaleDateString()}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

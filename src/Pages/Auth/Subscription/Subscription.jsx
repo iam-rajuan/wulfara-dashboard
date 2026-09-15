@@ -80,29 +80,6 @@ const checkoutSummaryMatches = (expected, actual) => {
   );
 };
 
-const resolvePlanListingPeriod = (plan, preferredValue = '') => {
-  const options = getPlanListingPeriodOptions(plan);
-
-  if (options.length > 0) {
-    const normalizedPreferred = normalizeListingPeriodLabel(preferredValue);
-    const matchedOption = options.find((option) => {
-      const canonical = normalizeListingPeriodLabel(option.label);
-      const singular = normalizeListingPeriodLabel(`${option.durationMonths} month`);
-      const plural = normalizeListingPeriodLabel(`${option.durationMonths} months`);
-
-      return normalizedPreferred && (
-        normalizedPreferred === canonical ||
-        normalizedPreferred === singular ||
-        normalizedPreferred === plural
-      );
-    });
-
-    return matchedOption?.label || options[0].label;
-  }
-
-  return preferredValue || '';
-};
-
 const resolvePlanListingPeriodOption = (plan, preferredValue = '') => {
   const options = getPlanListingPeriodOptions(plan);
 
@@ -173,11 +150,16 @@ const Subscription = () => {
   const { data: plansResponse, isLoading: isLoadingPlans } = useGetPlansQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
-  const { data: onboardingResponse, isLoading: isLoadingOnboarding } = useGetOnboardingStatusQuery(supplierId, { skip: !user });
+  const { data: onboardingResponse, isLoading: isLoadingOnboarding } = useGetOnboardingStatusQuery(supplierId, {
+    skip: !user,
+    refetchOnMountOrArgChange: true,
+  });
   const [saveSubscription, { isLoading: isSaving }] = useSaveOnboardingSubscriptionMutation();
   const [createCheckoutSession, { isLoading: isCheckingOut }] = useCreateCheckoutSessionMutation();
 
   const supplier = onboardingResponse?.data?.supplier;
+  const hasActivePaidSubscription =
+    supplier?.paymentStatus === 'paid' && supplier?.subscriptionStatus === 'active';
   const selectedPlanId = supplier?.selectedPlan?._id || supplier?.selectedPlan || '';
   const plans = useMemo(() => plansResponse?.data || [], [plansResponse?.data]);
   const availableAddons = useMemo(() => plansResponse?.addons || [], [plansResponse?.addons]);
@@ -190,6 +172,14 @@ const Subscription = () => {
       navigate(`/sign-in${buildOnboardingQueryString(searchParams)}`);
     }
   }, [navigate, searchParams, user]);
+
+  useEffect(() => {
+    if (!user || !hasActivePaidSubscription) {
+      return;
+    }
+
+    navigate('/dashboard', { replace: true });
+  }, [hasActivePaidSubscription, navigate, user]);
 
   useEffect(() => {
     if (selectedPlanId) {

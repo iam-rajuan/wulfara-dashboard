@@ -25,11 +25,24 @@ const RevenueReports = () => {
 
   const formattedRevenue = totalRevenue >= 1000 ? (totalRevenue / 1000).toFixed(2) + 'K' : totalRevenue.toString();
   const paidSuppliersCount = new Set(paidPayments.map((p) => p.supplier?._id).filter(Boolean)).size;
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const recurringMonthlyRevenue = paidPayments
+    .filter((payment) => {
+      const paidAt = payment.createdAt ? new Date(payment.createdAt) : null;
+      return (
+        ['initial_subscription', 'recurring_invoice'].includes(payment.paymentType) &&
+        paidAt &&
+        paidAt.getMonth() === currentMonth &&
+        paidAt.getFullYear() === currentYear
+      );
+    })
+    .reduce((acc, curr) => acc + (curr.baseAmount || curr.amount || 0), 0);
 
   // Stat Card Data
   const stats = [
     { title: 'TOTAL REVENUE', value: `$${formattedRevenue}`, icon: <Banknote size={18} />, color: 'text-gray-700', sub: null },
-    { title: 'MRR', value: `$${(totalRevenue / 12).toFixed(2)}`, icon: <RefreshCw size={18} />, color: 'text-gray-700', sub: null },
+    { title: 'MONTHLY RECURRING', value: `$${recurringMonthlyRevenue.toFixed(2)}`, icon: <RefreshCw size={18} />, color: 'text-gray-700', sub: 'Invoice based' },
     { title: 'PAYMENTS', value: paidPayments.length.toString(), icon: <CreditCard size={18} />, color: 'text-gray-700', sub: 'Paid count' },
     { title: 'PAID SUPPLIERS', value: paidSuppliersCount.toString(), icon: <Tag size={18} />, color: 'text-gray-700', sub: null },
   ];

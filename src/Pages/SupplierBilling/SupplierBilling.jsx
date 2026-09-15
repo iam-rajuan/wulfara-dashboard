@@ -1,15 +1,69 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CreditCard, Download, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CreditCard, Download, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
 import { useGetSupplierDashboardQuery } from '../../redux/features/listings/listingsApi';
-import { useGetInvoicesQuery } from '../../redux/features/subscriptions/subscriptionsApi';
+import {
+  useGetCurrentSubscriptionQuery,
+  useGetInvoicesQuery,
+} from '../../redux/features/subscriptions/subscriptionsApi';
+
+const formatCurrency = (amount = 0, currency = 'usd') =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: String(currency || 'usd').toUpperCase(),
+  }).format(Number(amount || 0));
+
+const formatDate = (value) => {
+  if (!value) {
+    return 'Not available';
+  }
+
+  return new Date(value).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
+const formatNextPayment = (subscription, isMonthly) => {
+  if (isMonthly && subscription?.subscriptionEndDate && !subscription?.nextPaymentDate) {
+    return 'No further automatic payments';
+  }
+
+  return formatDate(subscription?.nextPaymentDate);
+};
+
+const statusClassName = (status = '') => {
+  const normalized = String(status).toLowerCase();
+  if (['active', 'paid', 'completed'].includes(normalized)) {
+    return 'bg-green-50 text-green-700 border border-green-200';
+  }
+  if (['past_due', 'payment_failed', 'requires_action', 'failed', 'unpaid'].includes(normalized)) {
+    return 'bg-red-50 text-red-700 border border-red-200';
+  }
+  if (['pending_checkout', 'pending', 'incomplete', 'trialing'].includes(normalized)) {
+    return 'bg-amber-50 text-amber-700 border border-amber-200';
+  }
+  return 'bg-gray-100 text-gray-600 border border-gray-200';
+};
 
 export default function SupplierBilling() {
   const { data: dashboardData } = useGetSupplierDashboardQuery();
   const { data: invoicesData, isLoading: isLoadingInvoices } = useGetInvoicesQuery();
+  const { data: subscriptionData } = useGetCurrentSubscriptionQuery();
 
   const profile = dashboardData?.data?.profile;
-  const currentPlan = profile?.subscriptionPlan || 'free';
+  const currentSubscription = subscriptionData?.data || invoicesData?.currentSubscription || null;
+  const currentPlan =
+    currentSubscription?.plan?.name ||
+    currentSubscription?.planName ||
+    profile?.subscriptionPlan ||
+    'free';
+  const billingCycle = currentSubscription?.billingCycle || profile?.selectedBillingCycle || 'No active billing cycle';
+  const billingCycleType = currentSubscription?.billingCycleType || '';
+  const isMonthly = billingCycleType === 'monthly';
+  const isAnnual = billingCycleType === 'annual';
+  const subscriptionStatus = currentSubscription?.status || profile?.subscriptionStatus || 'inactive';
   const invoices = invoicesData?.data || [];
 
   return (
@@ -29,11 +83,10 @@ export default function SupplierBilling() {
                 <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Current Plan</h3>
                 <div className="text-3xl font-extrabold text-gray-900 capitalize flex items-center gap-3">
                   {currentPlan}
-                  {currentPlan !== 'free' && (
-                    <span className="bg-[#D1A635]/10 text-[#D1A635] text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
-                      <CheckCircle2 size={12} /> Active
-                    </span>
-                  )}
+                  <span className={`text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 capitalize ${statusClassName(subscriptionStatus)}`}>
+                    {subscriptionStatus === 'active' ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                    {subscriptionStatus.replace(/_/g, ' ')}
+                  </span>
                 </div>
               </div>
               {/* <Link to="/subscription">
@@ -44,19 +97,51 @@ export default function SupplierBilling() {
             </div>
             
             <p className="text-[13px] text-gray-600 mb-6">
-              You are currently on the {currentPlan} plan. Upgrade to Premium for priority search placement, unlimited RFQ responses, and a dedicated account manager.
+              Your listing entitlement is synced from Stripe billing events and WULFARA approval status.
             </p>
 
-            <div className="flex items-center gap-6 pt-6 border-t border-gray-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pt-6 border-t border-gray-100">
               <div>
                 <div className="text-[11px] font-bold text-gray-400 mb-1">Billing Cycle</div>
-                <div className="text-[13px] font-bold text-gray-900">Monthly</div>
+                <div className="text-[13px] font-bold text-gray-900">{billingCycle}</div>
               </div>
               <div>
-                <div className="text-[11px] font-bold text-gray-400 mb-1">Next Payment Date</div>
+                <div className="text-[11px] font-bold text-gray-400 mb-1">
+                  {isAnnual ? 'Subscription End Date' : 'Next Payment Date'}
+                </div>
                 <div className="text-[13px] font-bold text-gray-900 flex items-center gap-1.5">
                   <Calendar size={14} className="text-gray-400" /> 
-                  Oct 15, 2026
+                  {isAnnual
+                    ? formatDate(currentSubscription?.subscriptionEndDate)
+                    : formatNextPayment(currentSubscription, isMonthly)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-gray-400 mb-1">
+                  {isMonthly ? 'Recurring Amount' : 'Payment Amount'}
+                </div>
+                <div className="text-[13px] font-bold text-gray-900">
+                  {isMonthly
+                    ? `${formatCurrency(currentSubscription?.effectiveRecurringAmount, currentSubscription?.currency)} / month`
+                    : formatCurrency(currentSubscription?.totalInitialAmount || invoices[0]?.amount, currentSubscription?.currency)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-gray-400 mb-1">Selected Duration</div>
+                <div className="text-[13px] font-bold text-gray-900">
+                  {currentSubscription?.durationMonths ? `${currentSubscription.durationMonths} months` : 'Not available'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-gray-400 mb-1">Current Period</div>
+                <div className="text-[13px] font-bold text-gray-900">
+                  {formatDate(currentSubscription?.currentPeriodStart)} - {formatDate(currentSubscription?.currentPeriodEnd)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-gray-400 mb-1">Term Ends</div>
+                <div className="text-[13px] font-bold text-gray-900">
+                  {formatDate(currentSubscription?.subscriptionEndDate)}
                 </div>
               </div>
             </div>
@@ -71,14 +156,14 @@ export default function SupplierBilling() {
                   <CreditCard size={14} className="text-gray-500" />
                 </div>
                 <div>
-                  <div className="text-[13px] font-bold text-gray-900">•••• •••• •••• 4242</div>
-                  <div className="text-[11px] text-gray-500">Expires 12/28</div>
+                  <div className="text-[13px] font-bold text-gray-900">Managed securely by Stripe</div>
+                  <div className="text-[11px] text-gray-500">Card details are not stored in WULFARA.</div>
                 </div>
               </div>
             </div>
-            <button className="w-full text-center text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline">
-              Update Payment Method
-            </button>
+            <Link to="/subscription" className="w-full text-center text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline">
+              Manage Plan
+            </Link>
           </div>
         </div>
 
@@ -114,20 +199,25 @@ export default function SupplierBilling() {
                         {new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </td>
                       <td className="px-6 py-4 text-[13px] font-bold text-gray-900">
-                        ${invoice.amount?.toFixed(2)}
+                        {formatCurrency(invoice.amount, invoice.currency)}
                       </td>
                       <td className="px-6 py-4 text-[13px] text-gray-600 capitalize">
-                        {invoice.planName || 'Premium'} Plan
+                        {invoice.planName || 'Subscription'} Plan
+                        {invoice.paymentType && (
+                          <div className="text-[11px] text-gray-400 capitalize">{invoice.paymentType.replace(/_/g, ' ')}</div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold capitalize ${
-                          invoice.status === 'paid' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600'
-                        }`}>
+                        <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold capitalize ${statusClassName(invoice.status)}`}>
                           {invoice.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <a href={invoice.invoiceUrl || '#'} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-[#D1A635] hover:bg-[#D1A635]/10 rounded-lg transition-colors">
+                        <a href={invoice.invoiceUrl || '#'} target="_blank" rel="noreferrer" className={`inline-flex items-center justify-center p-2 rounded-lg transition-colors ${
+                          invoice.invoiceUrl
+                            ? 'text-gray-400 hover:text-[#D1A635] hover:bg-[#D1A635]/10'
+                            : 'text-gray-300 pointer-events-none'
+                        }`}>
                           <ExternalLink size={16} />
                         </a>
                       </td>

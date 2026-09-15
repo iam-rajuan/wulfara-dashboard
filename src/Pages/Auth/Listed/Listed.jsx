@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { AlertTriangle, Check, FileText, Inbox, LoaderCircle } from 'lucide-react';
 import { useGetOnboardingStatusQuery } from '../../../redux/features/listings/listingsApi';
+import { useLazyGetCheckoutStatusQuery } from '../../../redux/features/subscriptions/subscriptionsApi';
 import { appendOnboardingContext, buildOnboardingQueryString } from '../../../utils/onboarding';
 
 const POLL_INTERVAL_MS = 2000;
@@ -14,16 +15,23 @@ const Listed = () => {
   const { user } = useSelector((state) => state.auth);
   const supplierId = user?.role === 'admin' ? searchParams.get('supplierId') : undefined;
   const sessionId = searchParams.get('session_id');
-  const { data: onboardingResponse, isLoading, refetch } = useGetOnboardingStatusQuery(supplierId, { skip: !user });
+  const { data: onboardingResponse, isLoading, refetch } = useGetOnboardingStatusQuery(supplierId, {
+    skip: !user,
+    refetchOnMountOrArgChange: true,
+  });
+  const [checkCheckoutStatus, { data: checkoutStatusResponse }] = useLazyGetCheckoutStatusQuery();
   const onboarding = onboardingResponse?.data?.onboarding;
   const supplier = onboardingResponse?.data?.supplier;
   const [pollAttempts, setPollAttempts] = useState(0);
   const [status, setStatus] = useState(sessionId ? 'processing' : 'idle');
 
-  const shouldKeepPolling = useMemo(
-    () => Boolean(sessionId && onboarding?.isComplete === false && pollAttempts < MAX_POLL_ATTEMPTS),
-    [onboarding?.isComplete, pollAttempts, sessionId]
+  const isTerminalStatus = useMemo(
+    () => ['success', 'timeout', 'failed', 'expired', 'unauthorized'].includes(status),
+    [status]
   );
+  const isBackendPaidActive =
+    (supplier?.paymentStatus === 'paid' && supplier?.subscriptionStatus === 'active') ||
+    (checkoutStatusResponse?.paymentStatus === 'paid' && checkoutStatusResponse?.subscriptionStatus === 'active');
 
   useEffect(() => {
     if (!user) {
@@ -32,30 +40,106 @@ const Listed = () => {
   }, [navigate, searchParams, user]);
 
   useEffect(() => {
+    if (!user || !sessionId || isTerminalStatus) {
+      return;
+    }
+
+    let pollTimer;
+    let cancelled = false;
+
+    if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+      setStatus('timeout');
+      return;
+    }
+
+    setStatus('processing');
+
+    checkCheckoutStatus({ sessionId, supplierId })
+      .unwrap()
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+
+        if (response?.status === 'paid') {
+          setStatus('success');
+          refetch();
+          return;
+        }
+
+        if (response?.status === 'failed') {
+          setStatus('failed');
+          return;
+        }
+
+        if (response?.status === 'expired') {
+          setStatus('expired');
+          return;
+        }
+
+        pollTimer = window.setTimeout(() => {
+          setPollAttempts((current) => current + 1);
+          refetch();
+        }, POLL_INTERVAL_MS);
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+
+        const errorStatus = error?.data?.status;
+        if (errorStatus === 'unauthorized') {
+          setStatus('unauthorized');
+          return;
+        }
+
+        if (errorStatus === 'invalid_session') {
+          setStatus('expired');
+          return;
+        }
+
+        pollTimer = window.setTimeout(() => {
+          setPollAttempts((current) => current + 1);
+          refetch();
+        }, POLL_INTERVAL_MS);
+      });
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) {
+        window.clearTimeout(pollTimer);
+      }
+    };
+  }, [checkCheckoutStatus, isTerminalStatus, navigate, pollAttempts, refetch, sessionId, supplierId, user]);
+
+  useEffect(() => {
     if (!user) {
       return;
     }
 
-    if (onboarding?.isComplete) {
+    if (isBackendPaidActive) {
       setStatus('success');
       navigate('/dashboard', { replace: true });
       return;
     }
 
-    if (sessionId && shouldKeepPolling) {
-      setStatus('processing');
-      const pollTimer = window.setTimeout(() => {
-        setPollAttempts((current) => current + 1);
-        refetch();
-      }, POLL_INTERVAL_MS);
+    if (!sessionId && onboarding?.isComplete) {
+      setStatus('success');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isBackendPaidActive, navigate, onboarding?.isComplete, sessionId, user]);
 
-      return () => window.clearTimeout(pollTimer);
+  useEffect(() => {
+    if (status !== 'success') {
+      return;
     }
 
-    if (sessionId && pollAttempts >= MAX_POLL_ATTEMPTS) {
-      setStatus('timeout');
-    }
-  }, [navigate, onboarding?.isComplete, pollAttempts, refetch, sessionId, shouldKeepPolling, user]);
+    const redirectTimer = window.setTimeout(() => {
+      navigate(checkoutStatusResponse?.redirectTo || '/dashboard', { replace: true });
+    }, 800);
+
+    return () => window.clearTimeout(redirectTimer);
+  }, [checkoutStatusResponse?.redirectTo, navigate, status]);
 
   useEffect(() => {
     if (!sessionId || isLoading || !user) {
@@ -72,8 +156,20 @@ const Listed = () => {
   }
 
   const isProcessing = status === 'processing';
-  const isSuccess = status === 'success' || onboarding?.isComplete;
+  const isSuccess = status === 'success' || (!sessionId && onboarding?.isComplete);
   const isTimeout = status === 'timeout';
+  const isFailed = status === 'failed' || status === 'expired' || status === 'unauthorized';
+  const summaryStatus = isSuccess ? 'Active' : 'Pending Confirmation';
+  const paymentLabel = isSuccess ? 'Paid' : isFailed ? 'Not Confirmed' : 'Processing';
+  const paymentClass = isSuccess ? 'text-emerald-700' : isFailed ? 'text-red-700' : 'text-amber-700';
+
+  const handleRetry = () => {
+    setStatus('processing');
+    setPollAttempts(0);
+    if (sessionId) {
+      checkCheckoutStatus({ sessionId, supplierId });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-sans flex items-center justify-center p-6">
@@ -84,7 +180,7 @@ const Listed = () => {
             <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${isTimeout ? 'bg-amber-50' : 'bg-[#F0F5FA]'}`}>
               {isProcessing ? (
                 <LoaderCircle className="w-8 h-8 text-[#D1A635] animate-spin" />
-              ) : isTimeout ? (
+              ) : isTimeout || isFailed ? (
                 <AlertTriangle className="w-8 h-8 text-amber-600" />
               ) : (
                 <div className="w-8 h-8 bg-[#D1A635] rounded-full flex items-center justify-center shadow-sm">
@@ -104,13 +200,25 @@ const Listed = () => {
               {isProcessing && 'Confirming your payment and activating your listing...'}
               {isSuccess && 'Your company is now listed on WULFARA.'}
               {isTimeout && 'We are still confirming your payment.'}
+              {isFailed && 'We could not confirm this checkout session.'}
             </h1>
 
             <p className="text-[14px] text-gray-500 mb-10 max-w-md mx-auto leading-relaxed">
-              {isProcessing && 'Stripe returned successfully. We are waiting for the backend webhook to finish activating your supplier listing.'}
+              {isProcessing && 'Stripe returned successfully. We are verifying the Checkout Session with the backend and activating your supplier listing.'}
               {isSuccess && 'Your payment was successful and your supplier listing is active. Redirecting you to your Supplier Dashboard now.'}
-              {isTimeout && 'We could not confirm the listing yet. Please refresh this page or contact support if this continues.'}
+              {isTimeout && 'Payment verification is taking longer than expected. Refresh or retry; this does not mean your payment failed.'}
+              {isFailed && (checkoutStatusResponse?.message || 'Please retry with the same session or contact support if this continues.')}
             </p>
+
+            {(isTimeout || isFailed) && (
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="inline-flex items-center justify-center rounded-md bg-[#111827] px-5 py-2.5 text-sm font-bold text-white hover:bg-black transition-colors"
+              >
+                Retry verification
+              </button>
+            )}
 
             <div className="w-full h-px bg-gray-100 mb-8"></div>
           </div>
@@ -138,12 +246,12 @@ const Listed = () => {
                 <div className="flex justify-between items-center border-b border-gray-50 pb-4">
                   <span className="text-[13px] text-gray-500">Status</span>
                   <span className={`text-[13px] font-bold ${isTimeout ? 'text-amber-700' : 'text-[#D1A635]'}`}>
-                    {isTimeout ? 'Pending Confirmation' : 'Active'}
+                    {summaryStatus}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[13px] text-gray-500">Payment</span>
-                  <span className="text-[13px] font-bold text-gray-900">{supplier?.paymentStatus || 'Pending'}</span>
+                  <span className={`text-[13px] font-bold ${paymentClass}`}>{paymentLabel}</span>
                 </div>
               </div>
             )}

@@ -184,9 +184,28 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+    getCheckoutStatus: builder.query({
+      query: ({ sessionId, supplierId } = {}) => {
+        const searchParams = new URLSearchParams();
+        if (sessionId) {
+          searchParams.set('session_id', sessionId);
+        }
+        if (supplierId) {
+          searchParams.set('supplierId', supplierId);
+        }
+
+        const queryString = searchParams.toString();
+        return `/subscriptions/checkout-status${queryString ? `?${queryString}` : ''}`;
+      },
+      providesTags: ['Subscription', 'Payment', 'Onboarding', 'Listing'],
+    }),
     getInvoices: builder.query({
       query: () => '/subscriptions/invoices',
       providesTags: ['Invoice'],
+    }),
+    getCurrentSubscription: builder.query({
+      query: () => '/subscriptions/current',
+      providesTags: ['Subscription'],
     }),
     getAllPayments: builder.query({
       query: () => '/subscriptions/admin/payments',
@@ -220,6 +239,8 @@ export const {
   useUpdatePlanMutation,
   useDeletePlanMutation,
   useCreateCheckoutSessionMutation,
+  useLazyGetCheckoutStatusQuery,
+  useGetCurrentSubscriptionQuery,
   useGetInvoicesQuery,
   useGetAllPaymentsQuery,
   useGetActiveSubscriptionsQuery,
