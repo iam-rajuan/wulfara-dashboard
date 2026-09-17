@@ -68,6 +68,7 @@ export default function ActiveSubscriptions() {
               <tbody className="divide-y divide-gray-100">
                 {subscriptions.map((supplier) => {
                   const currentSubscription = supplier.currentSubscription;
+                  const isCancellationScheduled = currentSubscription?.billingCycleType === "monthly" && currentSubscription?.cancelAtPeriodEnd;
 
                   return (
                     <tr key={supplier._id} className="hover:bg-gray-50">
@@ -90,8 +91,16 @@ export default function ActiveSubscriptions() {
                       </td>
                       <td className="px-6 py-4 text-[13px] text-gray-600">{supplier.selectedBillingCycle || currentSubscription?.billingCycle || "N/A"}</td>
                       <td className="px-6 py-4 text-[13px] text-gray-600 capitalize">{currentSubscription?.status?.replace(/_/g, " ") || "Legacy"}</td>
-                      <td className="px-6 py-4 text-[13px] text-gray-600">{formatNextRenewal(currentSubscription)}</td>
-                      <td className="px-6 py-4 text-[13px] text-gray-600">{formatDate(currentSubscription?.subscriptionEndDate)}</td>
+                      <td className="px-6 py-4 text-[13px] text-gray-600">
+                        {isCancellationScheduled ? (
+                          <span className="font-bold text-amber-700">Cancellation Scheduled</span>
+                        ) : (
+                          formatNextRenewal(currentSubscription)
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-[13px] text-gray-600">
+                        {formatDate(isCancellationScheduled ? currentSubscription?.cancelAt : currentSubscription?.subscriptionEndDate)}
+                      </td>
                       <td className="px-6 py-4 text-[13px] text-gray-600">{new Date(supplier.updatedAt).toLocaleDateString()}</td>
                     </tr>
                   );

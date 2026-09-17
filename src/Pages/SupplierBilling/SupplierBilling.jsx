@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, CreditCard, Download, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { useGetSupplierDashboardQuery } from '../../redux/features/listings/listingsApi';
 import {
+  useCancelCurrentSubscriptionMutation,
   useGetCurrentSubscriptionQuery,
   useGetInvoicesQuery,
 } from '../../redux/features/subscriptions/subscriptionsApi';
+import {
+  canRequestSubscriptionCancellation,
+  getAccessUntilDate,
+  isCancellationScheduled as getIsCancellationScheduled,
+  isMonthlyRecurringSubscription,
+} from './subscriptionEligibility';
 
 const formatCurrency = (amount = 0, currency = 'usd') =>
   new Intl.NumberFormat('en-US', {
@@ -26,7 +34,7 @@ const formatDate = (value) => {
 };
 
 const formatNextPayment = (subscription, isMonthly) => {
-  if (isMonthly && subscription?.subscriptionEndDate && !subscription?.nextPaymentDate) {
+  if (isMonthly && (subscription?.cancelAtPeriodEnd || (subscription?.subscriptionEndDate && !subscription?.nextPaymentDate))) {
     return 'No further automatic payments';
   }
 
@@ -36,21 +44,23 @@ const formatNextPayment = (subscription, isMonthly) => {
 const statusClassName = (status = '') => {
   const normalized = String(status).toLowerCase();
   if (['active', 'paid', 'completed'].includes(normalized)) {
-    return 'bg-green-50 text-green-700 border border-green-200';
+    return 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200';
   }
   if (['past_due', 'payment_failed', 'requires_action', 'failed', 'unpaid'].includes(normalized)) {
-    return 'bg-red-50 text-red-700 border border-red-200';
+    return 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200';
   }
   if (['pending_checkout', 'pending', 'incomplete', 'trialing'].includes(normalized)) {
-    return 'bg-amber-50 text-amber-700 border border-amber-200';
+    return 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200';
   }
-  return 'bg-gray-100 text-gray-600 border border-gray-200';
+  return 'bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200';
 };
 
 export default function SupplierBilling() {
-  const { data: dashboardData } = useGetSupplierDashboardQuery();
-  const { data: invoicesData, isLoading: isLoadingInvoices } = useGetInvoicesQuery();
-  const { data: subscriptionData } = useGetCurrentSubscriptionQuery();
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const { data: dashboardData, refetch: refetchDashboard } = useGetSupplierDashboardQuery();
+  const { data: invoicesData, isLoading: isLoadingInvoices, refetch: refetchInvoices } = useGetInvoicesQuery();
+  const { data: subscriptionData, refetch: refetchCurrentSubscription } = useGetCurrentSubscriptionQuery();
+  const [cancelCurrentSubscription, { isLoading: isCancelling }] = useCancelCurrentSubscriptionMutation();
 
   const profile = dashboardData?.data?.profile;
   const currentSubscription = subscriptionData?.data || invoicesData?.currentSubscription || null;
@@ -61,10 +71,28 @@ export default function SupplierBilling() {
     'free';
   const billingCycle = currentSubscription?.billingCycle || profile?.selectedBillingCycle || 'No active billing cycle';
   const billingCycleType = currentSubscription?.billingCycleType || '';
-  const isMonthly = billingCycleType === 'monthly';
+  const isMonthly = isMonthlyRecurringSubscription(currentSubscription, profile);
   const isAnnual = billingCycleType === 'annual';
   const subscriptionStatus = currentSubscription?.status || profile?.subscriptionStatus || 'inactive';
+  const isCancellationScheduled = getIsCancellationScheduled(currentSubscription, profile);
+  const cancellationAccessUntil = getAccessUntilDate(currentSubscription);
+  const canCancelSubscription = canRequestSubscriptionCancellation(currentSubscription, profile);
   const invoices = invoicesData?.data || [];
+
+  const handleConfirmCancellation = async () => {
+    try {
+      await cancelCurrentSubscription().unwrap();
+      setIsCancelDialogOpen(false);
+      toast.success('Subscription cancellation scheduled.');
+      await Promise.all([
+        refetchCurrentSubscription(),
+        refetchInvoices(),
+        refetchDashboard(),
+      ]);
+    } catch (error) {
+      toast.error(error?.data?.message || 'Unable to schedule cancellation right now.');
+    }
+  };
 
   return (
     <div className="min-h-screen p-6 lg:p-8 bg-[#F8F9FB] text-[#0F172A] font-sans mt-16">
@@ -81,24 +109,37 @@ export default function SupplierBilling() {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Current Plan</h3>
-                <div className="text-3xl font-extrabold text-gray-900 capitalize flex items-center gap-3">
+                <div className="text-3xl font-extrabold text-gray-900 capitalize flex flex-wrap items-center gap-x-3 gap-y-2">
                   {currentPlan}
-                  <span className={`text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 capitalize ${statusClassName(subscriptionStatus)}`}>
-                    {subscriptionStatus === 'active' ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                  <span className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-extrabold leading-none capitalize shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${statusClassName(subscriptionStatus)}`}>
+                    {subscriptionStatus === 'active' ? <CheckCircle2 size={13} strokeWidth={2.4} /> : <AlertCircle size={13} strokeWidth={2.4} />}
                     {subscriptionStatus.replace(/_/g, ' ')}
                   </span>
                 </div>
               </div>
-              {/* <Link to="/subscription">
-                <button className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-[13px] font-bold py-2 px-4 rounded-md transition-colors shadow-sm">
-                  Upgrade Plan
+              {canCancelSubscription && (
+                <button
+                  type="button"
+                  onClick={() => setIsCancelDialogOpen(true)}
+                  className="bg-white hover:bg-red-50 border border-red-200 text-red-700 text-[13px] font-bold py-2 px-4 rounded-md transition-colors shadow-sm"
+                >
+                  Cancel Subscription
                 </button>
-              </Link> */}
+              )}
             </div>
-            
+             
             <p className="text-[13px] text-gray-600 mb-6">
               Your listing entitlement is synced from Stripe billing events and WULFARA approval status.
             </p>
+
+            {isCancellationScheduled && (
+              <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                <div className="text-[13px] font-bold text-amber-800">Cancellation Scheduled</div>
+                <div className="text-[12px] text-amber-700 mt-1">
+                  Access remains active until {formatDate(cancellationAccessUntil)}. No further automatic payments are scheduled.
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pt-6 border-t border-gray-100">
               <div>
@@ -161,9 +202,9 @@ export default function SupplierBilling() {
                 </div>
               </div>
             </div>
-            <Link to="/subscription" className="w-full text-center text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline">
+            {/* <Link to="/subscription" className="w-full text-center text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline">
               Manage Plan
-            </Link>
+            </Link> */}
           </div>
         </div>
 
@@ -230,6 +271,39 @@ export default function SupplierBilling() {
         </div>
 
       </div>
+
+      {isCancelDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl border border-gray-200">
+            <h2 className="text-lg font-extrabold text-gray-900 mb-3">Cancel Subscription</h2>
+            <p className="text-[13px] text-gray-600 leading-relaxed mb-4">
+              Your subscription will remain active until the end of your current paid billing period. You will not be charged again after that date.
+            </p>
+            <div className="rounded-lg bg-gray-50 border border-gray-100 p-4 mb-6">
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Access Until</div>
+              <div className="text-[14px] font-bold text-gray-900">{formatDate(cancellationAccessUntil)}</div>
+            </div>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsCancelDialogOpen(false)}
+                disabled={isCancelling}
+                className="px-4 py-2 rounded-md border border-gray-200 text-[13px] font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+              >
+                Keep Subscription
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancellation}
+                disabled={isCancelling}
+                className="px-4 py-2 rounded-md bg-red-600 text-[13px] font-bold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {isCancelling ? 'Scheduling...' : 'Cancel Subscription'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

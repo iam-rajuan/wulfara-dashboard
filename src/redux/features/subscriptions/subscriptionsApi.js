@@ -207,6 +207,13 @@ export const subscriptionsApi = apiSlice.injectEndpoints({
       query: () => '/subscriptions/current',
       providesTags: ['Subscription'],
     }),
+    cancelCurrentSubscription: builder.mutation({
+      query: () => ({
+        url: '/subscriptions/current/cancel',
+        method: 'POST',
+      }),
+      invalidatesTags: ['Subscription', 'Payment', 'Onboarding', 'Listing'],
+    }),
     getAllPayments: builder.query({
       query: () => '/subscriptions/admin/payments',
       providesTags: ['Payment'],
@@ -241,6 +248,7 @@ export const {
   useCreateCheckoutSessionMutation,
   useLazyGetCheckoutStatusQuery,
   useGetCurrentSubscriptionQuery,
+  useCancelCurrentSubscriptionMutation,
   useGetInvoicesQuery,
   useGetAllPaymentsQuery,
   useGetActiveSubscriptionsQuery,
