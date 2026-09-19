@@ -81,7 +81,7 @@ const PrivateRoute = () => {
         }
 
         if (onboarding?.isComplete === false) {
-            if (!isOnboardingRoute && onboarding?.nextRoute && location.pathname !== onboarding.nextRoute) {
+            if (onboarding?.nextRoute && location.pathname !== onboarding.nextRoute) {
                 return <Navigate to={onboarding.nextRoute} replace />
             }
         } else {

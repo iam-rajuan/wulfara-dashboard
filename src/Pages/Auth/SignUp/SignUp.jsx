@@ -46,10 +46,10 @@ const SignUp = () => {
     if (isError && error) {
       setLocalError(error.data?.message || 'Registration failed');
     }
-    if (user && !isAdminAssistedMode && !isPublicSupplierOnboardingIntent) {
+    if (user && !showOtpModal && !isAdminAssistedMode && !isPublicSupplierOnboardingIntent) {
       navigate("/dashboard");
     }
-  }, [user, isError, error, navigate, isAdminAssistedMode, isPublicSupplierOnboardingIntent]);
+  }, [user, isError, error, navigate, showOtpModal, isAdminAssistedMode, isPublicSupplierOnboardingIntent]);
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
