@@ -55,6 +55,33 @@ const statusClassName = (status = '') => {
   return 'bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200';
 };
 
+const buildProfileSubscriptionFallback = (profile) => {
+  if (!profile) {
+    return null;
+  }
+
+  const isActivePaidSupplier =
+    profile.subscriptionStatus === 'active' &&
+    profile.paymentStatus === 'paid';
+  const hasMonthlyBilling =
+    /month|monthly/i.test(profile.selectedBillingCycle || '');
+
+  if (!isActivePaidSupplier || !hasMonthlyBilling) {
+    return null;
+  }
+
+  return {
+    planName: profile.subscriptionPlan,
+    billingCycle: profile.selectedBillingCycle,
+    billingCycleType: 'monthly',
+    durationMonths: Number.parseInt(profile.selectedListingPeriod, 10) || null,
+    status: profile.subscriptionStatus,
+    isMonthlyRecurring: true,
+    cancellationScheduled: false,
+    canCancelAtPeriodEnd: true,
+  };
+};
+
 export default function SupplierBilling() {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const { data: dashboardData, refetch: refetchDashboard } = useGetSupplierDashboardQuery();
@@ -63,7 +90,8 @@ export default function SupplierBilling() {
   const [cancelCurrentSubscription, { isLoading: isCancelling }] = useCancelCurrentSubscriptionMutation();
 
   const profile = dashboardData?.data?.profile;
-  const currentSubscription = subscriptionData?.data || invoicesData?.currentSubscription || null;
+  const profileSubscriptionFallback = buildProfileSubscriptionFallback(profile);
+  const currentSubscription = subscriptionData?.data || invoicesData?.currentSubscription || profileSubscriptionFallback;
   const currentPlan =
     currentSubscription?.plan?.name ||
     currentSubscription?.planName ||
