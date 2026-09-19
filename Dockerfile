@@ -14,5 +14,7 @@ RUN npm run build
 
 FROM alpine:3.22 AS runtime
 
+RUN apk add --no-cache busybox-extras
+
 WORKDIR /app
 COPY --from=builder /app/dist /opt/dashboard-dist
