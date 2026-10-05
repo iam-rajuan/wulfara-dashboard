@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { AlertTriangle, Check, FileText, Inbox, LoaderCircle } from 'lucide-react';
 import { useGetOnboardingStatusQuery } from '../../../redux/features/listings/listingsApi';
 import { useLazyGetCheckoutStatusQuery } from '../../../redux/features/subscriptions/subscriptionsApi';
-import { appendOnboardingContext, buildOnboardingQueryString } from '../../../utils/onboarding';
+import { buildOnboardingQueryString } from '../../../utils/onboarding';
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 15;
@@ -64,6 +64,7 @@ const Listed = () => {
         if (response?.status === 'paid') {
           setStatus('success');
           refetch();
+          navigate(response?.redirectTo || '/dashboard', { replace: true });
           return;
         }
 
@@ -140,16 +141,6 @@ const Listed = () => {
 
     return () => window.clearTimeout(redirectTimer);
   }, [checkoutStatusResponse?.redirectTo, navigate, status]);
-
-  useEffect(() => {
-    if (!sessionId || isLoading || !user) {
-      return;
-    }
-
-    if (onboarding?.isComplete === false && onboarding?.nextRoute && status === 'idle') {
-      navigate(appendOnboardingContext(onboarding.nextRoute, searchParams), { replace: true });
-    }
-  }, [isLoading, navigate, onboarding, searchParams, sessionId, status, user]);
 
   if (!user) {
     return null;
