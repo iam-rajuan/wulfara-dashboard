@@ -152,6 +152,7 @@ const Subscription = () => {
   const [searchParams] = useSearchParams();
   const { user } = useSelector((state) => state.auth);
   const supplierId = user?.role === 'admin' ? searchParams.get('supplierId') : undefined;
+  const sessionId = searchParams.get('session_id');
   const isCancelled = searchParams.get('cancelled') === '1';
 
   const { data: plansResponse, isLoading: isLoadingPlans } = useGetPlansQuery(undefined, {
@@ -184,6 +185,14 @@ const Subscription = () => {
       navigate(`/sign-in${buildOnboardingQueryString(searchParams)}`);
     }
   }, [navigate, searchParams, user]);
+
+  useEffect(() => {
+    if (!user || !sessionId) {
+      return;
+    }
+
+    navigate(appendOnboardingContext('/listed', searchParams), { replace: true });
+  }, [navigate, searchParams, sessionId, user]);
 
   useEffect(() => {
     if (!user || !hasActivePaidSubscription) {

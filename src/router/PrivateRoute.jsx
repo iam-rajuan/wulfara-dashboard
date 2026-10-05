@@ -26,7 +26,8 @@ const PrivateRoute = () => {
     const onboarding = data?.data?.onboarding;
     const isOnboardingRoute = ONBOARDING_ROUTES.includes(location.pathname);
     const searchParams = new URLSearchParams(location.search);
-    const isCheckoutReturnRoute = location.pathname === "/listed" && searchParams.has("session_id");
+    const hasCheckoutSession = searchParams.has("session_id");
+    const isCheckoutReturnRoute = location.pathname === "/listed" && hasCheckoutSession;
     const isUnauthorized = meError?.status === 401;
 
     useEffect(() => {
@@ -78,6 +79,10 @@ const PrivateRoute = () => {
     }
 
     if (isSupplier) {
+        if (hasCheckoutSession && !isCheckoutReturnRoute) {
+            return <Navigate to={`/listed${location.search}`} replace />
+        }
+
         if (isLoading) {
             return null;
         }
