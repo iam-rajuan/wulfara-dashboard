@@ -56,14 +56,14 @@ const Listed = () => {
 
     checkCheckoutStatus({ sessionId, supplierId })
       .unwrap()
-      .then((response) => {
+      .then(async (response) => {
         if (cancelled) {
           return;
         }
 
         if (response?.status === 'paid') {
           setStatus('success');
-          refetch();
+          await refetch();
           navigate(response?.redirectTo || '/dashboard', { replace: true });
           return;
         }
