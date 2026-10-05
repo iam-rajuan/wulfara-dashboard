@@ -24,10 +24,13 @@ const PrivateRoute = () => {
     const isBuyer = effectiveUser?.role === "buyer";
     const { data, isLoading } = useGetOnboardingStatusQuery(undefined, { skip: !isSupplier });
     const onboarding = data?.data?.onboarding;
+    const supplier = data?.data?.supplier;
     const isOnboardingRoute = ONBOARDING_ROUTES.includes(location.pathname);
     const searchParams = new URLSearchParams(location.search);
     const hasCheckoutSession = searchParams.has("session_id");
     const isCheckoutReturnRoute = location.pathname === "/listed" && hasCheckoutSession;
+    const hasActivePaidSubscription =
+        supplier?.paymentStatus === "paid" && supplier?.subscriptionStatus === "active";
     const isUnauthorized = meError?.status === 401;
 
     useEffect(() => {
@@ -85,6 +88,14 @@ const PrivateRoute = () => {
 
         if (isLoading) {
             return null;
+        }
+
+        if (hasActivePaidSubscription) {
+            if (isOnboardingRoute) {
+                return <Navigate to="/dashboard" replace />
+            }
+
+            return <Outlet />
         }
 
         if (onboarding?.isComplete === false) {
