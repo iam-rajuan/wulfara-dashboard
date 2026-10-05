@@ -88,13 +88,28 @@ const isActivePaidRecord = (record) =>
   record?.paymentStatus === 'paid' && record?.subscriptionStatus === 'active';
 
 const CHECKOUT_RECOVERY_STORAGE_KEY = 'wulfara:checkout-recovery';
+const CHECKOUT_RECOVERY_TTL_MS = 2 * 60 * 1000;
 
 const hasStoredCheckoutRecovery = () => {
   if (typeof window === 'undefined') {
     return false;
   }
 
-  return window.sessionStorage.getItem(CHECKOUT_RECOVERY_STORAGE_KEY) === '1';
+  try {
+    const rawCheckoutRecovery = window.sessionStorage.getItem(CHECKOUT_RECOVERY_STORAGE_KEY);
+    const checkoutRecovery = rawCheckoutRecovery ? JSON.parse(rawCheckoutRecovery) : null;
+    const startedAt = Number(checkoutRecovery?.startedAt || 0);
+    const isFreshCheckoutRecovery = startedAt > 0 && Date.now() - startedAt < CHECKOUT_RECOVERY_TTL_MS;
+
+    if (!isFreshCheckoutRecovery) {
+      window.sessionStorage.removeItem(CHECKOUT_RECOVERY_STORAGE_KEY);
+    }
+
+    return isFreshCheckoutRecovery;
+  } catch {
+    window.sessionStorage.removeItem(CHECKOUT_RECOVERY_STORAGE_KEY);
+    return false;
+  }
 };
 
 const setStoredCheckoutRecovery = (value) => {
@@ -103,7 +118,10 @@ const setStoredCheckoutRecovery = (value) => {
   }
 
   if (value) {
-    window.sessionStorage.setItem(CHECKOUT_RECOVERY_STORAGE_KEY, '1');
+    window.sessionStorage.setItem(
+      CHECKOUT_RECOVERY_STORAGE_KEY,
+      JSON.stringify({ startedAt: Date.now() })
+    );
     return;
   }
 
@@ -427,7 +445,7 @@ const Subscription = () => {
     return null;
   }
 
-  if (!isCancelled && (isCheckingStoredCheckout || isRecoveringCheckout)) {
+  if (!isCancelled && isCheckingStoredCheckout) {
     return (
       <div className="min-h-screen bg-slate-50 font-sans flex items-center justify-center px-6">
         <div className="w-full max-w-xl rounded-xl border border-slate-100 bg-white shadow-sm p-8 md:p-12 text-center">
