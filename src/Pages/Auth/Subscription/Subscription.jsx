@@ -87,6 +87,29 @@ const checkoutSummaryMatches = (expected, actual) => {
 const isActivePaidRecord = (record) =>
   record?.paymentStatus === 'paid' && record?.subscriptionStatus === 'active';
 
+const CHECKOUT_RECOVERY_STORAGE_KEY = 'wulfara:checkout-recovery';
+
+const hasStoredCheckoutRecovery = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return window.sessionStorage.getItem(CHECKOUT_RECOVERY_STORAGE_KEY) === '1';
+};
+
+const setStoredCheckoutRecovery = (value) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (value) {
+    window.sessionStorage.setItem(CHECKOUT_RECOVERY_STORAGE_KEY, '1');
+    return;
+  }
+
+  window.sessionStorage.removeItem(CHECKOUT_RECOVERY_STORAGE_KEY);
+};
+
 const resolvePlanListingPeriodOption = (plan, preferredValue = '') => {
   const options = getPlanListingPeriodOptions(plan);
 
@@ -170,6 +193,7 @@ const Subscription = () => {
   const [createCheckoutSession, { isLoading: isCheckingOut }] = useCreateCheckoutSessionMutation();
   const [checkCheckoutStatus, { isFetching: isRecoveringCheckout }] = useLazyGetCheckoutStatusQuery();
   const checkoutRecoveryRequestedRef = useRef(false);
+  const [isCheckingStoredCheckout, setIsCheckingStoredCheckout] = useState(hasStoredCheckoutRecovery);
 
   const supplier = onboardingResponse?.data?.supplier;
   const hasActivePaidSubscription = isActivePaidRecord(supplier);
@@ -199,6 +223,7 @@ const Subscription = () => {
       return;
     }
 
+    setStoredCheckoutRecovery(false);
     navigate('/dashboard', { replace: true });
   }, [hasActivePaidSubscription, navigate, user]);
 
@@ -208,22 +233,32 @@ const Subscription = () => {
 
   useEffect(() => {
     if (!user || hasActivePaidSubscription || checkoutRecoveryRequestedRef.current) {
+      if (hasActivePaidSubscription) {
+        setIsCheckingStoredCheckout(false);
+      }
       return;
     }
 
+    const shouldBlockSubscriptionChooser = hasStoredCheckoutRecovery();
+    setIsCheckingStoredCheckout(shouldBlockSubscriptionChooser);
     checkoutRecoveryRequestedRef.current = true;
     checkCheckoutStatus({ supplierId })
       .unwrap()
       .then(async (response) => {
         if (isActivePaidRecord(response)) {
-          const onboardingResult = await refetchOnboardingStatus();
-          if (isActivePaidRecord(onboardingResult?.data?.data?.supplier)) {
-            navigate('/dashboard', { replace: true });
-          }
+          setStoredCheckoutRecovery(false);
+          await refetchOnboardingStatus();
+          navigate(response?.redirectTo || '/dashboard', { replace: true });
+          return;
         }
+
+        setStoredCheckoutRecovery(false);
+        setIsCheckingStoredCheckout(false);
       })
       .catch(() => {
         checkoutRecoveryRequestedRef.current = false;
+        setStoredCheckoutRecovery(false);
+        setIsCheckingStoredCheckout(false);
       });
   }, [
     checkCheckoutStatus,
@@ -349,6 +384,7 @@ const Subscription = () => {
         throw new Error('Stripe checkout URL was not returned');
       }
 
+      setStoredCheckoutRecovery(true);
       window.location.href = response.paymentUrl;
     } catch (error) {
       toast.error(error?.data?.message || error?.message || 'Failed to initialize checkout');
@@ -389,6 +425,30 @@ const Subscription = () => {
 
   if (!user) {
     return null;
+  }
+
+  if (!isCancelled && (isCheckingStoredCheckout || isRecoveringCheckout)) {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans flex items-center justify-center px-6">
+        <div className="w-full max-w-xl rounded-xl border border-slate-100 bg-white shadow-sm p-8 md:p-12 text-center">
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-[#F0F5FA]">
+            <RefreshCw className="w-8 h-8 text-[#D1A635] animate-spin" />
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-200 bg-white mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+              Payment Processing
+            </span>
+          </div>
+          <h1 className="text-3xl md:text-[40px] font-bold text-[#111827] mb-4 leading-tight">
+            Confirming your payment and activating your listing...
+          </h1>
+          <p className="text-[14px] text-gray-500 max-w-md mx-auto leading-relaxed">
+            Stripe returned successfully. We are syncing your subscription and will take you straight to the dashboard.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
